@@ -32,6 +32,7 @@
 		85144DC533CB2E009D744CFE /* Note.swift in Sources */ = {isa = PBXBuildFile; fileRef = F43EB7BE5864CF10191833D0 /* Note.swift */; };
 		8612FF8D23469433262DEB6E /* RecentNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49692AD4B5AEBC7BD61F296C /* RecentNotesView.swift */; };
 		8AEF03B8D881872153AE07BA /* SlashCommandProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2FAA89E775B8E613C683386 /* SlashCommandProcessor.swift */; };
+		9407F4DF7F08247A7A8DE2A1 /* KnownTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2083C8673639AE82BE4560F /* KnownTool.swift */; };
 		9701F78808A345A405B23AEB /* ScrambleTextEffect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BCB06CB1FECF1A8F5BC6E6D /* ScrambleTextEffect.swift */; };
 		9A57A0453CCBD40B8265E252 /* VellemApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4237C4F0B607897B8B1D6069 /* VellemApp.swift */; };
 		9AE5D39B5FB80AEF1C4478DE /* NoteNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC017F0B5E3C20165F74A1F8 /* NoteNotifications.swift */; };
@@ -108,6 +109,7 @@
 		8F794DBD059DAB5C6B04AC1D /* NotesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesStore.swift; sourceTree = "<group>"; };
 		96920392987CD241F12576E0 /* CaptureContextProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureContextProvider.swift; sourceTree = "<group>"; };
 		9D31FD034B4CD8D85C052A6A /* QuickCaptureWindowConfigurator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickCaptureWindowConfigurator.swift; sourceTree = "<group>"; };
+		A2083C8673639AE82BE4560F /* KnownTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnownTool.swift; sourceTree = "<group>"; };
 		A21C416FE49D8BACA6D8E9A2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A2DBFCAF9442A9D7F1C75762 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		A2FAA89E775B8E613C683386 /* SlashCommandProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlashCommandProcessor.swift; sourceTree = "<group>"; };
@@ -239,6 +241,7 @@
 				AB9D350726789738B4EC27EB /* AppGroup.swift */,
 				1C69FD53E41A13CCC596052D /* AppPreferences.swift */,
 				0C55CFE4DA2FAE52B9A01F7B /* GlobalHotKeyService.swift */,
+				A2083C8673639AE82BE4560F /* KnownTool.swift */,
 				BC017F0B5E3C20165F74A1F8 /* NoteNotifications.swift */,
 				9D31FD034B4CD8D85C052A6A /* QuickCaptureWindowConfigurator.swift */,
 				5BCB06CB1FECF1A8F5BC6E6D /* ScrambleTextEffect.swift */,
@@ -460,6 +463,7 @@
 				1DD64FA45B0CB617F1AD3573 /* FolderNotesListView.swift in Sources */,
 				3CC319DEF2250062736D7234 /* FoundationNoteEditor.swift in Sources */,
 				23B75E5BA4E1D67E06AE504A /* GlobalHotKeyService.swift in Sources */,
+				9407F4DF7F08247A7A8DE2A1 /* KnownTool.swift in Sources */,
 				58831C737EBD42FE4454A836 /* MarkdownRenderedView.swift in Sources */,
 				24D2B5D83EE9639CA953FAE1 /* MarkdownTableView.swift in Sources */,
 				54690B4AA0C9E9E226529359 /* MenuBarComposerView.swift in Sources */,

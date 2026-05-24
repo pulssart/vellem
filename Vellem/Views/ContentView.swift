@@ -50,14 +50,6 @@ struct ContentView: View {
 
             ToolbarItemGroup(placement: .primaryAction) {
                 Button {
-                    store.selectToday()
-                } label: {
-                    Label("Today", systemImage: "calendar")
-                }
-                .labelStyle(.iconOnly)
-                .help("Today")
-
-                Button {
                     store.createDraft()
                 } label: {
                     Label("New Note", systemImage: "square.and.pencil")

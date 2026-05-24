@@ -321,6 +321,7 @@ private struct AgentWorkflow: Identifiable {
     let description: String
     let systemImage: String
     let prompt: String
+    var tools: [KnownTool] = []
 
     static func workflows(for folder: Folder) -> [AgentWorkflow] {
         switch folder.kind {
@@ -344,7 +345,8 @@ private struct AgentWorkflow: Identifiable {
             Summarize decisions, blockers, requests, and follow-ups.
             Append the result to today's Vellem note with `append_to_daily`.
             Keep it short and useful for an end-of-day review.
-            """
+            """,
+            tools: [.slack, .gmail]
         ),
         AgentWorkflow(
             id: "today-calendar-granola",
@@ -355,7 +357,8 @@ private struct AgentWorkflow: Identifiable {
             Review today's Calendar events and Granola meeting notes.
             Extract decisions, action items, people involved, and open questions.
             Append a clean meeting recap to today's Vellem note with `append_to_daily`.
-            """
+            """,
+            tools: [.calendar, .granola]
         ),
         AgentWorkflow(
             id: "today-linear-progress",
@@ -366,7 +369,8 @@ private struct AgentWorkflow: Identifiable {
             Review today's Linear activity.
             Summarize issues moved, comments that need attention, blockers, and next actions.
             Append this project progress log to today's Vellem note with `append_to_daily`.
-            """
+            """,
+            tools: [.linear]
         ),
         AgentWorkflow(
             id: "today-figma-design",
@@ -377,7 +381,34 @@ private struct AgentWorkflow: Identifiable {
             Review today's relevant Figma work.
             Summarize changed screens, design decisions, feedback, unresolved questions, and handoff notes.
             Append this design log to today's Vellem note with `append_to_daily`.
-            """
+            """,
+            tools: [.figma]
+        ),
+        AgentWorkflow(
+            id: "today-notion-digest",
+            title: "Notion knowledge digest",
+            description: "Summarize today's Notion changes worth knowing.",
+            systemImage: "doc.text.below.ecg",
+            prompt: """
+            Scan Notion for pages and databases updated in the last 24 hours.
+            Summarize what changed, who changed it, and which pages matter for the team this week.
+            Highlight decisions logged, specs updated, and new docs worth reading.
+            Append this knowledge digest to today's Vellem note with `append_to_daily`.
+            """,
+            tools: [.notion]
+        ),
+        AgentWorkflow(
+            id: "today-github-prs",
+            title: "GitHub PR digest",
+            description: "Open PRs, reviews queued, merged today.",
+            systemImage: "arrow.triangle.pull",
+            prompt: """
+            Review today's GitHub activity across the repos that matter.
+            Summarize open PRs awaiting review (mine and others'), reviews that need a reply, PRs merged today, and any failing checks worth flagging.
+            Group by repo. Keep it short and actionable.
+            Append this PR digest to today's Vellem note with `append_to_daily`.
+            """,
+            tools: [.github]
         )
     ]
 
@@ -553,6 +584,11 @@ private struct AgentWorkflowCard: View {
                 }
                 .buttonStyle(.borderless)
                 .help(isCopied ? "Copied" : "Copy prompt")
+            }
+
+            if !workflow.tools.isEmpty {
+                ToolBadgeRow(tools: workflow.tools, size: 16)
+                    .padding(.leading, 30)
             }
         }
         .padding(12)

@@ -219,6 +219,88 @@
   .install-steps li { margin-bottom: 8px; }
   .install-steps code { background: var(--accent-soft); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: "SF Mono", Menlo, Consolas, monospace; }
 
+  .changelog {
+    margin-bottom: 56px;
+    padding-top: 4px;
+  }
+  .changelog > summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    user-select: none;
+    padding: 4px 0;
+  }
+  .changelog > summary::-webkit-details-marker { display: none; }
+  .changelog > summary h2 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .changelog-chevron {
+    width: 22px; height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    transition: transform 0.18s ease;
+  }
+  .changelog[open] > summary .changelog-chevron { transform: rotate(90deg); }
+  .changelog > summary:hover .changelog-chevron { color: var(--fg); }
+  .changelog-intro {
+    font-size: 16px;
+    color: var(--muted);
+    line-height: 1.65;
+    margin-bottom: 24px;
+    margin-top: 14px;
+  }
+  .release {
+    border-top: 1px solid var(--border);
+    padding-top: 18px;
+    margin-top: 18px;
+  }
+  .release-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .release-tag {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+  }
+  .release-title { font-size: 17px; font-weight: 600; }
+  .release-date { font-size: 12.5px; color: var(--muted); margin-left: auto; }
+  .release-body { font-size: 14.5px; color: var(--muted); line-height: 1.6; }
+  .release-body p { margin-bottom: 8px; }
+  .release-body ul { padding-left: 20px; margin: 4px 0 8px; }
+  .release-body li { margin-bottom: 4px; }
+  .release-body code { background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; font-size: 0.88em; font-family: "SF Mono", Menlo, Consolas, monospace; color: var(--fg); }
+  .release-body strong { color: var(--fg); }
+  .release-body a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+  .release-body a:hover { border-bottom-color: var(--accent); }
+  .changelog-empty { font-size: 14px; color: var(--muted); font-style: italic; }
+  .changelog-more {
+    display: inline-block;
+    margin-top: 22px;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .changelog-more:hover { color: var(--fg); }
+
   footer { font-size: 13px; color: var(--muted); text-align: center; margin-top: auto; padding-top: 32px; }
   footer a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
   footer a:hover { color: var(--fg); }
@@ -368,6 +450,20 @@
     <p class="small">Claude can now say <em>"I'll save that report to Vellem"</em> — and actually do it. Same idea for Codex, or any MCP client.</p>
   </section>
 
+  <details class="changelog" id="whats-new">
+    <summary>
+      <span class="changelog-chevron" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </span>
+      <h2>What's new</h2>
+    </summary>
+    <p class="changelog-intro">Each release pulled live from GitHub. Vellem auto-updates from <strong>1.0.3</strong> onward.</p>
+    <div id="changelog-list">
+      <p class="changelog-empty">Loading release notes…</p>
+    </div>
+    <a class="changelog-more" href="https://github.com/pulssart/vellem/releases" target="_blank" rel="noopener">See full release history on GitHub →</a>
+  </details>
+
   <div class="install-steps">
     <h2>Install Vellem</h2>
     <ol>
@@ -384,9 +480,58 @@
 </div>
 
 <script>
-  // Fetch the latest release from GitHub and wire up the download button.
+  const repo = "pulssart/vellem";
+
+  // Minimal, safe markdown → HTML (escape first, then apply a few patterns).
+  function escapeHTML(s) {
+    return s.replace(/[&<>"']/g, c => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[c]));
+  }
+  function renderMarkdown(md) {
+    if (!md) return "";
+    const lines = md.split(/\r?\n/);
+    let html = "";
+    let inList = false;
+    const flushList = () => { if (inList) { html += "</ul>"; inList = false; } };
+
+    for (const raw of lines) {
+      const line = raw.trimEnd();
+      if (!line.trim()) { flushList(); continue; }
+
+      const bullet = line.match(/^\s*[-*]\s+(.*)$/);
+      const heading = line.match(/^#{1,6}\s+(.*)$/);
+
+      if (heading) {
+        flushList();
+        html += `<p><strong>${inline(heading[1])}</strong></p>`;
+        continue;
+      }
+      if (bullet) {
+        if (!inList) { html += "<ul>"; inList = true; }
+        html += `<li>${inline(bullet[1])}</li>`;
+        continue;
+      }
+      flushList();
+      html += `<p>${inline(line)}</p>`;
+    }
+    flushList();
+    return html;
+  }
+  function inline(s) {
+    s = escapeHTML(s);
+    s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
+    s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+    s = s.replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    return s;
+  }
+  function formatDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  }
+
+  // Fetch latest release → wire up the download button.
   (async () => {
-    const repo = "pulssart/vellem";
     const dlBtn = document.getElementById("download");
     const versionEl = document.getElementById("version");
     try {
@@ -403,6 +548,42 @@
     } catch (err) {
       versionEl.textContent = "No release yet — check back soon.";
       console.warn("Vellem download fetch failed:", err);
+    }
+  })();
+
+  // Fetch full release list → render "What's new".
+  (async () => {
+    const list = document.getElementById("changelog-list");
+    try {
+      const res = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=20`, {
+        headers: { Accept: "application/vnd.github+json" }
+      });
+      if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+      const releases = await res.json();
+      const visible = releases.filter(r => !r.draft && !r.prerelease);
+      if (!visible.length) {
+        list.innerHTML = '<p class="changelog-empty">No releases yet.</p>';
+        return;
+      }
+      list.innerHTML = visible.map(r => {
+        const tag = escapeHTML(r.tag_name || "");
+        const title = escapeHTML((r.name || r.tag_name || "").replace(/^Vellem\s*/i, ""));
+        const date = r.published_at ? formatDate(r.published_at) : "";
+        const body = renderMarkdown(r.body || "") || '<p><em>No notes provided.</em></p>';
+        return `
+          <article class="release">
+            <header class="release-head">
+              <span class="release-tag">${tag}</span>
+              <span class="release-title">${title}</span>
+              <span class="release-date">${date}</span>
+            </header>
+            <div class="release-body">${body}</div>
+          </article>
+        `;
+      }).join("");
+    } catch (err) {
+      list.innerHTML = '<p class="changelog-empty">Could not load release notes from GitHub.</p>';
+      console.warn("Vellem changelog fetch failed:", err);
     }
   })();
 </script>
