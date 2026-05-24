@@ -40,12 +40,23 @@ enum KnownTool: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
+    var bundledAssetName: String? {
+        switch self {
+        case .gmail: "Gmail"
+        case .calendar: "GoogleCalendar"
+        default: nil
+        }
+    }
+
     @MainActor
     var realIcon: NSImage? {
         for path in appPaths {
             if FileManager.default.fileExists(atPath: path) {
                 return NSWorkspace.shared.icon(forFile: path)
             }
+        }
+        if let name = bundledAssetName, let image = NSImage(named: name) {
+            return image
         }
         return nil
     }

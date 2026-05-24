@@ -398,17 +398,27 @@ private struct AgentWorkflow: Identifiable {
             tools: [.notion]
         ),
         AgentWorkflow(
-            id: "today-github-prs",
-            title: "GitHub PR digest",
-            description: "Open PRs, reviews queued, merged today.",
-            systemImage: "arrow.triangle.pull",
+            id: "today-maxi-recap",
+            title: "Daily maxi recap",
+            description: "Everything that mattered today across your stack.",
+            systemImage: "sparkles.rectangle.stack",
             prompt: """
-            Review today's GitHub activity across the repos that matter.
-            Summarize open PRs awaiting review (mine and others'), reviews that need a reply, PRs merged today, and any failing checks worth flagging.
-            Group by repo. Keep it short and actionable.
-            Append this PR digest to today's Vellem note with `append_to_daily`.
+            Build a comprehensive end-of-day recap by pulling from every connected tool:
+
+            - **Calendar** — meetings held today, attendees, key outcomes.
+            - **Granola** — decisions, action items, and open questions captured in meeting notes.
+            - **Slack** — important threads, mentions, decisions reached, requests awaiting an answer.
+            - **Gmail** — emails that need a reply, contracts, deliverables, customer signals.
+            - **Linear** — issues moved, blockers, comments needing follow-up, next-up tickets.
+            - **Notion** — pages and databases updated today worth knowing about.
+            - **Figma** — design changes, feedback, screens ready for handoff.
+
+            Organize the recap by area (people / projects / product / design / inbox).
+            Lead with what changed, then what to do next.
+            Append the full recap to today's Vellem note with `append_to_daily`.
+            Keep each section tight — a few crisp lines, not a wall of text.
             """,
-            tools: [.github]
+            tools: [.calendar, .granola, .slack, .gmail, .linear, .notion, .figma]
         )
     ]
 
