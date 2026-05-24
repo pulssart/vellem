@@ -54,6 +54,8 @@ mkdir -p "${DIST_DIR}" "${EXPORT_DIR}"
 rm -rf "${DERIVED_DIR}"
 
 # ---------- Build with Developer ID ----------
+# We pin SYMROOT to force xcodebuild's output into our local DERIVED_DIR even when
+# the user has a custom DerivedData location set in Xcode Preferences.
 echo "▶ Building Release with Developer ID signing…"
 xcodebuild \
   -project "${PROJECT}" \
@@ -61,17 +63,29 @@ xcodebuild \
   -configuration Release \
   -destination 'platform=macOS' \
   -derivedDataPath "${DERIVED_DIR}" \
+  SYMROOT="${PWD}/${DERIVED_DIR}/Build/Products" \
+  OBJROOT="${PWD}/${DERIVED_DIR}/Build/Intermediates.noindex" \
   CODE_SIGN_STYLE=Manual \
   CODE_SIGN_IDENTITY="${SIGN_IDENTITY}" \
   DEVELOPMENT_TEAM="${TEAM_ID}" \
   OTHER_CODE_SIGN_FLAGS="--timestamp --options=runtime" \
   build 2>&1 | tail -10
 
-BUILT_APP="${DERIVED_DIR}/Build/Products/Release/${APP_NAME}.app"
+# Resolve the actual built app via showBuildSettings (handles custom DerivedData).
+BUILT_PRODUCTS_DIR=$(xcodebuild -project "${PROJECT}" -scheme "${SCHEME}" -configuration Release \
+  -derivedDataPath "${DERIVED_DIR}" \
+  SYMROOT="${PWD}/${DERIVED_DIR}/Build/Products" \
+  OBJROOT="${PWD}/${DERIVED_DIR}/Build/Intermediates.noindex" \
+  -showBuildSettings 2>/dev/null \
+  | awk -F' = ' '/^[[:space:]]*BUILT_PRODUCTS_DIR =/ {print $2; exit}')
+
+BUILT_APP="${BUILT_PRODUCTS_DIR}/${APP_NAME}.app"
 if [ ! -d "${BUILT_APP}" ]; then
   echo "❌ Build failed: ${BUILT_APP} not found"
+  echo "   BUILT_PRODUCTS_DIR=${BUILT_PRODUCTS_DIR}"
   exit 1
 fi
+echo "  → built: ${BUILT_APP}"
 
 # ---------- Re-sign the embedded MCP binary with Developer ID + hardened runtime ----------
 echo "▶ Re-signing embedded vellem-mcp with Developer ID + hardened runtime…"
