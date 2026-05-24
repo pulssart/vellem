@@ -14,6 +14,7 @@
 		1DD64FA45B0CB617F1AD3573 /* FolderNotesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8F99F51703D71B546E6A40F /* FolderNotesListView.swift */; };
 		23B75E5BA4E1D67E06AE504A /* GlobalHotKeyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C55CFE4DA2FAE52B9A01F7B /* GlobalHotKeyService.swift */; };
 		24D2B5D83EE9639CA953FAE1 /* MarkdownTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10A90F67EE3D6AEA8BAD71D /* MarkdownTableView.swift */; };
+		26A6541E7178ACA1918A570E /* AppAccentColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BABA9B4516AB8444AA7B00F /* AppAccentColor.swift */; };
 		2898251A6A595DE42B505DE5 /* ShortcutRecorderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB9D1E2FE88D0AB3CDAA5CE /* ShortcutRecorderView.swift */; };
 		31B6EF6F0ABBC638178F8E65 /* ExternalNoteEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBE185614F479229EF10A601 /* ExternalNoteEvent.swift */; };
 		3BE9405A30E0F1F7573A70E5 /* MCPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 173FC39ED423E0E6F6889FD9 /* MCPServer.swift */; };
@@ -96,6 +97,7 @@
 		49B4CA5399EE9B52D315E6CD /* FoundationNoteEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationNoteEditor.swift; sourceTree = "<group>"; };
 		50C9B65A7D37F293B2E56B22 /* RichMarkdownTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RichMarkdownTextView.swift; sourceTree = "<group>"; };
 		5334D67E5540F6D3D13CAF7E /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		5BABA9B4516AB8444AA7B00F /* AppAccentColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAccentColor.swift; sourceTree = "<group>"; };
 		5BCB06CB1FECF1A8F5BC6E6D /* ScrambleTextEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrambleTextEffect.swift; sourceTree = "<group>"; };
 		7403455CDB6C6BDA172CC259 /* VellemWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VellemWidget.entitlements; sourceTree = "<group>"; };
 		80643F8C5478A89576230AD2 /* MenuBarComposerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarComposerView.swift; sourceTree = "<group>"; };
@@ -215,6 +217,7 @@
 		E628C942DA0CCFA4D3F05CD8 /* Support */ = {
 			isa = PBXGroup;
 			children = (
+				5BABA9B4516AB8444AA7B00F /* AppAccentColor.swift */,
 				AB9D350726789738B4EC27EB /* AppGroup.swift */,
 				1C69FD53E41A13CCC596052D /* AppPreferences.swift */,
 				0C55CFE4DA2FAE52B9A01F7B /* GlobalHotKeyService.swift */,
@@ -421,6 +424,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				26A6541E7178ACA1918A570E /* AppAccentColor.swift in Sources */,
 				5296387F85718E62222D21DC /* AppGroup.swift in Sources */,
 				F6B46CAA8CA7A7B39ABAE1F2 /* AppPreferences.swift in Sources */,
 				E05E41F66101C66B1D0CA02A /* CaptureContextProvider.swift in Sources */,

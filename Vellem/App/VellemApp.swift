@@ -10,6 +10,7 @@ struct VellemApp: App {
     @State private var quickText = ""
     @AppStorage(AppPreferences.showMenuBarExtraKey) private var showMenuBarExtra = true
     @AppStorage(AppPreferences.showDockIconKey) private var showDockIcon = true
+    @AppAccent private var accent
 
     init() {
         AppPreferences.registerDefaults()
@@ -19,7 +20,7 @@ struct VellemApp: App {
         WindowGroup("Vellem", id: "main") {
             ContentView(store: store)
                 .frame(minWidth: 760, minHeight: 520)
-                .tint(Color(nsColor: .systemYellow))
+                .tint(accent.color)
                 .background(ExternalNoteEventBridge(store: store))
                 .onOpenURL { url in
                     handle(url)
@@ -73,13 +74,13 @@ struct VellemApp: App {
         MenuBarExtra("Vellem", systemImage: "note.text.badge.plus", isInserted: menuBarExtraBinding) {
             MenuBarComposerView(store: store, text: $quickText)
                 .frame(width: 360)
-                .tint(Color(nsColor: .systemYellow))
+                .tint(accent.color)
         }
         .menuBarExtraStyle(.window)
 
         Window("Quick Capture", id: "quick-capture") {
             QuickCaptureView(store: store)
-                .tint(Color(nsColor: .systemYellow))
+                .tint(accent.color)
         }
         .defaultSize(width: 420, height: 300)
         .windowResizability(.automatic)
@@ -87,7 +88,7 @@ struct VellemApp: App {
 
         Window("View Note", id: "note-viewer") {
             NoteViewerView(store: store)
-                .tint(Color(nsColor: .systemYellow))
+                .tint(accent.color)
         }
         .defaultSize(width: 560, height: 600)
         .windowResizability(.automatic)

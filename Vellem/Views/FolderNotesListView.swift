@@ -8,6 +8,7 @@ struct FolderNotesListView: View {
     @State private var isDropping = false
     @State private var copiedIntegrationSetup = false
     @State private var copiedWorkflowID: AgentWorkflow.ID?
+    @AppAccent private var accent
 
     private var notes: [Note] {
         store.notes.filter { $0.folderID == folder.id && !$0.isDailyNote }
@@ -55,7 +56,7 @@ struct FolderNotesListView: View {
         .overlay {
             if isDropping {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(Color(nsColor: .systemYellow), lineWidth: 2)
+                    .stroke(accent.color, lineWidth: 2)
                     .padding(8)
                     .allowsHitTesting(false)
             }
@@ -111,7 +112,7 @@ struct FolderNotesListView: View {
         HStack(spacing: 10) {
             Image(systemName: folder.systemImage)
                 .font(.system(size: 24, weight: .semibold))
-                .foregroundStyle(FolderColor.named(folder.color)?.swiftUIColor ?? Color(nsColor: .systemYellow))
+                .foregroundStyle(FolderColor.named(folder.color)?.swiftUIColor ?? accent.color)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(folder.name)
@@ -165,7 +166,7 @@ struct FolderNotesListView: View {
         VStack(spacing: 16) {
             Image(systemName: folder.outlineSystemImage)
                 .font(.system(size: 34, weight: .regular))
-                .foregroundStyle(FolderColor.named(folder.color)?.swiftUIColor ?? Color(nsColor: .systemYellow))
+                .foregroundStyle(FolderColor.named(folder.color)?.swiftUIColor ?? accent.color)
 
             VStack(spacing: 5) {
                 Text("Connect \(folder.name) to Vellem")
@@ -331,6 +332,54 @@ private struct AgentWorkflow: Identifiable {
         }
     }
 
+    static let dailyLogWorkflows: [AgentWorkflow] = [
+        AgentWorkflow(
+            id: "today-slack-email",
+            title: "Slack and email recap",
+            description: "Summarize messages that matter today.",
+            systemImage: "tray.and.arrow.down",
+            prompt: """
+            Review today's important Slack messages and email threads.
+            Summarize decisions, blockers, requests, and follow-ups.
+            Append the result to today's Vellem note with `append_to_daily`.
+            Keep it short and useful for an end-of-day review.
+            """
+        ),
+        AgentWorkflow(
+            id: "today-calendar-granola",
+            title: "Meetings recap",
+            description: "Turn Calendar and Granola into a daily log.",
+            systemImage: "calendar.badge.clock",
+            prompt: """
+            Review today's Calendar events and Granola meeting notes.
+            Extract decisions, action items, people involved, and open questions.
+            Append a clean meeting recap to today's Vellem note with `append_to_daily`.
+            """
+        ),
+        AgentWorkflow(
+            id: "today-linear-progress",
+            title: "Linear progress",
+            description: "Log issue movement and next actions.",
+            systemImage: "list.bullet.rectangle",
+            prompt: """
+            Review today's Linear activity.
+            Summarize issues moved, comments that need attention, blockers, and next actions.
+            Append this project progress log to today's Vellem note with `append_to_daily`.
+            """
+        ),
+        AgentWorkflow(
+            id: "today-figma-design",
+            title: "Figma design log",
+            description: "Capture design changes and rationale.",
+            systemImage: "square.on.square",
+            prompt: """
+            Review today's relevant Figma work.
+            Summarize changed screens, design decisions, feedback, unresolved questions, and handoff notes.
+            Append this design log to today's Vellem note with `append_to_daily`.
+            """
+        )
+    ]
+
     private static let codexWorkflows: [AgentWorkflow] = [
         AgentWorkflow(
             id: "codex-save-audit",
@@ -472,13 +521,14 @@ private struct AgentWorkflowCard: View {
     let workflow: AgentWorkflow
     let isCopied: Bool
     let onCopy: () -> Void
+    @AppAccent private var accent
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 8) {
                 Image(systemName: workflow.systemImage)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Color(nsColor: .systemYellow))
+                    .foregroundStyle(accent.color)
                     .frame(width: 22, height: 22)
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -529,6 +579,8 @@ struct FolderNoteEditorContainer: View {
 struct TodayNotesListView: View {
     @ObservedObject var store: NotesStore
     @Environment(\.openWindow) private var openWindow
+    @State private var copiedWorkflowID: AgentWorkflow.ID?
+    @AppAccent private var accent
 
     private var notes: [Note] {
         store.notes.filter { !$0.isDailyNote && Calendar.current.isDateInToday($0.createdAt) }
@@ -542,7 +594,9 @@ struct TodayNotesListView: View {
                 emptyState
             } else {
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 4) {
+                    LazyVStack(alignment: .leading, spacing: 12) {
+                        workflowCards
+
                         ForEach(notes) { note in
                             FolderNoteListRow(note: note, onOpenViewer: {
                                 openInFloatingViewer(note)
@@ -573,7 +627,7 @@ struct TodayNotesListView: View {
         HStack(spacing: 10) {
             Image(systemName: "calendar")
                 .font(.system(size: 24, weight: .semibold))
-                .foregroundStyle(Color(nsColor: .systemYellow))
+                .foregroundStyle(accent.color)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Today")
@@ -592,21 +646,66 @@ struct TodayNotesListView: View {
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
+    private var workflowCards: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Daily log prompts")
+                    .font(.headline)
+
+                Spacer()
+
+                Text("Copy a prompt, paste it into your agent.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 10)], spacing: 10) {
+                ForEach(AgentWorkflow.dailyLogWorkflows) { workflow in
+                    AgentWorkflowCard(
+                        workflow: workflow,
+                        isCopied: copiedWorkflowID == workflow.id
+                    ) {
+                        copy(workflow.prompt)
+                        copiedWorkflowID = workflow.id
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            if copiedWorkflowID == workflow.id {
+                                copiedWorkflowID = nil
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color(nsColor: .windowBackgroundColor))
+        )
+    }
+
     private var emptyState: some View {
-        VStack(spacing: 10) {
-            Image(systemName: "calendar")
-                .font(.system(size: 34, weight: .regular))
-                .foregroundStyle(.tertiary)
+        ScrollView {
+            VStack(spacing: 16) {
+                VStack(spacing: 10) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 34, weight: .regular))
+                        .foregroundStyle(.tertiary)
 
-            Text("No notes today")
-                .font(.headline)
+                    Text("No notes today")
+                        .font(.headline)
 
-            Text("Notes created today will appear here.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                    Text("Notes created today will appear here.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.top, 24)
+
+                workflowCards
+            }
+            .padding(20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(32)
     }
 
     @ViewBuilder
@@ -665,6 +764,7 @@ private struct FolderNoteListRow: View {
     var onOpenViewer: (() -> Void)? = nil
     let onSelect: () -> Void
     @State private var isHovering = false
+    @AppAccent private var accent
 
     var body: some View {
         Button(action: onSelect) {
@@ -673,7 +773,7 @@ private struct FolderNoteListRow: View {
                     HStack(spacing: 6) {
                         if !note.isRead {
                             Circle()
-                                .fill(Color(nsColor: .systemYellow))
+                                .fill(accent.color)
                                 .frame(width: 7, height: 7)
                                 .accessibilityLabel("Unread")
                         }
@@ -718,7 +818,7 @@ private struct FolderNoteListRow: View {
             .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(isHovering ? Color(nsColor: .systemYellow).opacity(0.16) : Color.clear)
+                    .fill(isHovering ? accent.color.opacity(0.16) : Color.clear)
             )
         }
         .buttonStyle(.plain)

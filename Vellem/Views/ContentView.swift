@@ -5,6 +5,7 @@ struct ContentView: View {
     @Environment(\.openSettings) private var openSettings
     @AppStorage(AppPreferences.hasCompletedOnboardingKey) private var hasCompletedOnboarding = false
     @State private var showsOnboarding = false
+    @AppAccent private var accent
 
     var body: some View {
         NavigationSplitView {
@@ -28,7 +29,7 @@ struct ContentView: View {
                 EmptyNotesView(store: store)
             }
         }
-        .toolbarBackground(Color(nsColor: .systemYellow).opacity(0.28), for: .windowToolbar)
+        .toolbarBackground(accent.color.opacity(0.28), for: .windowToolbar)
         .toolbarBackground(.visible, for: .windowToolbar)
         .toolbar {
             if isShowingFolderNote || isShowingTodayNote {

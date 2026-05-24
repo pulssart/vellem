@@ -17,8 +17,15 @@ enum AppPreferences {
             quickCaptureModifiersKey: Int(defaultQuickCaptureModifiers),
             showMenuBarExtraKey: true,
             showDockIconKey: true,
-            hasCompletedOnboardingKey: false
+            hasCompletedOnboardingKey: false,
+            AppAccentColor.storageKey: AppAccentColor.defaultValue.rawValue
         ])
+
+        if let shared = AppAccentColor.sharedDefaults {
+            let current = UserDefaults.standard.string(forKey: AppAccentColor.storageKey)
+                ?? AppAccentColor.defaultValue.rawValue
+            shared.set(current, forKey: AppAccentColor.storageKey)
+        }
     }
 
     static var quickCaptureShortcut: AppShortcut {

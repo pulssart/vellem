@@ -1,7 +1,27 @@
+import AppKit
 import SwiftUI
 import WidgetKit
 
-private let widgetHeaderColor = Color(nsColor: .systemYellow).opacity(0.30)
+private let widgetAppGroupID = "MKAFV9VL9V.com.adriendonot.Vellem"
+private let widgetAccentStorageKey = "appAccentColor"
+
+private func widgetAccentNSColor() -> NSColor {
+    let raw = UserDefaults(suiteName: widgetAppGroupID)?.string(forKey: widgetAccentStorageKey)
+        ?? UserDefaults.standard.string(forKey: widgetAccentStorageKey)
+    switch raw {
+    case "orange": return .systemOrange
+    case "red":    return .systemRed
+    case "pink":   return .systemPink
+    case "purple": return .systemPurple
+    case "blue":   return .systemBlue
+    case "green":  return .systemGreen
+    default:       return .systemYellow
+    }
+}
+
+private var widgetHeaderColor: Color {
+    Color(nsColor: widgetAccentNSColor()).opacity(0.30)
+}
 
 struct WidgetNote: Identifiable, Codable {
     var id: UUID

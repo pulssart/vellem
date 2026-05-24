@@ -7,6 +7,7 @@ struct MarkdownTableView: View {
     let rows: [[String]]
     let alignments: [TableAlignment]
     let fontSize: CGFloat
+    @AppAccent private var accent
 
     private var columnCount: Int {
         max(headers.count, rows.map(\.count).max() ?? 0)
@@ -49,7 +50,7 @@ struct MarkdownTableView: View {
                 }
             }
         }
-        .background(Color(nsColor: .systemYellow).opacity(0.18))
+        .background(accent.color.opacity(0.18))
     }
 
     private func dataRow(_ row: [String], isAlternate: Bool) -> some View {

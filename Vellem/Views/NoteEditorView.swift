@@ -17,6 +17,7 @@ struct NoteEditorView: View {
     @State private var saveTask: Task<Void, Never>?
     @State private var formatTask: Task<Void, Never>?
     @StateObject private var richController = RichMarkdownController()
+    @AppAccent private var accent
 
     private let editor = FoundationNoteEditor()
 
@@ -86,7 +87,7 @@ struct NoteEditorView: View {
         .overlay {
             if isDroppingImage {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(Color(nsColor: .systemYellow), lineWidth: 3)
+                    .stroke(accent.color, lineWidth: 3)
                     .padding(8)
                     .allowsHitTesting(false)
             }
@@ -133,38 +134,9 @@ struct NoteEditorView: View {
 
     private var toolbar: some View {
         HStack(spacing: 4) {
-            // Formatting essentials
-            toolbarIcon("bold", help: "Bold (⌘B)") { richController.toggleBold() }
-                .keyboardShortcut("b", modifiers: [.command])
-            toolbarIcon("italic", help: "Italic (⌘I)") { richController.toggleItalic() }
-                .keyboardShortcut("i", modifiers: [.command])
-            toolbarIcon("underline", help: "Underline (⌘U)") { richController.toggleUnderline() }
-                .keyboardShortcut("u", modifiers: [.command])
-            toolbarIcon("strikethrough", help: "Strikethrough") { richController.toggleStrikethrough() }
-
-            toolbarDivider
-
-            Menu {
-                Button("Title") { richController.setHeading(1) }
-                    .keyboardShortcut("1", modifiers: [.command])
-                Button("Subtitle") { richController.setHeading(2) }
-                    .keyboardShortcut("2", modifiers: [.command])
-                Button("Heading") { richController.setHeading(3) }
-                    .keyboardShortcut("3", modifiers: [.command])
-                Divider()
-                Button("Plain text") { richController.clearLinePrefix() }
-                    .keyboardShortcut("0", modifiers: [.command])
-            } label: {
-                Image(systemName: "textformat.size")
-                    .frame(width: 24, height: 22)
+            if !isPreviewMode {
+                formattingToolbar
             }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .fixedSize()
-            .help("Heading (⌘1 / ⌘2 / ⌘3)")
-
-            toolbarIcon("checklist", help: "Todo (⌘L)") { richController.toggleTodo() }
-                .keyboardShortcut("l", modifiers: [.command])
 
             Spacer()
 
@@ -214,7 +186,7 @@ struct NoteEditorView: View {
             .fixedSize()
             .disabled(isEditing || cleanedText.isEmpty)
             .help("Apple Intelligence")
-            .tint(Color(nsColor: .systemYellow))
+            .tint(accent.color)
 
             // Overflow
             Menu {
@@ -245,6 +217,41 @@ struct NoteEditorView: View {
         .labelStyle(.iconOnly)
         .foregroundStyle(.secondary)
         .tint(.secondary)
+    }
+
+    @ViewBuilder
+    private var formattingToolbar: some View {
+        toolbarIcon("bold", help: "Bold (⌘B)") { richController.toggleBold() }
+            .keyboardShortcut("b", modifiers: [.command])
+        toolbarIcon("italic", help: "Italic (⌘I)") { richController.toggleItalic() }
+            .keyboardShortcut("i", modifiers: [.command])
+        toolbarIcon("underline", help: "Underline (⌘U)") { richController.toggleUnderline() }
+            .keyboardShortcut("u", modifiers: [.command])
+        toolbarIcon("strikethrough", help: "Strikethrough") { richController.toggleStrikethrough() }
+
+        toolbarDivider
+
+        Menu {
+            Button("Title") { richController.setHeading(1) }
+                .keyboardShortcut("1", modifiers: [.command])
+            Button("Subtitle") { richController.setHeading(2) }
+                .keyboardShortcut("2", modifiers: [.command])
+            Button("Heading") { richController.setHeading(3) }
+                .keyboardShortcut("3", modifiers: [.command])
+            Divider()
+            Button("Plain text") { richController.clearLinePrefix() }
+                .keyboardShortcut("0", modifiers: [.command])
+        } label: {
+            Image(systemName: "textformat.size")
+                .frame(width: 24, height: 22)
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Heading (⌘1 / ⌘2 / ⌘3)")
+
+        toolbarIcon("checklist", help: "Todo (⌘L)") { richController.toggleTodo() }
+            .keyboardShortcut("l", modifiers: [.command])
     }
 
     private func toolbarIcon(_ systemName: String, help: String, action: @escaping () -> Void) -> some View {
@@ -476,6 +483,7 @@ struct NoteEditorView: View {
 struct ScramblePreviewView: View {
     let frame: ScrambleFrame
     let textSizeStep: Int
+    @AppAccent private var accent
 
     var body: some View {
         ScrollView {
@@ -496,7 +504,7 @@ struct ScramblePreviewView: View {
         for offset in frame.yellowOffsets {
             let start = value.index(value.startIndex, offsetByCharacters: offset)
             let end = value.index(start, offsetByCharacters: 1)
-            value[start..<end].foregroundColor = Color(nsColor: .systemYellow)
+            value[start..<end].foregroundColor = accent.color
         }
 
         return value

@@ -6,6 +6,7 @@ struct MarkdownRenderedView: View {
     @Binding var text: String
     var textSizeStep: Int = 0
     var contentPadding: EdgeInsets = EdgeInsets(top: 18, leading: 20, bottom: 18, trailing: 20)
+    @AppAccent private var accent
 
     var body: some View {
         ScrollView {
@@ -154,7 +155,7 @@ struct MarkdownRenderedView: View {
                 } label: {
                     Image(systemName: checked ? "checkmark.square.fill" : "square")
                         .font(.system(size: bodyTextSize + 2))
-                        .foregroundStyle(checked ? Color(nsColor: .systemYellow) : Color.secondary)
+                        .foregroundStyle(checked ? accent.color : Color.secondary)
                         .contentTransition(.symbolEffect(.replace))
                 }
                 .buttonStyle(.plain)
@@ -170,7 +171,7 @@ struct MarkdownRenderedView: View {
         case .quote(let value):
             HStack(spacing: 10) {
                 RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(Color(nsColor: .systemYellow).opacity(0.6))
+                    .fill(accent.color.opacity(0.6))
                     .frame(width: 3)
                 Text(inlineMarkdown(value))
                     .font(.system(size: bodyTextSize).italic())

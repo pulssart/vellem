@@ -42,6 +42,7 @@ struct RecentNotesView: View {
     @State private var hoveredFolderID: UUID?
     @State private var isHoveringToday = false
     @State private var isRootDropTargeted = false
+    @AppAccent private var accent
 
     var body: some View {
         ScrollView {
@@ -56,8 +57,8 @@ struct RecentNotesView: View {
             }
             .padding(.vertical, 8)
         }
-        .tint(Color(nsColor: .systemYellow))
-        .accentColor(Color(nsColor: .systemYellow))
+        .tint(accent.color)
+        .accentColor(accent.color)
         .navigationTitle("Vellem")
         .searchable(text: $query, placement: .sidebar, prompt: "Search notes")
         .toolbar {
@@ -80,7 +81,7 @@ struct RecentNotesView: View {
         return HStack(spacing: 8) {
             Image(systemName: "calendar")
                 .font(.system(size: 24, weight: .semibold))
-                .foregroundStyle(Color(nsColor: .systemYellow))
+                .foregroundStyle(accent.color)
                 .frame(width: 28, alignment: .leading)
 
             Text("Today")
@@ -99,7 +100,7 @@ struct RecentNotesView: View {
         .padding(.vertical, 5)
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(store.isTodaySelected ? Color(nsColor: .systemYellow).opacity(0.34) : (isHoveringToday ? Color(nsColor: .systemYellow).opacity(0.18) : Color.clear))
+                .fill(store.isTodaySelected ? accent.color.opacity(0.34) : (isHoveringToday ? accent.color.opacity(0.18) : Color.clear))
         )
         .padding(.leading, 8)
         .padding(.trailing, 8)
@@ -152,7 +153,7 @@ struct RecentNotesView: View {
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .stroke(
-                        isRootDropTargeted ? Color(nsColor: .systemYellow) : Color.clear,
+                        isRootDropTargeted ? accent.color : Color.clear,
                         lineWidth: 1.5
                     )
                     .padding(.horizontal, 4)
@@ -173,7 +174,7 @@ struct RecentNotesView: View {
         return HStack(spacing: 8) {
             Image(systemName: folderIconName(for: folder, selected: isSelected))
                 .font(.system(size: 24, weight: .semibold))
-                .foregroundStyle(FolderColor.named(folder.color)?.swiftUIColor ?? Color(nsColor: .systemYellow))
+                .foregroundStyle(FolderColor.named(folder.color)?.swiftUIColor ?? accent.color)
                 .frame(width: 28, alignment: .leading)
 
             if renamingFolderID == folder.id {
@@ -199,7 +200,7 @@ struct RecentNotesView: View {
         .padding(.vertical, 5)
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(isSelected ? Color(nsColor: .systemYellow).opacity(0.34) : (isHovering ? Color(nsColor: .systemYellow).opacity(0.18) : Color.clear))
+                .fill(isSelected ? accent.color.opacity(0.34) : (isHovering ? accent.color.opacity(0.18) : Color.clear))
         )
         .padding(.leading, 8)
         .padding(.trailing, 8)
@@ -394,6 +395,7 @@ private struct NoteRow: View {
     let isSelected: Bool
     var onOpenViewer: (() -> Void)? = nil
     @State private var isHovering = false
+    @AppAccent private var accent
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -406,7 +408,7 @@ private struct NoteRow: View {
                 HStack(spacing: 6) {
                     if !note.isRead {
                         Circle()
-                            .fill(Color(nsColor: .systemYellow))
+                            .fill(accent.color)
                             .frame(width: 7, height: 7)
                             .accessibilityLabel("Unread")
                     }
@@ -446,7 +448,7 @@ private struct NoteRow: View {
         .padding(.vertical, 6)
         .background {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(isSelected ? Color(nsColor: .systemYellow).opacity(0.45) : Color.clear)
+                .fill(isSelected ? accent.color.opacity(0.45) : Color.clear)
         }
         .onHover { hovering in
             isHovering = hovering

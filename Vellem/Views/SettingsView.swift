@@ -5,12 +5,32 @@ struct SettingsView: View {
     @AppStorage(AppPreferences.quickCaptureModifiersKey) private var modifiers = Int(AppPreferences.defaultQuickCaptureModifiers)
     @AppStorage(AppPreferences.showMenuBarExtraKey) private var showMenuBarExtra = true
     @AppStorage(AppPreferences.showDockIconKey) private var showDockIcon = true
+    @AppStorage(AppAccentColor.storageKey) private var accentRaw = AppAccentColor.defaultValue.rawValue
+
+    private var selectedAccent: AppAccentColor {
+        AppAccentColor(rawValue: accentRaw) ?? .yellow
+    }
 
     var body: some View {
         Form {
             Section("Quick Note") {
                 LabeledContent("Shortcut") {
                     ShortcutRecorderView(keyCode: $keyCode, modifiers: $modifiers)
+                }
+            }
+
+            Section("Appearance") {
+                LabeledContent("App color") {
+                    HStack(spacing: 10) {
+                        ForEach(AppAccentColor.allCases) { color in
+                            AccentSwatch(
+                                color: color,
+                                isSelected: color == selectedAccent
+                            ) {
+                                selectAccent(color)
+                            }
+                        }
+                    }
                 }
             }
 
@@ -40,11 +60,42 @@ struct SettingsView: View {
         }
     }
 
+    private func selectAccent(_ color: AppAccentColor) {
+        accentRaw = color.rawValue
+        AppAccentColor.sharedDefaults?.set(color.rawValue, forKey: AppAccentColor.storageKey)
+        WidgetReloader.reload()
+    }
+
     private var menuBarExtraBinding: Binding<Bool> {
         Binding {
             showMenuBarExtra || !showDockIcon
         } set: { newValue in
             showMenuBarExtra = showDockIcon ? newValue : true
         }
+    }
+}
+
+private struct AccentSwatch: View {
+    let color: AppAccentColor
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                Circle()
+                    .fill(color.color)
+                    .frame(width: 22, height: 22)
+                if isSelected {
+                    Circle()
+                        .strokeBorder(Color.primary.opacity(0.85), lineWidth: 2)
+                        .frame(width: 26, height: 26)
+                }
+            }
+            .frame(width: 28, height: 28)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(color.displayName)
     }
 }

@@ -7,6 +7,7 @@ struct NoteViewerView: View {
 
     @State private var copyFeedback: String?
     @State private var textSizeStep = 0
+    @AppAccent private var accent
 
     var body: some View {
         Group {
@@ -114,7 +115,7 @@ struct NoteViewerView: View {
         .padding(.horizontal, 16)
         .padding(.top, 14)
         .padding(.bottom, 10)
-        .background(Color(nsColor: .systemYellow).opacity(0.42))
+        .background(accent.color.opacity(0.42))
     }
 
     private func footer(for note: Note) -> some View {
@@ -300,7 +301,7 @@ struct NoteViewerView: View {
                 } label: {
                     Image(systemName: checked ? "checkmark.square.fill" : "square")
                         .font(.system(size: bodyTextSize + 2))
-                        .foregroundStyle(checked ? Color(nsColor: .systemYellow) : Color.secondary)
+                        .foregroundStyle(checked ? accent.color : Color.secondary)
                         .contentTransition(.symbolEffect(.replace))
                 }
                 .buttonStyle(.plain)

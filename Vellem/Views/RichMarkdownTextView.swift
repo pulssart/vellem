@@ -713,7 +713,7 @@ struct RichMarkdownTextView: NSViewRepresentable {
                 .withSymbolConfiguration(config)
             img?.isTemplate = !checked
             if checked {
-                return img?.tintedSolid(with: .systemYellow)
+                return img?.tintedSolid(with: AppAccentColor.current.nsColor)
             }
             return img
         }
