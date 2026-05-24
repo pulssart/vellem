@@ -229,6 +229,7 @@ struct MenuBarComposerView: View {
         text = note.text
         scrambleFrame = nil
         store.selectedNoteID = note.id
+        store.markRead(note.id)
         message = nil
     }
 

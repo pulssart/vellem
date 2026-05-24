@@ -24,17 +24,18 @@ final class NotesFileStore {
     func addNote(text: String, generatedTitle: String? = nil, folderID: UUID? = nil) throws -> Note {
         var notes = try load()
         let resolvedFolderID = try resolveFolderID(folderID)
+        let sourceApp = try sourceApp(for: resolvedFolderID)
         let note = Note(
             text: text,
             generatedTitle: generatedTitle,
             kind: .regular,
-            sourceApp: "Claude (MCP)",
+            sourceApp: sourceApp,
             sourceURL: nil,
             folderID: resolvedFolderID
         )
         notes.insert(note, at: 0)
         try save(notes)
-        ExternalNoteEvent.postCreated(noteID: note.id, source: "Claude (MCP)")
+        ExternalNoteEvent.postCreated(noteID: note.id, source: sourceApp)
         return note
     }
 
@@ -47,16 +48,41 @@ final class NotesFileStore {
         return folderID
     }
 
+    private func sourceApp(for folderID: UUID?) throws -> String {
+        guard let folderID else { return "MCP" }
+        guard let folder = try loadFolders().first(where: { $0.id == folderID }) else {
+            return "MCP"
+        }
+
+        switch folder.kind {
+        case .smartCodex:
+            return "Codex (MCP)"
+        case .smartClaude:
+            return "Claude (MCP)"
+        case .smartServices, .regular:
+            switch folder.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+            case "codex":
+                return "Codex (MCP)"
+            case "claude":
+                return "Claude (MCP)"
+            default:
+                return "MCP"
+            }
+        }
+    }
+
     func appendToDaily(text: String) throws -> Note {
         var notes = try load()
         let now = Date()
         let cal = Calendar.current
+        let sourceApp = "MCP"
 
         if let index = notes.firstIndex(where: { $0.kind == .daily && cal.isDate($0.createdAt, inSameDayAs: now) }) {
             var updated = notes[index]
             let separator = updated.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "" : "\n\n"
             updated.text += separator + text
             updated.updatedAt = now
+            updated.sourceApp = sourceApp
             notes[index] = updated
             notes.sort { $0.updatedAt > $1.updatedAt }
             try save(notes)
@@ -68,14 +94,14 @@ final class NotesFileStore {
             text: "# \(title)\n\n" + text,
             generatedTitle: title,
             kind: .daily,
-            sourceApp: "Claude (MCP)",
+            sourceApp: sourceApp,
             sourceURL: nil,
             createdAt: now,
             updatedAt: now
         )
         notes.insert(note, at: 0)
         try save(notes)
-        ExternalNoteEvent.postCreated(noteID: note.id, source: "Claude (MCP)")
+        ExternalNoteEvent.postCreated(noteID: note.id, source: sourceApp)
         return note
     }
 

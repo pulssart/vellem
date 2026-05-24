@@ -1,3 +1,4 @@
+import AppKit
 import Combine
 import Foundation
 
@@ -13,6 +14,10 @@ final class NotesStore: ObservableObject {
     var viewerNote: Note? {
         guard let viewerNoteID else { return nil }
         return notes.first { $0.id == viewerNoteID }
+    }
+
+    var unreadCount: Int {
+        notes.filter { !$0.isRead }.count
     }
 
     private let fileURL: URL
@@ -384,6 +389,7 @@ final class NotesStore: ObservableObject {
         } else if selectedNoteID == nil && !isTodaySelected {
             selectedNoteID = notes.first?.id
         }
+        updateDockBadge()
         WidgetReloader.reload()
     }
 
@@ -424,10 +430,11 @@ final class NotesStore: ObservableObject {
         selectedNoteID = nil
     }
 
-    func selectNote(_ noteID: Note.ID, inToday: Bool = false) {
+    func selectNote(_ noteID: Note.ID, inToday: Bool = false, inFolder folderID: Folder.ID? = nil) {
         selectedNoteID = noteID
-        selectedFolderID = nil
+        selectedFolderID = folderID
         isTodaySelected = inToday
+        markRead(noteID)
     }
 
     func selectFolder(_ folderID: Folder.ID) {
@@ -443,9 +450,11 @@ final class NotesStore: ObservableObject {
             notes = try decoder.decode([Note].self, from: data)
                 .sorted { $0.updatedAt > $1.updatedAt }
             selectedNoteID = notes.first?.id
+            updateDockBadge()
         } catch {
             notes = []
             selectedNoteID = nil
+            updateDockBadge()
         }
     }
 
@@ -454,7 +463,7 @@ final class NotesStore: ObservableObject {
         let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleaned.isEmpty else { return nil }
 
-        let note = Note(text: cleaned, sourceApp: source?.appName, sourceURL: source?.url)
+        let note = Note(text: cleaned, sourceApp: source?.appName, sourceURL: source?.url, isRead: source == nil)
         notes.insert(note, at: 0)
         selectedNoteID = note.id
         isTodaySelected = false
@@ -467,7 +476,7 @@ final class NotesStore: ObservableObject {
 
     @discardableResult
     func createDraft() -> Note {
-        let note = Note(text: "")
+        let note = Note(text: "", isRead: true)
         notes.insert(note, at: 0)
         selectedNoteID = note.id
         isTodaySelected = false
@@ -504,6 +513,23 @@ final class NotesStore: ObservableObject {
         save()
     }
 
+    func markRead(_ noteID: Note.ID) {
+        setReadState(true, for: noteID)
+    }
+
+    func markUnread(_ noteID: Note.ID) {
+        setReadState(false, for: noteID)
+    }
+
+    private func setReadState(_ isRead: Bool, for noteID: Note.ID) {
+        guard let index = notes.firstIndex(where: { $0.id == noteID }),
+              notes[index].isRead != isRead else {
+            return
+        }
+        notes[index].isRead = isRead
+        save()
+    }
+
     func formatAfterEditing(noteID: Note.ID, originalText: String) {
         Task {
             await formatNoteByDefault(noteID: noteID, originalText: originalText, preservesTitle: false)
@@ -530,6 +556,9 @@ final class NotesStore: ObservableObject {
                !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 notes[index].text = append(text, toDailyText: notes[index].text)
                 notes[index].updatedAt = .now
+                if source != nil {
+                    notes[index].isRead = false
+                }
             }
             if let source {
                 notes[index].sourceApp = source.appName
@@ -556,7 +585,8 @@ final class NotesStore: ObservableObject {
             sourceApp: source?.appName,
             sourceURL: source?.url,
             createdAt: day,
-            updatedAt: .now
+            updatedAt: .now,
+            isRead: source == nil
         )
         notes.insert(note, at: 0)
         selectedNoteID = note.id
@@ -659,10 +689,16 @@ final class NotesStore: ObservableObject {
             )
             let data = try encoder.encode(notes)
             try data.write(to: fileURL, options: [.atomic])
+            updateDockBadge()
             WidgetReloader.reload()
         } catch {
             assertionFailure("Could not save notes: \(error)")
         }
+    }
+
+    private func updateDockBadge() {
+        let count = unreadCount
+        NSApp.dockTile.badgeLabel = count > 0 ? "\(count)" : nil
     }
 
     private func migrateLegacyNotes() {

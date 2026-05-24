@@ -308,6 +308,9 @@ struct RecentNotesView: View {
             Button("Copy") {
                 copy(note.text)
             }
+            Button(note.isRead ? "Mark as unread" : "Mark as read") {
+                note.isRead ? store.markUnread(note.id) : store.markRead(note.id)
+            }
             Button("Delete", role: .destructive) {
                 store.delete(note)
             }
@@ -400,9 +403,18 @@ private struct NoteRow: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Text(note.title)
-                    .lineLimit(1)
-                    .fontWeight(isSelected ? .semibold : .regular)
+                HStack(spacing: 6) {
+                    if !note.isRead {
+                        Circle()
+                            .fill(Color(nsColor: .systemYellow))
+                            .frame(width: 7, height: 7)
+                            .accessibilityLabel("Unread")
+                    }
+
+                    Text(note.title)
+                        .lineLimit(1)
+                        .fontWeight((isSelected || !note.isRead) ? .semibold : .regular)
+                }
 
                 Spacer()
 

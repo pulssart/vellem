@@ -10,6 +10,7 @@ struct Note: Identifiable, Codable, Hashable {
     var createdAt: Date
     var updatedAt: Date
     var folderID: UUID?
+    var isRead: Bool
 
     init(
         id: UUID = UUID(),
@@ -20,7 +21,8 @@ struct Note: Identifiable, Codable, Hashable {
         sourceURL: URL? = nil,
         createdAt: Date = .now,
         updatedAt: Date = .now,
-        folderID: UUID? = nil
+        folderID: UUID? = nil,
+        isRead: Bool = false
     ) {
         self.id = id
         self.text = text
@@ -31,6 +33,7 @@ struct Note: Identifiable, Codable, Hashable {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.folderID = folderID
+        self.isRead = isRead
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -43,6 +46,7 @@ struct Note: Identifiable, Codable, Hashable {
         case createdAt
         case updatedAt
         case folderID
+        case isRead
     }
 
     init(from decoder: Decoder) throws {
@@ -56,6 +60,7 @@ struct Note: Identifiable, Codable, Hashable {
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         updatedAt = try container.decode(Date.self, forKey: .updatedAt)
         folderID = try container.decodeIfPresent(UUID.self, forKey: .folderID)
+        isRead = try container.decodeIfPresent(Bool.self, forKey: .isRead) ?? true
     }
 
     var title: String {

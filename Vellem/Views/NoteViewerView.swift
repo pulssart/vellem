@@ -40,6 +40,9 @@ struct NoteViewerView: View {
 
             footer(for: note)
         }
+        .onAppear {
+            store.markRead(note.id)
+        }
     }
 
     private var emptyState: some View {

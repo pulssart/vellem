@@ -99,6 +99,7 @@ struct NoteEditorView: View {
         .navigationTitle(note.title)
         .onAppear {
             text = note.text
+            store.markRead(note.id)
         }
         .onChange(of: note.id) {
             saveTask?.cancel()
