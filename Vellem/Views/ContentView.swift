@@ -3,6 +3,8 @@ import SwiftUI
 struct ContentView: View {
     @ObservedObject var store: NotesStore
     @Environment(\.openSettings) private var openSettings
+    @AppStorage(AppPreferences.hasCompletedOnboardingKey) private var hasCompletedOnboarding = false
+    @State private var showsOnboarding = false
 
     var body: some View {
         NavigationSplitView {
@@ -71,6 +73,18 @@ struct ContentView: View {
                 .labelStyle(.iconOnly)
                 .help("Settings")
             }
+        }
+        .sheet(isPresented: $showsOnboarding) {
+            OnboardingView(isPresented: $showsOnboarding)
+        }
+        .onAppear {
+            guard !hasCompletedOnboarding else { return }
+            DispatchQueue.main.async {
+                showsOnboarding = true
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .vellemShowOnboarding)) { _ in
+            showsOnboarding = true
         }
     }
 

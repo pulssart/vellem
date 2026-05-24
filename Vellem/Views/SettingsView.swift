@@ -18,6 +18,10 @@ struct SettingsView: View {
                 Toggle("Show in menu bar", isOn: menuBarExtraBinding)
                     .disabled(!showDockIcon)
                 Toggle("Show Dock icon", isOn: $showDockIcon)
+                Button("Show onboarding") {
+                    NotificationCenter.default.post(name: .vellemShowOnboarding, object: nil)
+                    NSApp.activate(ignoringOtherApps: true)
+                }
 
                 if !showDockIcon {
                     Text("The menu bar icon stays on so you can still open settings and quit the app.")

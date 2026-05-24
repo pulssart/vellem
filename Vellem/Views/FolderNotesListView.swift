@@ -6,6 +6,7 @@ struct FolderNotesListView: View {
     let folder: Folder
     @Environment(\.openWindow) private var openWindow
     @State private var isDropping = false
+    @State private var copiedIntegrationSetup = false
 
     private var notes: [Note] {
         store.notes.filter { $0.folderID == folder.id && !$0.isDailyNote }
@@ -148,6 +149,18 @@ struct FolderNotesListView: View {
                     .font(.caption)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
+
+                Button {
+                    copy(guide.clipboardText)
+                    copiedIntegrationSetup = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        copiedIntegrationSetup = false
+                    }
+                } label: {
+                    Label(copiedIntegrationSetup ? "Copied" : "Copy setup", systemImage: copiedIntegrationSetup ? "checkmark" : "doc.on.doc")
+                }
+                .controlSize(.small)
+                .padding(.top, 4)
             }
             .frame(maxWidth: 560)
         }
@@ -216,6 +229,7 @@ struct FolderNotesListView: View {
 private struct IntegrationGuide {
     let config: String
     let prompt: String
+    let clipboardText: String
 
     init?(folder: Folder) {
         switch folder.kind {
@@ -229,21 +243,21 @@ private struct IntegrationGuide {
               }
             }
             """
-            prompt = "Ajoute ce serveur MCP Vellem a ta configuration Claude Desktop, puis redemarre Claude. Ensuite, envoie les notes et rapports dans le dossier Claude de Vellem via le tool add_note avec folder_name: \"Claude\"."
+            prompt = "Add this MCP server to Claude Desktop, restart Claude, then send notes and reports to Vellem with folder_name: \"Claude\"."
         case .smartCodex:
             config = """
-            {
-              "mcpServers": {
-                "vellem": {
-                  "command": "/Applications/Vellem.app/Contents/Resources/vellem-mcp"
-                }
-              }
-            }
+            [mcp_servers.vellem]
+            command = "/Applications/Vellem.app/Contents/Resources/vellem-mcp"
             """
-            prompt = "Ajoute ce serveur MCP Vellem a la configuration Codex, puis utilise-le pour envoyer les rapports, analyses et diagnostics dans le dossier Codex de Vellem via le tool add_note avec folder_name: \"Codex\"."
+            prompt = "Add this MCP server to Codex, then use it to send reports, analyses, diagnostics, and notes to Vellem with folder_name: \"Codex\"."
         default:
             return nil
         }
+        clipboardText = """
+        \(prompt)
+
+        \(config)
+        """
     }
 }
 

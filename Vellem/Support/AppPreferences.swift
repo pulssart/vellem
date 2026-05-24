@@ -6,6 +6,7 @@ enum AppPreferences {
     static let quickCaptureModifiersKey = "quickCaptureShortcutModifiers"
     static let showMenuBarExtraKey = "showMenuBarExtra"
     static let showDockIconKey = "showDockIcon"
+    static let hasCompletedOnboardingKey = "hasCompletedOnboarding"
 
     static let defaultQuickCaptureKeyCode = UInt32(kVK_ANSI_N)
     static let defaultQuickCaptureModifiers = UInt32(controlKey | optionKey)
@@ -15,7 +16,8 @@ enum AppPreferences {
             quickCaptureKeyCodeKey: Int(defaultQuickCaptureKeyCode),
             quickCaptureModifiersKey: Int(defaultQuickCaptureModifiers),
             showMenuBarExtraKey: true,
-            showDockIconKey: true
+            showDockIconKey: true,
+            hasCompletedOnboardingKey: false
         ])
     }
 

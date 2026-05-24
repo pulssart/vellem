@@ -258,6 +258,7 @@ extension Notification.Name {
     static let vellemSaveSelection = Notification.Name("vellemSaveSelection")
     static let vellemOpenQuickCapture = Notification.Name("vellemOpenQuickCapture")
     static let vellemOpenNoteViewer = Notification.Name("vellemOpenNoteViewer")
+    static let vellemShowOnboarding = Notification.Name("vellemShowOnboarding")
 }
 
 struct SelectionCapture {

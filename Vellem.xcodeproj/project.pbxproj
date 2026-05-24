@@ -19,6 +19,7 @@
 		3BE9405A30E0F1F7573A70E5 /* MCPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 173FC39ED423E0E6F6889FD9 /* MCPServer.swift */; };
 		3CC319DEF2250062736D7234 /* FoundationNoteEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B4CA5399EE9B52D315E6CD /* FoundationNoteEditor.swift */; };
 		40FEEC4AE410D759F7E03740 /* VellemMCP in Resources */ = {isa = PBXBuildFile; fileRef = FBA0F236EA37E12018852354 /* VellemMCP */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		42720883CE171B0D4DCAEAFE /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2DBFCAF9442A9D7F1C75762 /* OnboardingView.swift */; };
 		435AF4A3230B36749C94FCCF /* RichMarkdownTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50C9B65A7D37F293B2E56B22 /* RichMarkdownTextView.swift */; };
 		44854383E74D58FD9C66534B /* Folder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06BFC875C442588F75CDB14F /* Folder.swift */; };
 		4905548C2FBB99FC64230ABF /* Note.swift in Sources */ = {isa = PBXBuildFile; fileRef = F43EB7BE5864CF10191833D0 /* Note.swift */; };
@@ -103,6 +104,7 @@
 		96920392987CD241F12576E0 /* CaptureContextProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureContextProvider.swift; sourceTree = "<group>"; };
 		9D31FD034B4CD8D85C052A6A /* QuickCaptureWindowConfigurator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickCaptureWindowConfigurator.swift; sourceTree = "<group>"; };
 		A21C416FE49D8BACA6D8E9A2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A2DBFCAF9442A9D7F1C75762 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		A2FAA89E775B8E613C683386 /* SlashCommandProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlashCommandProcessor.swift; sourceTree = "<group>"; };
 		AB9D350726789738B4EC27EB /* AppGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroup.swift; sourceTree = "<group>"; };
 		ACA8C9B235D9FB2554B024F0 /* NoteEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteEditorView.swift; sourceTree = "<group>"; };
@@ -236,6 +238,7 @@
 				80643F8C5478A89576230AD2 /* MenuBarComposerView.swift */,
 				ACA8C9B235D9FB2554B024F0 /* NoteEditorView.swift */,
 				356838C1CD7E49ADB6021F9D /* NoteViewerView.swift */,
+				A2DBFCAF9442A9D7F1C75762 /* OnboardingView.swift */,
 				BD71622FB3E692BE3A04703F /* QuickCaptureView.swift */,
 				49692AD4B5AEBC7BD61F296C /* RecentNotesView.swift */,
 				50C9B65A7D37F293B2E56B22 /* RichMarkdownTextView.swift */,
@@ -437,6 +440,7 @@
 				9AE5D39B5FB80AEF1C4478DE /* NoteNotifications.swift in Sources */,
 				C89A47B53674806E28BA31A7 /* NoteViewerView.swift in Sources */,
 				CB9AEB33C1AE9A1E5F1132C5 /* NotesStore.swift in Sources */,
+				42720883CE171B0D4DCAEAFE /* OnboardingView.swift in Sources */,
 				DEFB9BEE7FC2EB8E9CECAACF /* QuickCaptureView.swift in Sources */,
 				FD5C98AC840324B38B9C6AD3 /* QuickCaptureWindowConfigurator.swift in Sources */,
 				8612FF8D23469433262DEB6E /* RecentNotesView.swift in Sources */,
