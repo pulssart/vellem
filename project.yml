@@ -8,7 +8,10 @@ settings:
     SWIFT_VERSION: "6.0"
     DEVELOPMENT_TEAM: MKAFV9VL9V
     CODE_SIGN_STYLE: Automatic
-packages: {}
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.6.4
 targets:
   Vellem:
     type: application
@@ -29,9 +32,11 @@ targets:
         com.apple.security.application-groups:
           - MKAFV9VL9V.com.adriendonot.Vellem
         com.apple.security.automation.apple-events: true
+        com.apple.security.network.client: true
     dependencies:
       - target: VellemWidget
       - target: VellemMCP
+      - package: Sparkle
     postCompileScripts:
       - name: Embed vellem-mcp into app bundle
         script: |

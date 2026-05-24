@@ -16,6 +16,7 @@
 		24D2B5D83EE9639CA953FAE1 /* MarkdownTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10A90F67EE3D6AEA8BAD71D /* MarkdownTableView.swift */; };
 		26A6541E7178ACA1918A570E /* AppAccentColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BABA9B4516AB8444AA7B00F /* AppAccentColor.swift */; };
 		2898251A6A595DE42B505DE5 /* ShortcutRecorderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB9D1E2FE88D0AB3CDAA5CE /* ShortcutRecorderView.swift */; };
+		2EF9EDE84DED9E0F126DF8DC /* AgentLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = D68868F1B2DF047B7E1C887B /* AgentLauncher.swift */; };
 		31B6EF6F0ABBC638178F8E65 /* ExternalNoteEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBE185614F479229EF10A601 /* ExternalNoteEvent.swift */; };
 		3BE9405A30E0F1F7573A70E5 /* MCPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 173FC39ED423E0E6F6889FD9 /* MCPServer.swift */; };
 		3CC319DEF2250062736D7234 /* FoundationNoteEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B4CA5399EE9B52D315E6CD /* FoundationNoteEditor.swift */; };
@@ -36,10 +37,12 @@
 		9AE5D39B5FB80AEF1C4478DE /* NoteNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC017F0B5E3C20165F74A1F8 /* NoteNotifications.swift */; };
 		A7D9892DF8EC810BB4B30D99 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A21C416FE49D8BACA6D8E9A2 /* SettingsView.swift */; };
 		A8CD39ED4AE7AA148B71A201 /* VellemWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF48CECE3EAB55C21C890A37 /* VellemWidget.swift */; };
+		B8C4116198FB6B75DA86E333 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = E2E99B783493520DDA1312EA /* Sparkle */; };
 		BA5B2B1DD9BD085050522E42 /* CaptureSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = B06165260A0578E62B687404 /* CaptureSource.swift */; };
 		C89A47B53674806E28BA31A7 /* NoteViewerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 356838C1CD7E49ADB6021F9D /* NoteViewerView.swift */; };
 		CB1EBB6D81F5091510CBD9A1 /* VellemWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BA2DB4030DCE7E4AC7CC9249 /* VellemWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CB9AEB33C1AE9A1E5F1132C5 /* NotesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F794DBD059DAB5C6B04AC1D /* NotesStore.swift */; };
+		CE35CCA9346942A425296E88 /* UpdateController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB18914F966B32428D515231 /* UpdateController.swift */; };
 		DEFB9BEE7FC2EB8E9CECAACF /* QuickCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD71622FB3E692BE3A04703F /* QuickCaptureView.swift */; };
 		DF0D66950ECDF79763930042 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E40D411CB18F137ED64EC417 /* Assets.xcassets */; };
 		E05E41F66101C66B1D0CA02A /* CaptureContextProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96920392987CD241F12576E0 /* CaptureContextProvider.swift */; };
@@ -119,8 +122,10 @@
 		BC017F0B5E3C20165F74A1F8 /* NoteNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteNotifications.swift; sourceTree = "<group>"; };
 		BD71622FB3E692BE3A04703F /* QuickCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickCaptureView.swift; sourceTree = "<group>"; };
 		CBE185614F479229EF10A601 /* ExternalNoteEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalNoteEvent.swift; sourceTree = "<group>"; };
+		D68868F1B2DF047B7E1C887B /* AgentLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentLauncher.swift; sourceTree = "<group>"; };
 		D8F99F51703D71B546E6A40F /* FolderNotesListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderNotesListView.swift; sourceTree = "<group>"; };
 		DA290798A38AD8E245859D60 /* EmptyNotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyNotesView.swift; sourceTree = "<group>"; };
+		DB18914F966B32428D515231 /* UpdateController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateController.swift; sourceTree = "<group>"; };
 		E40D411CB18F137ED64EC417 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		EF9C21FE93547103DFB5A2A4 /* NotesFileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesFileStore.swift; sourceTree = "<group>"; };
 		F10A90F67EE3D6AEA8BAD71D /* MarkdownTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownTableView.swift; sourceTree = "<group>"; };
@@ -129,6 +134,17 @@
 		F9FBFC33F50F0D1A99BA19B8 /* WidgetReloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetReloader.swift; sourceTree = "<group>"; };
 		FBA0F236EA37E12018852354 /* VellemMCP */ = {isa = PBXFileReference; includeInIndex = 0; path = VellemMCP; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		B0CFAD93D9E66FB49F399F00 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B8C4116198FB6B75DA86E333 /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		41ECB42FCD9653CDDED72DC2 /* Models */ = {
@@ -181,9 +197,11 @@
 		7CD9B64AD44CAD38873A8718 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				D68868F1B2DF047B7E1C887B /* AgentLauncher.swift */,
 				96920392987CD241F12576E0 /* CaptureContextProvider.swift */,
 				49B4CA5399EE9B52D315E6CD /* FoundationNoteEditor.swift */,
 				A2FAA89E775B8E613C683386 /* SlashCommandProcessor.swift */,
+				DB18914F966B32428D515231 /* UpdateController.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -305,6 +323,7 @@
 				E3CEB544CE940AAC4A0A3CB8 /* Sources */,
 				393174C69B1530B0F8E42378 /* Embed vellem-mcp into app bundle */,
 				211681A7D44439F2CB9D900C /* Resources */,
+				B0CFAD93D9E66FB49F399F00 /* Frameworks */,
 				15CDE9F07C4A49CFBE74E034 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
@@ -315,6 +334,7 @@
 			);
 			name = Vellem;
 			packageProductDependencies = (
+				E2E99B783493520DDA1312EA /* Sparkle */,
 			);
 			productName = Vellem;
 			productReference = B208E6F6B8EA843429D1F4E7 /* Vellem.app */;
@@ -353,6 +373,9 @@
 			);
 			mainGroup = 79CA3B7A19C41355259D9CF9;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				0A57A9296C9FB811C3779050 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
@@ -424,6 +447,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2EF9EDE84DED9E0F126DF8DC /* AgentLauncher.swift in Sources */,
 				26A6541E7178ACA1918A570E /* AppAccentColor.swift in Sources */,
 				5296387F85718E62222D21DC /* AppGroup.swift in Sources */,
 				F6B46CAA8CA7A7B39ABAE1F2 /* AppPreferences.swift in Sources */,
@@ -454,6 +478,7 @@
 				E797706A6007BFD3E21E36C0 /* ShortcutFormatter.swift in Sources */,
 				2898251A6A595DE42B505DE5 /* ShortcutRecorderView.swift in Sources */,
 				8AEF03B8D881872153AE07BA /* SlashCommandProcessor.swift in Sources */,
+				CE35CCA9346942A425296E88 /* UpdateController.swift in Sources */,
 				9A57A0453CCBD40B8265E252 /* VellemApp.swift in Sources */,
 				02D7C882CCFAAD0226BD6D61 /* WidgetReloader.swift in Sources */,
 			);
@@ -746,6 +771,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		0A57A9296C9FB811C3779050 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.4;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E2E99B783493520DDA1312EA /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0A57A9296C9FB811C3779050 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B9C4CE6640870E0111330794 /* Project object */;
 }

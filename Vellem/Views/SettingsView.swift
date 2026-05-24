@@ -6,6 +6,9 @@ struct SettingsView: View {
     @AppStorage(AppPreferences.showMenuBarExtraKey) private var showMenuBarExtra = true
     @AppStorage(AppPreferences.showDockIconKey) private var showDockIcon = true
     @AppStorage(AppAccentColor.storageKey) private var accentRaw = AppAccentColor.defaultValue.rawValue
+    @AppStorage("SUEnableAutomaticChecks") private var autoCheckUpdates = true
+    @AppStorage("SUAutomaticallyUpdate") private var autoDownloadUpdates = false
+    @ObservedObject private var updates = UpdateController.shared
 
     private var selectedAccent: AppAccentColor {
         AppAccentColor(rawValue: accentRaw) ?? .yellow
@@ -31,6 +34,22 @@ struct SettingsView: View {
                             }
                         }
                     }
+                }
+            }
+
+            Section("Updates") {
+                Toggle("Check for updates automatically", isOn: $autoCheckUpdates)
+                Toggle("Download and install updates automatically", isOn: $autoDownloadUpdates)
+                    .disabled(!autoCheckUpdates)
+                HStack {
+                    Button("Check now…") {
+                        updates.checkForUpdates()
+                    }
+                    .disabled(!updates.canCheckForUpdates)
+                    Spacer()
+                    Text("v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
 

@@ -87,7 +87,8 @@ struct FolderNotesListView: View {
                     ForEach(workflows) { workflow in
                         AgentWorkflowCard(
                             workflow: workflow,
-                            isCopied: copiedWorkflowID == workflow.id
+                            isCopied: copiedWorkflowID == workflow.id,
+                            targetApp: folder.kind == .smartCodex ? .codex : .claude
                         ) {
                             copy(workflow.prompt)
                             copiedWorkflowID = workflow.id
@@ -520,8 +521,10 @@ private struct AgentWorkflow: Identifiable {
 private struct AgentWorkflowCard: View {
     let workflow: AgentWorkflow
     let isCopied: Bool
+    let targetApp: AgentApp
     let onCopy: () -> Void
     @AppAccent private var accent
+    @State private var isHovering = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -556,13 +559,26 @@ private struct AgentWorkflowCard: View {
         .frame(maxWidth: .infinity, minHeight: 86, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color(nsColor: .windowBackgroundColor))
+                .fill(isHovering ? accent.color.opacity(0.08) : Color(nsColor: .windowBackgroundColor))
                 .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(Color(nsColor: .separatorColor).opacity(0.55), lineWidth: 1)
+                .stroke(isHovering ? accent.color.opacity(0.55) : Color(nsColor: .separatorColor).opacity(0.55), lineWidth: 1)
         )
+        .contentShape(Rectangle())
+        .onTapGesture {
+            AgentLauncher.send(prompt: workflow.prompt, to: targetApp)
+        }
+        .onHover { hovering in
+            isHovering = hovering
+            if hovering {
+                NSCursor.pointingHand.push()
+            } else {
+                NSCursor.pop()
+            }
+        }
+        .help("Open in \(targetApp.displayName) Desktop with this prompt")
     }
 }
 
@@ -663,7 +679,8 @@ struct TodayNotesListView: View {
                 ForEach(AgentWorkflow.dailyLogWorkflows) { workflow in
                     AgentWorkflowCard(
                         workflow: workflow,
-                        isCopied: copiedWorkflowID == workflow.id
+                        isCopied: copiedWorkflowID == workflow.id,
+                        targetApp: .claude
                     ) {
                         copy(workflow.prompt)
                         copiedWorkflowID = workflow.id

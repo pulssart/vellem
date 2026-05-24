@@ -137,6 +137,49 @@ echo "▶ Stapling notarization ticket to DMG…"
 xcrun stapler staple "${DMG_PATH}"
 xcrun stapler validate "${DMG_PATH}"
 
+# ---------- Sparkle: sign DMG + update appcast.xml ----------
+SPARKLE_BIN="$(find "$HOME/Library/Developer/Xcode/DerivedData" \
+  -path '*sparkle/Sparkle/bin/sign_update' -type f 2>/dev/null | head -1)"
+APPCAST="appcast.xml"
+BUILD_NUMBER="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Vellem/Info.plist)"
+DMG_URL="https://github.com/pulssart/vellem/releases/download/v${VERSION}/${DMG_NAME}"
+
+if [ -n "${SPARKLE_BIN}" ] && [ -f "${APPCAST}" ]; then
+  echo "▶ Signing DMG with Sparkle Ed25519 key…"
+  SIG_LINE="$("${SPARKLE_BIN}" "${DMG_PATH}")"
+  echo "   ${SIG_LINE}"
+  PUB_DATE="$(LC_TIME=en_US.UTF-8 date '+%a, %d %b %Y %H:%M:%S %z')"
+
+  ITEM=$(cat <<EOF
+        <item>
+            <title>Version ${VERSION}</title>
+            <sparkle:version>${BUILD_NUMBER}</sparkle:version>
+            <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <pubDate>${PUB_DATE}</pubDate>
+            <enclosure url="${DMG_URL}" ${SIG_LINE} type="application/octet-stream" />
+        </item>
+EOF
+)
+
+  echo "▶ Inserting <item> into ${APPCAST}…"
+  python3 -c "
+import sys, re
+path = '${APPCAST}'
+item = '''${ITEM}
+'''
+with open(path) as f:
+    src = f.read()
+if 'sparkle:shortVersionString>${VERSION}<' in src:
+    print('   already in appcast, skipping')
+    sys.exit(0)
+src = re.sub(r'(<language>[^<]*</language>)', r'\1\n' + item, src, count=1)
+with open(path, 'w') as f:
+    f.write(src)
+print('   inserted')
+"
+fi
+
 # ---------- Cleanup ----------
 rm -rf "${STAGING}" "${EXPORT_DIR}"
 
@@ -144,4 +187,6 @@ echo ""
 echo "✅ Done: ${DMG_PATH}"
 echo "   SHA-256: $(shasum -a 256 "${DMG_PATH}" | awk '{print $1}')"
 echo ""
-echo "Next: gh release create v${VERSION} ${DMG_PATH} --title \"Vellem ${VERSION}\" --notes-file CHANGELOG.md"
+echo "Next steps:"
+echo "  1. git add appcast.xml && git commit -m 'Release v${VERSION}' && git push"
+echo "  2. gh release create v${VERSION} ${DMG_PATH} --title \"Vellem ${VERSION}\" --notes-file CHANGELOG.md"

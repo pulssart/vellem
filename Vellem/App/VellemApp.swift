@@ -11,6 +11,7 @@ struct VellemApp: App {
     @AppStorage(AppPreferences.showMenuBarExtraKey) private var showMenuBarExtra = true
     @AppStorage(AppPreferences.showDockIconKey) private var showDockIcon = true
     @AppAccent private var accent
+    @StateObject private var updateController = UpdateController.shared
 
     init() {
         AppPreferences.registerDefaults()
@@ -45,6 +46,13 @@ struct VellemApp: App {
                 }
         }
         .commands {
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates…") {
+                    updateController.checkForUpdates()
+                }
+                .disabled(!updateController.canCheckForUpdates)
+            }
+
             CommandGroup(replacing: .newItem) {
                 Button("New Note") {
                     store.createDraft()

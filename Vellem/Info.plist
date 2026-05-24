@@ -13,7 +13,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.2</string>
+	<string>1.0.3</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -26,9 +26,11 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>4</string>
+	<string>5</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.productivity</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Vellem uses Apple Events to open Claude Desktop or Codex Desktop and paste a prompt into a new conversation.</string>
 	<key>NSServices</key>
 	<array>
 		<dict>
@@ -52,5 +54,15 @@
 			</array>
 		</dict>
 	</array>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://raw.githubusercontent.com/pulssart/vellem/main/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>5OV785cc1DVpiXPA3ZcZUlQ6uEi6CJsPU2+/XY5dsXE=</string>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
 </dict>
 </plist>
