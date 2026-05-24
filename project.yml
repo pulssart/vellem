@@ -1,0 +1,76 @@
+name: Vellem
+options:
+  bundleIdPrefix: com.adriendonot
+  deploymentTarget:
+    macOS: "26.0"
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    DEVELOPMENT_TEAM: MKAFV9VL9V
+    CODE_SIGN_STYLE: Automatic
+packages: {}
+targets:
+  Vellem:
+    type: application
+    platform: macOS
+    sources:
+      - path: Vellem
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.adriendonot.Vellem
+        INFOPLIST_FILE: Vellem/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ENABLE_HARDENED_RUNTIME: YES
+    entitlements:
+      path: Vellem/Vellem.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - MKAFV9VL9V.com.adriendonot.Vellem
+        com.apple.security.automation.apple-events: true
+    dependencies:
+      - target: VellemWidget
+      - target: VellemMCP
+    postCompileScripts:
+      - name: Embed vellem-mcp into app bundle
+        script: |
+          set -e
+          SRC="${BUILT_PRODUCTS_DIR}/vellem-mcp"
+          DEST_DIR="${TARGET_BUILD_DIR}/${PRODUCT_NAME}.app/Contents/Resources"
+          if [ -f "$SRC" ]; then
+            mkdir -p "$DEST_DIR"
+            cp -f "$SRC" "$DEST_DIR/vellem-mcp"
+            chmod +x "$DEST_DIR/vellem-mcp"
+            codesign --force --sign - --timestamp=none "$DEST_DIR/vellem-mcp" 2>/dev/null || true
+          fi
+  VellemMCP:
+    type: tool
+    platform: macOS
+    sources:
+      - path: VellemMCP
+      - path: Vellem/Models
+    settings:
+      base:
+        PRODUCT_NAME: vellem-mcp
+        SKIP_INSTALL: YES
+        SWIFT_VERSION: "6.0"
+        ENABLE_HARDENED_RUNTIME: NO
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "-"
+  VellemWidget:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: VellemWidget
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.adriendonot.Vellem.Widget
+        INFOPLIST_FILE: VellemWidget/Info.plist
+        SKIP_INSTALL: YES
+    entitlements:
+      path: VellemWidget/VellemWidget.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - MKAFV9VL9V.com.adriendonot.Vellem

@@ -1,0 +1,44 @@
+import Carbon
+import Foundation
+
+enum AppPreferences {
+    static let quickCaptureKeyCodeKey = "quickCaptureShortcutKeyCode"
+    static let quickCaptureModifiersKey = "quickCaptureShortcutModifiers"
+    static let showMenuBarExtraKey = "showMenuBarExtra"
+    static let showDockIconKey = "showDockIcon"
+
+    static let defaultQuickCaptureKeyCode = UInt32(kVK_ANSI_N)
+    static let defaultQuickCaptureModifiers = UInt32(controlKey | optionKey)
+
+    static func registerDefaults() {
+        UserDefaults.standard.register(defaults: [
+            quickCaptureKeyCodeKey: Int(defaultQuickCaptureKeyCode),
+            quickCaptureModifiersKey: Int(defaultQuickCaptureModifiers),
+            showMenuBarExtraKey: true,
+            showDockIconKey: true
+        ])
+    }
+
+    static var quickCaptureShortcut: AppShortcut {
+        AppShortcut(
+            keyCode: UInt32(UserDefaults.standard.integer(forKey: quickCaptureKeyCodeKey)),
+            modifiers: UInt32(UserDefaults.standard.integer(forKey: quickCaptureModifiersKey))
+        )
+        .normalized
+    }
+}
+
+struct AppShortcut: Equatable {
+    var keyCode: UInt32
+    var modifiers: UInt32
+
+    var normalized: AppShortcut {
+        guard keyCode != 0 || modifiers != 0 else {
+            return AppShortcut(
+                keyCode: AppPreferences.defaultQuickCaptureKeyCode,
+                modifiers: AppPreferences.defaultQuickCaptureModifiers
+            )
+        }
+        return self
+    }
+}

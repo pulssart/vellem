@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vellem — A quiet notes app for macOS</title>
+<meta name="description" content="Vellem is a fast, native macOS notes app with built-in MCP support. Capture, organize, and connect your thoughts.">
+<meta property="og:title" content="Vellem — A quiet notes app for macOS">
+<meta property="og:description" content="Fast, native macOS notes with built-in MCP support.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+<style>
+  :root {
+    --bg: #fafaf7;
+    --fg: #1a1a1a;
+    --muted: #6b6b6b;
+    --accent: #d4a017;
+    --accent-soft: #fdf6e3;
+    --border: rgba(0,0,0,0.08);
+    --radius: 14px;
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111110;
+      --fg: #f5f5f0;
+      --muted: #9a9a95;
+      --accent: #f5c244;
+      --accent-soft: rgba(245, 194, 68, 0.12);
+      --border: rgba(255,255,255,0.08);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--fg); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 64px 24px 48px;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 640px; width: 100%; }
+  header { text-align: center; margin-bottom: 56px; }
+  .logo {
+    width: 72px; height: 72px;
+    border-radius: 18px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 36px; font-weight: 600;
+    margin-bottom: 24px;
+    border: 1px solid var(--border);
+  }
+  h1 { font-size: 44px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
+  .tagline { font-size: 19px; color: var(--muted); max-width: 480px; margin: 0 auto; }
+
+  .download-card {
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 28px 24px;
+    margin-bottom: 48px;
+    text-align: center;
+  }
+  .download-card .version { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+  .download-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--fg); color: var(--bg);
+    font-size: 16px; font-weight: 600;
+    padding: 14px 26px;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: transform 0.08s ease, opacity 0.15s ease;
+  }
+  .download-btn:hover { transform: translateY(-1px); }
+  .download-btn:active { transform: translateY(0); opacity: 0.85; }
+  .download-btn[aria-disabled="true"] { opacity: 0.5; pointer-events: none; }
+  .download-meta { display: block; margin-top: 12px; font-size: 12px; color: var(--muted); }
+  .download-meta a { color: var(--muted); text-decoration: underline; }
+
+  .features { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 56px; }
+  @media (max-width: 520px) { .features { grid-template-columns: 1fr; } }
+  .feature h3 { font-size: 15px; margin-bottom: 4px; font-weight: 600; }
+  .feature p { font-size: 14px; color: var(--muted); line-height: 1.5; }
+
+  .install-steps {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    margin-bottom: 48px;
+  }
+  .install-steps h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 16px; font-weight: 600; }
+  .install-steps ol { padding-left: 22px; font-size: 14.5px; }
+  .install-steps li { margin-bottom: 8px; }
+  .install-steps code { background: var(--accent-soft); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: "SF Mono", Menlo, Consolas, monospace; }
+
+  footer { font-size: 13px; color: var(--muted); text-align: center; margin-top: auto; padding-top: 32px; }
+  footer a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
+  footer a:hover { color: var(--fg); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">V</div>
+    <h1>Vellem</h1>
+    <p class="tagline">A quiet, native macOS notes app with built-in MCP support. Capture fast, organize lightly, connect to anything.</p>
+  </header>
+
+  <div class="download-card">
+    <div class="version" id="version">Latest release</div>
+    <a class="download-btn" id="download" href="#" aria-disabled="true">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download for macOS
+    </a>
+    <span class="download-meta">Universal • macOS 26+ • Signed &amp; notarized<br><a id="release-link" href="https://github.com/pulssart/vellem/releases" target="_blank" rel="noopener">All releases</a></span>
+  </div>
+
+  <div class="features">
+    <div class="feature">
+      <h3>⚡ Fast capture</h3>
+      <p>Global hotkey, menu bar quick capture, Services menu integration. The note is open before you finish thinking.</p>
+    </div>
+    <div class="feature">
+      <h3>📐 Folders &amp; smart views</h3>
+      <p>Light organization. Color-tag folders. Daily notes, Today view, Recents — without the friction of a database.</p>
+    </div>
+    <div class="feature">
+      <h3>🔌 MCP built in</h3>
+      <p>An MCP server ships in the bundle. Claude, Codex and any MCP client can add, list, search and organize your notes.</p>
+    </div>
+    <div class="feature">
+      <h3>🪟 Widgets</h3>
+      <p>Native macOS widgets in all sizes. Your recent notes a glance away on the desktop or Notification Center.</p>
+    </div>
+  </div>
+
+  <div class="install-steps">
+    <h2>Install</h2>
+    <ol>
+      <li>Click <strong>Download for macOS</strong> above.</li>
+      <li>Open the <code>Vellem-x.y.z.dmg</code> file.</li>
+      <li>Drag <strong>Vellem</strong> into your <strong>Applications</strong> folder.</li>
+      <li>Launch from Spotlight or Launchpad. macOS will ask once if you're sure — click <strong>Open</strong>.</li>
+    </ol>
+  </div>
+
+  <footer>
+    Made with care • <a href="https://github.com/pulssart/vellem" target="_blank" rel="noopener">Source on GitHub</a>
+  </footer>
+</div>
+
+<script>
+  // Fetch the latest release from GitHub and wire up the download button.
+  (async () => {
+    const repo = "pulssart/vellem";
+    const dlBtn = document.getElementById("download");
+    const versionEl = document.getElementById("version");
+    try {
+      const res = await fetch(`https://api.github.com/repos/${repo}/releases/latest`, {
+        headers: { Accept: "application/vnd.github+json" }
+      });
+      if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+      const data = await res.json();
+      const dmg = (data.assets || []).find(a => a.name.toLowerCase().endsWith(".dmg"));
+      if (!dmg) throw new Error("No .dmg asset in latest release");
+      dlBtn.href = dmg.browser_download_url;
+      dlBtn.removeAttribute("aria-disabled");
+      versionEl.textContent = `${data.tag_name || data.name || "Latest"} • ${(dmg.size / (1024 * 1024)).toFixed(1)} MB`;
+    } catch (err) {
+      versionEl.textContent = "No release yet — check back soon.";
+      console.warn("Vellem download fetch failed:", err);
+    }
+  })();
+</script>
+</body>
+</html>

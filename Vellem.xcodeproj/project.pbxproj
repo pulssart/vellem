@@ -1,0 +1,743 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		02D7C882CCFAAD0226BD6D61 /* WidgetReloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9FBFC33F50F0D1A99BA19B8 /* WidgetReloader.swift */; };
+		09372CECAC2317BFA61B8966 /* EmptyNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA290798A38AD8E245859D60 /* EmptyNotesView.swift */; };
+		0E3D6D0BE9AF4A9B183331DD /* ExternalNoteEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBE185614F479229EF10A601 /* ExternalNoteEvent.swift */; };
+		159F7C4CE7573927C8C0E747 /* Folder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06BFC875C442588F75CDB14F /* Folder.swift */; };
+		1DD64FA45B0CB617F1AD3573 /* FolderNotesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8F99F51703D71B546E6A40F /* FolderNotesListView.swift */; };
+		23B75E5BA4E1D67E06AE504A /* GlobalHotKeyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C55CFE4DA2FAE52B9A01F7B /* GlobalHotKeyService.swift */; };
+		24D2B5D83EE9639CA953FAE1 /* MarkdownTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10A90F67EE3D6AEA8BAD71D /* MarkdownTableView.swift */; };
+		2898251A6A595DE42B505DE5 /* ShortcutRecorderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB9D1E2FE88D0AB3CDAA5CE /* ShortcutRecorderView.swift */; };
+		31B6EF6F0ABBC638178F8E65 /* ExternalNoteEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBE185614F479229EF10A601 /* ExternalNoteEvent.swift */; };
+		3BE9405A30E0F1F7573A70E5 /* MCPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 173FC39ED423E0E6F6889FD9 /* MCPServer.swift */; };
+		3CC319DEF2250062736D7234 /* FoundationNoteEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B4CA5399EE9B52D315E6CD /* FoundationNoteEditor.swift */; };
+		40FEEC4AE410D759F7E03740 /* VellemMCP in Resources */ = {isa = PBXBuildFile; fileRef = FBA0F236EA37E12018852354 /* VellemMCP */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		435AF4A3230B36749C94FCCF /* RichMarkdownTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50C9B65A7D37F293B2E56B22 /* RichMarkdownTextView.swift */; };
+		44854383E74D58FD9C66534B /* Folder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06BFC875C442588F75CDB14F /* Folder.swift */; };
+		4905548C2FBB99FC64230ABF /* Note.swift in Sources */ = {isa = PBXBuildFile; fileRef = F43EB7BE5864CF10191833D0 /* Note.swift */; };
+		5296387F85718E62222D21DC /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB9D350726789738B4EC27EB /* AppGroup.swift */; };
+		54690B4AA0C9E9E226529359 /* MenuBarComposerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80643F8C5478A89576230AD2 /* MenuBarComposerView.swift */; };
+		58831C737EBD42FE4454A836 /* MarkdownRenderedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B2CDF4595B418B17F37DADB /* MarkdownRenderedView.swift */; };
+		70C6B44386B992D079C562D4 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EDEBE5538AFEF3E24768584 /* ContentView.swift */; };
+		85144DC533CB2E009D744CFE /* Note.swift in Sources */ = {isa = PBXBuildFile; fileRef = F43EB7BE5864CF10191833D0 /* Note.swift */; };
+		8612FF8D23469433262DEB6E /* RecentNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49692AD4B5AEBC7BD61F296C /* RecentNotesView.swift */; };
+		8AEF03B8D881872153AE07BA /* SlashCommandProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2FAA89E775B8E613C683386 /* SlashCommandProcessor.swift */; };
+		9701F78808A345A405B23AEB /* ScrambleTextEffect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BCB06CB1FECF1A8F5BC6E6D /* ScrambleTextEffect.swift */; };
+		9A57A0453CCBD40B8265E252 /* VellemApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4237C4F0B607897B8B1D6069 /* VellemApp.swift */; };
+		9AE5D39B5FB80AEF1C4478DE /* NoteNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC017F0B5E3C20165F74A1F8 /* NoteNotifications.swift */; };
+		A7D9892DF8EC810BB4B30D99 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A21C416FE49D8BACA6D8E9A2 /* SettingsView.swift */; };
+		A8CD39ED4AE7AA148B71A201 /* VellemWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF48CECE3EAB55C21C890A37 /* VellemWidget.swift */; };
+		BA5B2B1DD9BD085050522E42 /* CaptureSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = B06165260A0578E62B687404 /* CaptureSource.swift */; };
+		C89A47B53674806E28BA31A7 /* NoteViewerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 356838C1CD7E49ADB6021F9D /* NoteViewerView.swift */; };
+		CB1EBB6D81F5091510CBD9A1 /* VellemWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BA2DB4030DCE7E4AC7CC9249 /* VellemWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CB9AEB33C1AE9A1E5F1132C5 /* NotesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F794DBD059DAB5C6B04AC1D /* NotesStore.swift */; };
+		DEFB9BEE7FC2EB8E9CECAACF /* QuickCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD71622FB3E692BE3A04703F /* QuickCaptureView.swift */; };
+		DF0D66950ECDF79763930042 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E40D411CB18F137ED64EC417 /* Assets.xcassets */; };
+		E05E41F66101C66B1D0CA02A /* CaptureContextProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96920392987CD241F12576E0 /* CaptureContextProvider.swift */; };
+		E33BF2E64AACB83F5F4EE3C1 /* NoteEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACA8C9B235D9FB2554B024F0 /* NoteEditorView.swift */; };
+		E797706A6007BFD3E21E36C0 /* ShortcutFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4691F7E3E47E6CF811638C9 /* ShortcutFormatter.swift */; };
+		E8AB2128DC24BEC54F10F907 /* CaptureSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = B06165260A0578E62B687404 /* CaptureSource.swift */; };
+		F6B46CAA8CA7A7B39ABAE1F2 /* AppPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C69FD53E41A13CCC596052D /* AppPreferences.swift */; };
+		FBDF83D5EF29D67A5234A546 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5334D67E5540F6D3D13CAF7E /* main.swift */; };
+		FD5C98AC840324B38B9C6AD3 /* QuickCaptureWindowConfigurator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D31FD034B4CD8D85C052A6A /* QuickCaptureWindowConfigurator.swift */; };
+		FE3CF6FC4076808D22813584 /* NotesFileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF9C21FE93547103DFB5A2A4 /* NotesFileStore.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		3537C1DE0200A6E98A92AC4B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B9C4CE6640870E0111330794 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C956D953B0CF276A37DA49FD;
+			remoteInfo = VellemMCP;
+		};
+		D559F8CDC2FCFEF9B5AE5E4D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B9C4CE6640870E0111330794 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 71647A0D9ABD5A5C0CA7C187;
+			remoteInfo = VellemWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		15CDE9F07C4A49CFBE74E034 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				CB1EBB6D81F5091510CBD9A1 /* VellemWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		06BFC875C442588F75CDB14F /* Folder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Folder.swift; sourceTree = "<group>"; };
+		07546495A4639F9FA7727639 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		0C55CFE4DA2FAE52B9A01F7B /* GlobalHotKeyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKeyService.swift; sourceTree = "<group>"; };
+		173FC39ED423E0E6F6889FD9 /* MCPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPServer.swift; sourceTree = "<group>"; };
+		1C69FD53E41A13CCC596052D /* AppPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferences.swift; sourceTree = "<group>"; };
+		1EDEBE5538AFEF3E24768584 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		2C4A1A4671C57414972898E1 /* Vellem.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Vellem.entitlements; sourceTree = "<group>"; };
+		356838C1CD7E49ADB6021F9D /* NoteViewerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteViewerView.swift; sourceTree = "<group>"; };
+		4237C4F0B607897B8B1D6069 /* VellemApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VellemApp.swift; sourceTree = "<group>"; };
+		49692AD4B5AEBC7BD61F296C /* RecentNotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentNotesView.swift; sourceTree = "<group>"; };
+		49B4CA5399EE9B52D315E6CD /* FoundationNoteEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoundationNoteEditor.swift; sourceTree = "<group>"; };
+		50C9B65A7D37F293B2E56B22 /* RichMarkdownTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RichMarkdownTextView.swift; sourceTree = "<group>"; };
+		5334D67E5540F6D3D13CAF7E /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		5BCB06CB1FECF1A8F5BC6E6D /* ScrambleTextEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrambleTextEffect.swift; sourceTree = "<group>"; };
+		7403455CDB6C6BDA172CC259 /* VellemWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VellemWidget.entitlements; sourceTree = "<group>"; };
+		80643F8C5478A89576230AD2 /* MenuBarComposerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarComposerView.swift; sourceTree = "<group>"; };
+		8B2CDF4595B418B17F37DADB /* MarkdownRenderedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownRenderedView.swift; sourceTree = "<group>"; };
+		8F794DBD059DAB5C6B04AC1D /* NotesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesStore.swift; sourceTree = "<group>"; };
+		96920392987CD241F12576E0 /* CaptureContextProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureContextProvider.swift; sourceTree = "<group>"; };
+		9D31FD034B4CD8D85C052A6A /* QuickCaptureWindowConfigurator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickCaptureWindowConfigurator.swift; sourceTree = "<group>"; };
+		A21C416FE49D8BACA6D8E9A2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A2FAA89E775B8E613C683386 /* SlashCommandProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlashCommandProcessor.swift; sourceTree = "<group>"; };
+		AB9D350726789738B4EC27EB /* AppGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroup.swift; sourceTree = "<group>"; };
+		ACA8C9B235D9FB2554B024F0 /* NoteEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteEditorView.swift; sourceTree = "<group>"; };
+		ACB9D1E2FE88D0AB3CDAA5CE /* ShortcutRecorderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutRecorderView.swift; sourceTree = "<group>"; };
+		AF48CECE3EAB55C21C890A37 /* VellemWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VellemWidget.swift; sourceTree = "<group>"; };
+		B06165260A0578E62B687404 /* CaptureSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSource.swift; sourceTree = "<group>"; };
+		B208E6F6B8EA843429D1F4E7 /* Vellem.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vellem.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BA292A9529D9F4B8D4131BC9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		BA2DB4030DCE7E4AC7CC9249 /* VellemWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = VellemWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		BC017F0B5E3C20165F74A1F8 /* NoteNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteNotifications.swift; sourceTree = "<group>"; };
+		BD71622FB3E692BE3A04703F /* QuickCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickCaptureView.swift; sourceTree = "<group>"; };
+		CBE185614F479229EF10A601 /* ExternalNoteEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalNoteEvent.swift; sourceTree = "<group>"; };
+		D8F99F51703D71B546E6A40F /* FolderNotesListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FolderNotesListView.swift; sourceTree = "<group>"; };
+		DA290798A38AD8E245859D60 /* EmptyNotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyNotesView.swift; sourceTree = "<group>"; };
+		E40D411CB18F137ED64EC417 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		EF9C21FE93547103DFB5A2A4 /* NotesFileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesFileStore.swift; sourceTree = "<group>"; };
+		F10A90F67EE3D6AEA8BAD71D /* MarkdownTableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownTableView.swift; sourceTree = "<group>"; };
+		F43EB7BE5864CF10191833D0 /* Note.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Note.swift; sourceTree = "<group>"; };
+		F4691F7E3E47E6CF811638C9 /* ShortcutFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutFormatter.swift; sourceTree = "<group>"; };
+		F9FBFC33F50F0D1A99BA19B8 /* WidgetReloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetReloader.swift; sourceTree = "<group>"; };
+		FBA0F236EA37E12018852354 /* VellemMCP */ = {isa = PBXFileReference; includeInIndex = 0; path = VellemMCP; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		41ECB42FCD9653CDDED72DC2 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				B06165260A0578E62B687404 /* CaptureSource.swift */,
+				CBE185614F479229EF10A601 /* ExternalNoteEvent.swift */,
+				06BFC875C442588F75CDB14F /* Folder.swift */,
+				F43EB7BE5864CF10191833D0 /* Note.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		4A272094950B020F428FE234 /* VellemWidget */ = {
+			isa = PBXGroup;
+			children = (
+				07546495A4639F9FA7727639 /* Info.plist */,
+				7403455CDB6C6BDA172CC259 /* VellemWidget.entitlements */,
+				AF48CECE3EAB55C21C890A37 /* VellemWidget.swift */,
+			);
+			path = VellemWidget;
+			sourceTree = "<group>";
+		};
+		4EB038FEAB0A726D84BF54D7 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				4237C4F0B607897B8B1D6069 /* VellemApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		65C12362375107539DC91F25 /* Stores */ = {
+			isa = PBXGroup;
+			children = (
+				8F794DBD059DAB5C6B04AC1D /* NotesStore.swift */,
+			);
+			path = Stores;
+			sourceTree = "<group>";
+		};
+		79CA3B7A19C41355259D9CF9 = {
+			isa = PBXGroup;
+			children = (
+				9672832ED4547732CCD713DF /* Vellem */,
+				E0C6BE20B3EFD03F63900CF1 /* VellemMCP */,
+				4A272094950B020F428FE234 /* VellemWidget */,
+				EC9DDDD29D685E6E8A45BEFC /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		7CD9B64AD44CAD38873A8718 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				96920392987CD241F12576E0 /* CaptureContextProvider.swift */,
+				49B4CA5399EE9B52D315E6CD /* FoundationNoteEditor.swift */,
+				A2FAA89E775B8E613C683386 /* SlashCommandProcessor.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		9672832ED4547732CCD713DF /* Vellem */ = {
+			isa = PBXGroup;
+			children = (
+				E40D411CB18F137ED64EC417 /* Assets.xcassets */,
+				BA292A9529D9F4B8D4131BC9 /* Info.plist */,
+				2C4A1A4671C57414972898E1 /* Vellem.entitlements */,
+				4EB038FEAB0A726D84BF54D7 /* App */,
+				41ECB42FCD9653CDDED72DC2 /* Models */,
+				7CD9B64AD44CAD38873A8718 /* Services */,
+				65C12362375107539DC91F25 /* Stores */,
+				E628C942DA0CCFA4D3F05CD8 /* Support */,
+				E988A86A25A36B01DB31CEEC /* Views */,
+			);
+			path = Vellem;
+			sourceTree = "<group>";
+		};
+		E0C6BE20B3EFD03F63900CF1 /* VellemMCP */ = {
+			isa = PBXGroup;
+			children = (
+				5334D67E5540F6D3D13CAF7E /* main.swift */,
+				173FC39ED423E0E6F6889FD9 /* MCPServer.swift */,
+				EF9C21FE93547103DFB5A2A4 /* NotesFileStore.swift */,
+			);
+			path = VellemMCP;
+			sourceTree = "<group>";
+		};
+		E628C942DA0CCFA4D3F05CD8 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				AB9D350726789738B4EC27EB /* AppGroup.swift */,
+				1C69FD53E41A13CCC596052D /* AppPreferences.swift */,
+				0C55CFE4DA2FAE52B9A01F7B /* GlobalHotKeyService.swift */,
+				BC017F0B5E3C20165F74A1F8 /* NoteNotifications.swift */,
+				9D31FD034B4CD8D85C052A6A /* QuickCaptureWindowConfigurator.swift */,
+				5BCB06CB1FECF1A8F5BC6E6D /* ScrambleTextEffect.swift */,
+				F4691F7E3E47E6CF811638C9 /* ShortcutFormatter.swift */,
+				F9FBFC33F50F0D1A99BA19B8 /* WidgetReloader.swift */,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
+		E988A86A25A36B01DB31CEEC /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				1EDEBE5538AFEF3E24768584 /* ContentView.swift */,
+				DA290798A38AD8E245859D60 /* EmptyNotesView.swift */,
+				D8F99F51703D71B546E6A40F /* FolderNotesListView.swift */,
+				8B2CDF4595B418B17F37DADB /* MarkdownRenderedView.swift */,
+				F10A90F67EE3D6AEA8BAD71D /* MarkdownTableView.swift */,
+				80643F8C5478A89576230AD2 /* MenuBarComposerView.swift */,
+				ACA8C9B235D9FB2554B024F0 /* NoteEditorView.swift */,
+				356838C1CD7E49ADB6021F9D /* NoteViewerView.swift */,
+				BD71622FB3E692BE3A04703F /* QuickCaptureView.swift */,
+				49692AD4B5AEBC7BD61F296C /* RecentNotesView.swift */,
+				50C9B65A7D37F293B2E56B22 /* RichMarkdownTextView.swift */,
+				A21C416FE49D8BACA6D8E9A2 /* SettingsView.swift */,
+				ACB9D1E2FE88D0AB3CDAA5CE /* ShortcutRecorderView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		EC9DDDD29D685E6E8A45BEFC /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B208E6F6B8EA843429D1F4E7 /* Vellem.app */,
+				FBA0F236EA37E12018852354 /* VellemMCP */,
+				BA2DB4030DCE7E4AC7CC9249 /* VellemWidget.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		71647A0D9ABD5A5C0CA7C187 /* VellemWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A5BF41EB4256FA5827E7E155 /* Build configuration list for PBXNativeTarget "VellemWidget" */;
+			buildPhases = (
+				3E0951076AAAEFE08801AFA9 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = VellemWidget;
+			packageProductDependencies = (
+			);
+			productName = VellemWidget;
+			productReference = BA2DB4030DCE7E4AC7CC9249 /* VellemWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		C956D953B0CF276A37DA49FD /* VellemMCP */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3C2D60CF5A60D7ED1D9308B4 /* Build configuration list for PBXNativeTarget "VellemMCP" */;
+			buildPhases = (
+				4DDBD97AB746FEEB2A093EE4 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = VellemMCP;
+			packageProductDependencies = (
+			);
+			productName = VellemMCP;
+			productReference = FBA0F236EA37E12018852354 /* VellemMCP */;
+			productType = "com.apple.product-type.tool";
+		};
+		CC2B8BC9C065AA45587FA742 /* Vellem */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8CD219C26AF533419E11772C /* Build configuration list for PBXNativeTarget "Vellem" */;
+			buildPhases = (
+				E3CEB544CE940AAC4A0A3CB8 /* Sources */,
+				393174C69B1530B0F8E42378 /* Embed vellem-mcp into app bundle */,
+				211681A7D44439F2CB9D900C /* Resources */,
+				15CDE9F07C4A49CFBE74E034 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4D0E7CAB3615879E61D0D576 /* PBXTargetDependency */,
+				15AD6BDC13B24BA3EB45FC4D /* PBXTargetDependency */,
+			);
+			name = Vellem;
+			packageProductDependencies = (
+			);
+			productName = Vellem;
+			productReference = B208E6F6B8EA843429D1F4E7 /* Vellem.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		B9C4CE6640870E0111330794 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					71647A0D9ABD5A5C0CA7C187 = {
+						DevelopmentTeam = MKAFV9VL9V;
+						ProvisioningStyle = Automatic;
+					};
+					C956D953B0CF276A37DA49FD = {
+						DevelopmentTeam = MKAFV9VL9V;
+						ProvisioningStyle = Automatic;
+					};
+					CC2B8BC9C065AA45587FA742 = {
+						DevelopmentTeam = MKAFV9VL9V;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = D0328F2B71485837CD651399 /* Build configuration list for PBXProject "Vellem" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 79CA3B7A19C41355259D9CF9;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				CC2B8BC9C065AA45587FA742 /* Vellem */,
+				C956D953B0CF276A37DA49FD /* VellemMCP */,
+				71647A0D9ABD5A5C0CA7C187 /* VellemWidget */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		211681A7D44439F2CB9D900C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DF0D66950ECDF79763930042 /* Assets.xcassets in Resources */,
+				40FEEC4AE410D759F7E03740 /* VellemMCP in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		393174C69B1530B0F8E42378 /* Embed vellem-mcp into app bundle */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Embed vellem-mcp into app bundle";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\nSRC=\"${BUILT_PRODUCTS_DIR}/vellem-mcp\"\nDEST_DIR=\"${TARGET_BUILD_DIR}/${PRODUCT_NAME}.app/Contents/Resources\"\nif [ -f \"$SRC\" ]; then\n  mkdir -p \"$DEST_DIR\"\n  cp -f \"$SRC\" \"$DEST_DIR/vellem-mcp\"\n  chmod +x \"$DEST_DIR/vellem-mcp\"\n  codesign --force --sign - --timestamp=none \"$DEST_DIR/vellem-mcp\" 2>/dev/null || true\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3E0951076AAAEFE08801AFA9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A8CD39ED4AE7AA148B71A201 /* VellemWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4DDBD97AB746FEEB2A093EE4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BA5B2B1DD9BD085050522E42 /* CaptureSource.swift in Sources */,
+				0E3D6D0BE9AF4A9B183331DD /* ExternalNoteEvent.swift in Sources */,
+				44854383E74D58FD9C66534B /* Folder.swift in Sources */,
+				3BE9405A30E0F1F7573A70E5 /* MCPServer.swift in Sources */,
+				85144DC533CB2E009D744CFE /* Note.swift in Sources */,
+				FE3CF6FC4076808D22813584 /* NotesFileStore.swift in Sources */,
+				FBDF83D5EF29D67A5234A546 /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E3CEB544CE940AAC4A0A3CB8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5296387F85718E62222D21DC /* AppGroup.swift in Sources */,
+				F6B46CAA8CA7A7B39ABAE1F2 /* AppPreferences.swift in Sources */,
+				E05E41F66101C66B1D0CA02A /* CaptureContextProvider.swift in Sources */,
+				E8AB2128DC24BEC54F10F907 /* CaptureSource.swift in Sources */,
+				70C6B44386B992D079C562D4 /* ContentView.swift in Sources */,
+				09372CECAC2317BFA61B8966 /* EmptyNotesView.swift in Sources */,
+				31B6EF6F0ABBC638178F8E65 /* ExternalNoteEvent.swift in Sources */,
+				159F7C4CE7573927C8C0E747 /* Folder.swift in Sources */,
+				1DD64FA45B0CB617F1AD3573 /* FolderNotesListView.swift in Sources */,
+				3CC319DEF2250062736D7234 /* FoundationNoteEditor.swift in Sources */,
+				23B75E5BA4E1D67E06AE504A /* GlobalHotKeyService.swift in Sources */,
+				58831C737EBD42FE4454A836 /* MarkdownRenderedView.swift in Sources */,
+				24D2B5D83EE9639CA953FAE1 /* MarkdownTableView.swift in Sources */,
+				54690B4AA0C9E9E226529359 /* MenuBarComposerView.swift in Sources */,
+				4905548C2FBB99FC64230ABF /* Note.swift in Sources */,
+				E33BF2E64AACB83F5F4EE3C1 /* NoteEditorView.swift in Sources */,
+				9AE5D39B5FB80AEF1C4478DE /* NoteNotifications.swift in Sources */,
+				C89A47B53674806E28BA31A7 /* NoteViewerView.swift in Sources */,
+				CB9AEB33C1AE9A1E5F1132C5 /* NotesStore.swift in Sources */,
+				DEFB9BEE7FC2EB8E9CECAACF /* QuickCaptureView.swift in Sources */,
+				FD5C98AC840324B38B9C6AD3 /* QuickCaptureWindowConfigurator.swift in Sources */,
+				8612FF8D23469433262DEB6E /* RecentNotesView.swift in Sources */,
+				435AF4A3230B36749C94FCCF /* RichMarkdownTextView.swift in Sources */,
+				9701F78808A345A405B23AEB /* ScrambleTextEffect.swift in Sources */,
+				A7D9892DF8EC810BB4B30D99 /* SettingsView.swift in Sources */,
+				E797706A6007BFD3E21E36C0 /* ShortcutFormatter.swift in Sources */,
+				2898251A6A595DE42B505DE5 /* ShortcutRecorderView.swift in Sources */,
+				8AEF03B8D881872153AE07BA /* SlashCommandProcessor.swift in Sources */,
+				9A57A0453CCBD40B8265E252 /* VellemApp.swift in Sources */,
+				02D7C882CCFAAD0226BD6D61 /* WidgetReloader.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		15AD6BDC13B24BA3EB45FC4D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C956D953B0CF276A37DA49FD /* VellemMCP */;
+			targetProxy = 3537C1DE0200A6E98A92AC4B /* PBXContainerItemProxy */;
+		};
+		4D0E7CAB3615879E61D0D576 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 71647A0D9ABD5A5C0CA7C187 /* VellemWidget */;
+			targetProxy = D559F8CDC2FCFEF9B5AE5E4D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		006335345F9124E22AFDE64E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = MKAFV9VL9V;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		02521E0E3E301D178227D6A7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = MKAFV9VL9V;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		16CD1B82CD95DCDDD2C53523 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = VellemWidget/VellemWidget.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = VellemWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.adriendonot.Vellem.Widget;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		CA2409BCD63FC21ADCFAED82 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Vellem/Vellem.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = Vellem/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.adriendonot.Vellem;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		D02D0F750B7F26240B591147 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = VellemWidget/VellemWidget.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = VellemWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.adriendonot.Vellem.Widget;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		D82DB3093DE51E443A43CDFA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.adriendonot.VellemMCP;
+				PRODUCT_NAME = "vellem-mcp";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		E7B1E6319CAA9C341D8AD204 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.adriendonot.VellemMCP;
+				PRODUCT_NAME = "vellem-mcp";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		F9EE0EC43053B7FCE922A037 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Vellem/Vellem.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = Vellem/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.adriendonot.Vellem;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3C2D60CF5A60D7ED1D9308B4 /* Build configuration list for PBXNativeTarget "VellemMCP" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E7B1E6319CAA9C341D8AD204 /* Debug */,
+				D82DB3093DE51E443A43CDFA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		8CD219C26AF533419E11772C /* Build configuration list for PBXNativeTarget "Vellem" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F9EE0EC43053B7FCE922A037 /* Debug */,
+				CA2409BCD63FC21ADCFAED82 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A5BF41EB4256FA5827E7E155 /* Build configuration list for PBXNativeTarget "VellemWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D02D0F750B7F26240B591147 /* Debug */,
+				16CD1B82CD95DCDDD2C53523 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D0328F2B71485837CD651399 /* Build configuration list for PBXProject "Vellem" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				006335345F9124E22AFDE64E /* Debug */,
+				02521E0E3E301D178227D6A7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = B9C4CE6640870E0111330794 /* Project object */;
+}
