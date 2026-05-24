@@ -10,7 +10,7 @@
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://pulssart.github.io/vellem/icon@2x.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://pulssart.github.io/vellem/screenshot.png">
+<meta name="twitter:image" content="https://pulssart.github.io/vellem/screenshot.jpg">
 <link rel="icon" type="image/png" href="icon.png">
 <link rel="apple-touch-icon" href="icon@2x.png">
 <style>
@@ -117,19 +117,15 @@
     border-radius: var(--radius);
     overflow: hidden;
     border: 1px solid var(--border);
-    background: var(--accent-soft);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.08);
-    aspect-ratio: 16 / 10;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.10);
   }
   .screenshot img {
     display: block;
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: top;
+    height: auto;
   }
   @media (prefers-color-scheme: dark) {
-    .screenshot { box-shadow: 0 12px 40px rgba(0,0,0,0.35); }
+    .screenshot { box-shadow: 0 12px 40px rgba(0,0,0,0.40); }
   }
 
   .download-card {
@@ -196,7 +192,7 @@
   </div>
 
   <figure class="screenshot">
-    <img src="screenshot.png" alt="Vellem app showing folders sidebar and an interactive todo list" loading="lazy">
+    <img src="screenshot.jpg" alt="Vellem on macOS — main window with the Claude folder, a note viewer, and the Quick Capture pop-up" loading="lazy">
   </figure>
 
   <section class="pitch">
