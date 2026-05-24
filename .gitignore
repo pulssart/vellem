@@ -1,5 +1,27 @@
+# macOS
+.DS_Store
+
+# Xcode
 build/
 DerivedData/
-.DS_Store
 *.xcuserstate
 xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# Release artifacts
+dist/
+*.dmg
+*.zip
+
+# Local secrets / overrides
+.env
+.env.local
+script/.release.env
+
+# Editor
+.vscode/
+.idea/
+
+# Claude/Codex local state
+.claude/settings.local.json
+.codex/
