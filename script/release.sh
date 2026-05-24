@@ -96,9 +96,9 @@ if [ -f "${EMBEDDED_MCP}" ]; then
     "${EMBEDDED_MCP}"
 fi
 
-# ---------- Re-sign the outer bundle so the embedded re-sign is sealed ----------
-echo "▶ Re-signing outer .app bundle…"
-codesign --force --deep --sign "${SIGN_IDENTITY}" \
+# ---------- Re-seal the outer bundle (no --deep: keeps nested Sparkle XPCs' own entitlements) ----------
+echo "▶ Re-sealing outer .app bundle (preserving Sparkle XPC entitlements)…"
+codesign --force --sign "${SIGN_IDENTITY}" \
   --options runtime --timestamp \
   --entitlements Vellem/Vellem.entitlements \
   "${BUILT_APP}"
