@@ -157,6 +157,57 @@
   .feature h3 { font-size: 15px; margin-bottom: 4px; font-weight: 600; }
   .feature p { font-size: 14px; color: var(--muted); line-height: 1.5; }
 
+  .tools-block {
+    margin-bottom: 56px;
+    padding-top: 4px;
+  }
+  .tools-block h2 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 10px;
+  }
+  .tools-intro {
+    font-size: 16px;
+    color: var(--muted);
+    line-height: 1.65;
+    margin-bottom: 24px;
+  }
+  .tool-group {
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+    margin-top: 22px;
+  }
+  .tool-group h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 14px;
+    font-weight: 650;
+  }
+  .tool-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 24px;
+  }
+  @media (max-width: 620px) { .tool-grid { grid-template-columns: 1fr; } }
+  .tool-item code {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--fg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12.5px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    margin-bottom: 6px;
+  }
+  .tool-item p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
   .install-steps {
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -218,6 +269,91 @@
       <p>Everything lives on your Mac. No cloud, no sync server, no telemetry. Apple App Group container, NSFileCoordinator. Your agents' work never leaves your machine.</p>
     </div>
   </div>
+
+  <section class="tools-block">
+    <h2>The MCP tools inside Vellem</h2>
+    <p class="tools-intro">Vellem gives agents a small, practical toolkit for memory. They can write, retrieve, update, and organize notes without asking you to copy text between windows.</p>
+
+    <div class="tool-group">
+      <h3>Capture</h3>
+      <div class="tool-grid">
+        <div class="tool-item">
+          <code>add_note</code>
+          <p>Create a Markdown note, set an optional title, and place it in a folder by name or id.</p>
+        </div>
+        <div class="tool-item">
+          <code>append_to_daily</code>
+          <p>Add a snippet to today's daily note. If today's note does not exist yet, Vellem creates it.</p>
+        </div>
+        <div class="tool-item">
+          <code>create_todo_list</code>
+          <p>Turn a list of tasks into a proper Vellem note with interactive Markdown checkboxes.</p>
+        </div>
+        <div class="tool-item">
+          <code>add_todo</code>
+          <p>Add one task to an existing note, checked or unchecked, without rewriting the whole note.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="tool-group">
+      <h3>Read and search</h3>
+      <div class="tool-grid">
+        <div class="tool-item">
+          <code>list_notes</code>
+          <p>Return recent notes with ids, titles, previews, note type, and update dates.</p>
+        </div>
+        <div class="tool-item">
+          <code>search_notes</code>
+          <p>Search note titles and bodies, case insensitive, with a controllable result limit.</p>
+        </div>
+        <div class="tool-item">
+          <code>get_note</code>
+          <p>Fetch the full content of a note by id when an agent needs exact context.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="tool-group">
+      <h3>Edit</h3>
+      <div class="tool-grid">
+        <div class="tool-item">
+          <code>update_note</code>
+          <p>Replace a note body with a new Markdown version when the agent has a better draft.</p>
+        </div>
+        <div class="tool-item">
+          <code>delete_note</code>
+          <p>Remove a note by id when something was captured by mistake.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="tool-group">
+      <h3>Organize</h3>
+      <div class="tool-grid">
+        <div class="tool-item">
+          <code>list_folders</code>
+          <p>List every folder, including ids, names, creation dates, and note counts.</p>
+        </div>
+        <div class="tool-item">
+          <code>create_folder</code>
+          <p>Create a folder by name, or reuse the existing one if it is already there.</p>
+        </div>
+        <div class="tool-item">
+          <code>delete_folder</code>
+          <p>Delete a folder while keeping its notes. The notes move back to the root.</p>
+        </div>
+        <div class="tool-item">
+          <code>set_folder_color</code>
+          <p>Set a folder color, or clear it, using the same palette as the app.</p>
+        </div>
+        <div class="tool-item">
+          <code>move_note</code>
+          <p>Move a note into a folder by id or name, create the folder if needed, or remove the note from its folder.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <section class="mcp-block">
     <h2>Plug it into Claude in 10 seconds</h2>
