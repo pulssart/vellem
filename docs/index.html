@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vellem — A quiet notes app for macOS</title>
-<meta name="description" content="Vellem is a fast, native macOS notes app with built-in MCP support. Capture, organize, and connect your thoughts.">
-<meta property="og:title" content="Vellem — A quiet notes app for macOS">
-<meta property="og:description" content="Fast, native macOS notes with built-in MCP support.">
+<title>Vellem — The notes app for your AI agents</title>
+<meta name="description" content="Vellem is the notebook for your AI agents. A native macOS app that gives Claude, Codex and any MCP client a beautiful place to capture, organize and revisit what they learn — and stays great for your own thoughts too.">
+<meta property="og:title" content="Vellem — The notes app for your AI agents">
+<meta property="og:description" content="Give Claude, Codex and any MCP client a real place to take notes. Native macOS, beautiful, yours.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://pulssart.github.io/vellem/icon@2x.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -52,8 +52,58 @@
     image-rendering: -webkit-optimize-contrast;
     filter: drop-shadow(0 8px 20px rgba(0,0,0,0.10));
   }
-  h1 { font-size: 48px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
-  .tagline { font-size: 19px; color: var(--muted); max-width: 480px; margin: 0 auto; }
+  h1 { font-size: 56px; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 16px; }
+  .eyebrow {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding: 6px 12px;
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    margin-bottom: 18px;
+  }
+  .tagline { font-size: 18px; color: var(--muted); max-width: 540px; margin: 0 auto; line-height: 1.6; }
+
+  .pitch {
+    margin-bottom: 48px;
+    padding: 0 4px;
+  }
+  .pitch h2 { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 12px; }
+  .pitch p { font-size: 17px; color: var(--muted); line-height: 1.65; }
+  .pitch em { font-style: italic; color: var(--fg); }
+
+  .mcp-block {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 48px;
+    background: var(--bg);
+  }
+  .mcp-block h2 { font-size: 18px; font-weight: 600; margin-bottom: 10px; }
+  .mcp-block p { font-size: 14.5px; color: var(--muted); margin-bottom: 14px; }
+  .mcp-block p.small { font-size: 13px; margin-top: 14px; margin-bottom: 0; }
+  .mcp-block em { color: var(--fg); font-style: italic; }
+  .mcp-block code { background: var(--accent-soft); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: "SF Mono", Menlo, Consolas, monospace; }
+  .mcp-block pre {
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 0;
+  }
+  .mcp-block pre code {
+    background: transparent;
+    padding: 0;
+    font-size: inherit;
+  }
+  .feature code { background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; font-size: 0.85em; font-family: "SF Mono", Menlo, Consolas, monospace; }
 
   .screenshot {
     margin: 0 0 56px;
@@ -124,8 +174,9 @@
 <div class="wrap">
   <header>
     <img class="logo" src="icon@2x.png" alt="Vellem app icon" width="112" height="112">
+    <p class="eyebrow">The notebook for your AI agents</p>
     <h1>Vellem</h1>
-    <p class="tagline">A quiet, native macOS notes app with built-in MCP support. Capture fast, organize lightly, connect to anything.</p>
+    <p class="tagline">Your AI agents read, write, search. They never remember.<br>Vellem gives Claude, Codex and any MCP client a real place to take notes — beautiful, native, yours.</p>
   </header>
 
   <div class="download-card">
@@ -141,27 +192,45 @@
     <img src="screenshot.png" alt="Vellem app showing folders sidebar and an interactive todo list" loading="lazy">
   </figure>
 
+  <section class="pitch">
+    <h2>Why give your agents a notebook?</h2>
+    <p>Every session with Claude or Codex ends with research, plans, decisions, code reviews — that vanish when the window closes. Vellem makes that work persist in a place <em>you</em> own. A real macOS app. Searchable. Foldered. Yours forever.</p>
+  </section>
+
   <div class="features">
     <div class="feature">
-      <h3>⚡ Fast capture</h3>
-      <p>Global hotkey, menu bar quick capture, Services menu integration. The note is open before you finish thinking.</p>
+      <h3>🤖 MCP-native, not bolted on</h3>
+      <p>Vellem ships its own MCP server. 14 tools: add notes, todo lists, daily logs, folders, full-text search. Your agent doesn't ask permission — it just writes.</p>
     </div>
     <div class="feature">
-      <h3>📐 Folders &amp; smart views</h3>
-      <p>Light organization. Color-tag folders. Daily notes, Today view, Recents — without the friction of a database.</p>
+      <h3>📁 One folder per agent</h3>
+      <p>Claude writes to <code>Claude</code>. Codex to <code>Codex</code>. Smart folders out of the box. You always know who said what.</p>
     </div>
     <div class="feature">
-      <h3>🔌 MCP built in</h3>
-      <p>An MCP server ships in the bundle. Claude, Codex and any MCP client can add, list, search and organize your notes.</p>
+      <h3>👀 You stay the reader</h3>
+      <p>While your agents fill the database, you keep the beautiful native UI: menu bar capture, global hotkey, widgets, Today view, Markdown rendering with interactive todos.</p>
     </div>
     <div class="feature">
-      <h3>🪟 Widgets</h3>
-      <p>Native macOS widgets in all sizes. Your recent notes a glance away on the desktop or Notification Center.</p>
+      <h3>🔒 Local-first, private</h3>
+      <p>Everything lives on your Mac. No cloud, no sync server, no telemetry. Apple App Group container, NSFileCoordinator. Your agents' work never leaves your machine.</p>
     </div>
   </div>
 
+  <section class="mcp-block">
+    <h2>Plug it into Claude in 10 seconds</h2>
+    <p>After installing Vellem, add this to <code>claude_desktop_config.json</code> and restart Claude:</p>
+    <pre><code>{
+  "mcpServers": {
+    "vellem": {
+      "command": "/Applications/Vellem.app/Contents/Resources/vellem-mcp"
+    }
+  }
+}</code></pre>
+    <p class="small">Claude can now say <em>"I'll save that report to Vellem"</em> — and actually do it. Same idea for Codex, or any MCP client.</p>
+  </section>
+
   <div class="install-steps">
-    <h2>Install</h2>
+    <h2>Install Vellem</h2>
     <ol>
       <li>Click <strong>Download for macOS</strong> above.</li>
       <li>Open the <code>Vellem-x.y.z.dmg</code> file.</li>
