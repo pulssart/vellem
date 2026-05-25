@@ -8,46 +8,41 @@ struct ContentView: View {
     @AppAccent private var accent
 
     var body: some View {
-        NavigationSplitView {
-            RecentNotesView(store: store)
-        } detail: {
-            if store.isTodaySelected {
-                if let note = selectedNote, isCreatedToday(note) {
-                    TodayNoteEditorContainer(store: store, note: note)
-                } else {
-                    TodayNotesListView(store: store)
+        Group {
+            if usesThreeColumnLayout {
+                NavigationSplitView {
+                    RecentNotesView(store: store)
+                } content: {
+                    if store.isTodaySelected {
+                        TodayNotesListView(store: store)
+                            .navigationSplitViewColumnWidth(min: 300, ideal: 360)
+                    } else if let folder = selectedFolder {
+                        FolderNotesListView(store: store, folder: folder)
+                            .navigationSplitViewColumnWidth(min: 300, ideal: 360)
+                    } else {
+                        EmptySelectionContentView()
+                            .navigationSplitViewColumnWidth(min: 280, ideal: 320)
+                    }
+                } detail: {
+                    scopedDetailView
                 }
-            } else if let folder = selectedFolder {
-                if let note = selectedNote, note.folderID == folder.id {
-                    FolderNoteEditorContainer(store: store, folder: folder, note: note)
-                } else {
-                    FolderNotesListView(store: store, folder: folder)
-                }
-            } else if let note = store.selectedNote {
-                NoteEditorView(store: store, note: note)
             } else {
-                EmptyNotesView(store: store)
+                NavigationSplitView {
+                    RecentNotesView(store: store)
+                } detail: {
+                    if let folder = selectedFolder, folder.kind == .smartPromptLibrary {
+                        FolderNotesListView(store: store, folder: folder)
+                    } else if let note = store.selectedNote {
+                        NoteEditorView(store: store, note: note)
+                    } else {
+                        EmptyNotesView(store: store)
+                    }
+                }
             }
         }
         .toolbarBackground(accent.color.opacity(0.28), for: .windowToolbar)
         .toolbarBackground(.visible, for: .windowToolbar)
         .toolbar {
-            if isShowingFolderNote || isShowingTodayNote {
-                ToolbarItem(placement: .navigation) {
-                    Button {
-                        if store.isTodaySelected {
-                            store.selectToday()
-                        } else {
-                            store.selectedNoteID = nil
-                        }
-                    } label: {
-                        Label(backButtonLabel, systemImage: "chevron.left")
-                    }
-                    .labelStyle(.iconOnly)
-                    .help(backButtonLabel)
-                }
-            }
-
             ToolbarItemGroup(placement: .primaryAction) {
                 Button {
                     store.createDraft()
@@ -91,22 +86,75 @@ struct ContentView: View {
         return store.notes.first { $0.id == selectedNoteID }
     }
 
-    private var isShowingFolderNote: Bool {
-        guard !store.isTodaySelected else { return false }
-        guard let folder = selectedFolder, let note = selectedNote else { return false }
-        return note.folderID == folder.id
+    private var selectedTodayNote: Note? {
+        guard let note = selectedNote, isCreatedToday(note) else { return nil }
+        return note
     }
 
-    private var isShowingTodayNote: Bool {
-        guard store.isTodaySelected, let note = selectedNote else { return false }
-        return isCreatedToday(note)
+    private var usesThreeColumnLayout: Bool {
+        if store.isTodaySelected {
+            return true
+        }
+
+        guard let selectedFolder else { return false }
+        return selectedFolder.kind != .smartPromptLibrary
     }
 
-    private var backButtonLabel: String {
-        store.isTodaySelected ? "Back to today" : "Back to folder"
+    @ViewBuilder
+    private var scopedDetailView: some View {
+        if store.isTodaySelected, let note = selectedTodayNote {
+            TodayNoteEditorContainer(store: store, note: note)
+        } else if let folder = selectedFolder, let note = selectedFolderNote(for: folder) {
+            FolderNoteEditorContainer(store: store, folder: folder, note: note)
+        } else {
+            EmptyDetailSelectionView()
+        }
     }
 
     private func isCreatedToday(_ note: Note) -> Bool {
         Calendar.current.isDateInToday(note.createdAt)
+    }
+
+    private func selectedFolderNote(for folder: Folder) -> Note? {
+        guard let note = selectedNote, store.noteMatchesDisplay(note, in: folder) else { return nil }
+        return note
+    }
+}
+
+private struct EmptySelectionContentView: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "square.split.2x1")
+                .font(.system(size: 26, weight: .regular))
+                .foregroundStyle(.tertiary)
+
+            Text("Choose a folder")
+                .font(.headline)
+
+            Text("Its notes will appear here.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(nsColor: .textBackgroundColor))
+    }
+}
+
+private struct EmptyDetailSelectionView: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "doc.text")
+                .font(.system(size: 30, weight: .regular))
+                .foregroundStyle(.tertiary)
+
+            Text("Select a note")
+                .font(.headline)
+
+            Text("Its content will open on the right.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(nsColor: .textBackgroundColor))
     }
 }

@@ -1,8 +1,10 @@
+import AppKit
 import SwiftUI
 
 struct QuickCaptureView: View {
     @ObservedObject var store: NotesStore
     @Environment(\.dismissWindow) private var dismissWindow
+    @AppAccent private var accent
 
     @AppStorage("quickCaptureAppendsToDailyNoteByChoice") private var appendsToDailyNote = false
     @AppStorage("quickCaptureFloatsAboveOtherWindows") private var floatsAboveOtherWindows = true
@@ -43,19 +45,19 @@ struct QuickCaptureView: View {
     }
 
     private var surfaceColor: Color {
-        Color(red: 1.0, green: 0.94, blue: 0.70)
+        Color(nsColor: accent.nsColor.blended(withFraction: 0.78, of: .windowBackgroundColor) ?? accent.nsColor)
     }
 
     private var inkColor: Color {
-        Color(red: 0.22, green: 0.16, blue: 0.04)
+        Color.primary
     }
 
     private var secondaryInkColor: Color {
-        inkColor.opacity(0.68)
+        Color.secondary
     }
 
     private var placeholderColor: Color {
-        inkColor.opacity(0.38)
+        Color.secondary.opacity(0.55)
     }
 
     private var header: some View {

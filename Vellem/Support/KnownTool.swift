@@ -6,6 +6,9 @@ enum KnownTool: String, CaseIterable, Identifiable, Hashable {
     case gmail
     case mail
     case calendar
+    case googleDocs
+    case googleSheets
+    case googleSlides
     case granola
     case linear
     case figma
@@ -20,6 +23,9 @@ enum KnownTool: String, CaseIterable, Identifiable, Hashable {
         case .gmail: "Gmail"
         case .mail: "Mail"
         case .calendar: "Calendar"
+        case .googleDocs: "Google Docs"
+        case .googleSheets: "Google Sheets"
+        case .googleSlides: "Google Slides"
         case .granola: "Granola"
         case .linear: "Linear"
         case .figma: "Figma"
@@ -36,7 +42,7 @@ enum KnownTool: String, CaseIterable, Identifiable, Hashable {
         case .figma: ["/Applications/Figma.app", "/Applications/Figma Beta.app"]
         case .notion: ["/Applications/Notion.app"]
         case .github: ["/Applications/GitHub Desktop.app"]
-        case .gmail, .mail, .calendar: []
+        case .gmail, .mail, .calendar, .googleDocs, .googleSheets, .googleSlides: []
         }
     }
 
@@ -67,6 +73,9 @@ enum KnownTool: String, CaseIterable, Identifiable, Hashable {
         case .gmail: "envelope.fill"
         case .mail: "envelope.fill"
         case .calendar: "calendar"
+        case .googleDocs: "doc.text.fill"
+        case .googleSheets: "tablecells.fill"
+        case .googleSlides: "rectangle.on.rectangle.fill"
         case .granola: "waveform"
         case .linear: "l.square.fill"
         case .figma: "f.cursive"
@@ -81,6 +90,9 @@ enum KnownTool: String, CaseIterable, Identifiable, Hashable {
         case .gmail:    Color(red: 0.92, green: 0.26, blue: 0.21) // Gmail red
         case .mail:     Color(red: 0.00, green: 0.48, blue: 1.00)
         case .calendar: Color(red: 0.10, green: 0.45, blue: 0.91) // Google Calendar blue
+        case .googleDocs: Color(red: 0.10, green: 0.45, blue: 0.91)
+        case .googleSheets: Color(red: 0.20, green: 0.66, blue: 0.33)
+        case .googleSlides: Color(red: 0.96, green: 0.62, blue: 0.04)
         case .granola:  Color(red: 1.00, green: 0.42, blue: 0.21)
         case .linear:   Color(red: 0.37, green: 0.42, blue: 0.82)
         case .figma:    Color(red: 0.95, green: 0.31, blue: 0.12)

@@ -9,9 +9,23 @@ struct FolderNotesListView: View {
     @State private var copiedIntegrationSetup = false
     @State private var copiedWorkflowID: AgentWorkflow.ID?
     @AppAccent private var accent
+    private let headerIconSize: CGFloat = 20
+    private let emptyStateIconSize: CGFloat = 28
+    private let smartFolderInk = Color(nsColor: NSColor(calibratedWhite: 0.22, alpha: 1))
 
     private var notes: [Note] {
-        store.notes.filter { $0.folderID == folder.id && !$0.isDailyNote }
+        store.notesForDisplay(in: folder)
+    }
+
+    private var workflowTargetApp: AgentApp {
+        switch folder.kind {
+        case .smartClaude:
+            .claude
+        case .smartCodex, .smartPromptLibrary:
+            .codex
+        default:
+            .claude
+        }
     }
 
     private var workflows: [AgentWorkflow] {
@@ -30,7 +44,7 @@ struct FolderNotesListView: View {
                         workflowCards
 
                         ForEach(notes) { note in
-                            FolderNoteListRow(note: note, onOpenViewer: {
+                            FolderNoteListRow(note: note, isSelected: store.selectedNoteID == note.id, onOpenViewer: {
                                 openInFloatingViewer(note)
                             }) {
                                 select(note)
@@ -73,30 +87,37 @@ struct FolderNotesListView: View {
         if !workflows.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("Ready-to-use workflows")
+                    Text(folder.kind == .smartPromptLibrary ? "Prompt library" : "Ready-to-use workflows")
                         .font(.headline)
 
                     Spacer()
 
-                    Text("Copy a prompt, paste it into \(folder.name).")
+                    Text(folder.kind == .smartPromptLibrary ? "Copy a prompt, paste it into Codex." : "Copy a prompt, paste it into \(folder.name).")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 10)], spacing: 10) {
-                    ForEach(workflows) { workflow in
-                        AgentWorkflowCard(
-                            workflow: workflow,
-                            isCopied: copiedWorkflowID == workflow.id,
-                            targetApp: folder.kind == .smartCodex ? .codex : .claude
-                        ) {
-                            copy(workflow.prompt)
-                            copiedWorkflowID = workflow.id
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                                if copiedWorkflowID == workflow.id {
-                                    copiedWorkflowID = nil
+                if folder.kind == .smartPromptLibrary {
+                    ForEach(AgentWorkflowCategory.allCases) { category in
+                        let categoryWorkflows = workflows.filter { $0.category == category }
+                        if !categoryWorkflows.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(category.title)
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+
+                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 10)], spacing: 10) {
+                                    ForEach(categoryWorkflows) { workflow in
+                                        workflowCard(workflow)
+                                    }
                                 }
                             }
+                        }
+                    }
+                } else {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 10)], spacing: 10) {
+                        ForEach(workflows) { workflow in
+                            workflowCard(workflow)
                         }
                     }
                 }
@@ -112,8 +133,8 @@ struct FolderNotesListView: View {
     private var header: some View {
         HStack(spacing: 10) {
             Image(systemName: folder.systemImage)
-                .font(.system(size: 24, weight: .semibold))
-                .foregroundStyle(FolderColor.named(folder.color)?.swiftUIColor ?? accent.color)
+                .font(.system(size: headerIconSize, weight: .semibold))
+                .foregroundStyle(folder.isSmart ? smartFolderInk : (FolderColor.named(folder.color)?.swiftUIColor ?? accent.color))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(folder.name)
@@ -144,10 +165,32 @@ struct FolderNotesListView: View {
         Group {
             if let guide = IntegrationGuide(folder: folder) {
                 integrationEmptyState(guide)
+            } else if folder.kind == .smartPromptLibrary {
+                ScrollView {
+                    VStack(spacing: 16) {
+                        VStack(spacing: 10) {
+                            Image(systemName: folder.outlineSystemImage)
+                                .font(.system(size: emptyStateIconSize, weight: .regular))
+                                .foregroundStyle(folder.isSmart ? smartFolderInk : (FolderColor.named(folder.color)?.swiftUIColor ?? accent.color))
+
+                            Text("Prompt Library")
+                                .font(.headline)
+
+                            Text("A large set of ready-to-use prompts, grouped by category.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 24)
+
+                        workflowCards
+                    }
+                    .padding(20)
+                }
             } else {
                 VStack(spacing: 10) {
                     Image(systemName: folder.outlineSystemImage)
-                        .font(.system(size: 34, weight: .regular))
+                        .font(.system(size: emptyStateIconSize, weight: .regular))
                         .foregroundStyle(.tertiary)
 
                     Text("No notes in this folder")
@@ -166,8 +209,8 @@ struct FolderNotesListView: View {
     private func integrationEmptyState(_ guide: IntegrationGuide) -> some View {
         VStack(spacing: 16) {
             Image(systemName: folder.outlineSystemImage)
-                .font(.system(size: 34, weight: .regular))
-                .foregroundStyle(FolderColor.named(folder.color)?.swiftUIColor ?? accent.color)
+                .font(.system(size: emptyStateIconSize, weight: .regular))
+                .foregroundStyle(folder.isSmart ? smartFolderInk : (FolderColor.named(folder.color)?.swiftUIColor ?? accent.color))
 
             VStack(spacing: 5) {
                 Text("Connect \(folder.name) to Vellem")
@@ -213,8 +256,6 @@ struct FolderNotesListView: View {
             }
             .frame(maxWidth: 560)
 
-            workflowCards
-                .frame(maxWidth: 720)
         }
     }
 
@@ -244,7 +285,6 @@ struct FolderNotesListView: View {
         }
         Button("Delete", role: .destructive) {
             store.delete(note)
-            store.selectedNoteID = nil
         }
     }
 
@@ -271,6 +311,22 @@ struct FolderNotesListView: View {
     private func copy(_ value: String) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(value, forType: .string)
+    }
+
+    private func workflowCard(_ workflow: AgentWorkflow) -> some View {
+        AgentWorkflowCard(
+            workflow: workflow,
+            isCopied: copiedWorkflowID == workflow.id,
+            targetApp: workflowTargetApp
+        ) {
+            copy(workflow.prompt)
+            copiedWorkflowID = workflow.id
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                if copiedWorkflowID == workflow.id {
+                    copiedWorkflowID = nil
+                }
+            }
+        }
     }
 
     private func openInFloatingViewer(_ note: Note) {
@@ -315,20 +371,47 @@ private struct IntegrationGuide {
     }
 }
 
+private enum AgentWorkflowCategory: String, CaseIterable, Identifiable {
+    case research
+    case meetings
+    case product
+    case design
+    case docs
+    case inbox
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .research:
+            "Research and interviews"
+        case .meetings:
+            "Meetings and coordination"
+        case .product:
+            "Product and execution"
+        case .design:
+            "Design and feedback"
+        case .docs:
+            "Docs, sheets, and slides"
+        case .inbox:
+            "Inbox and customer signals"
+        }
+    }
+}
+
 private struct AgentWorkflow: Identifiable {
     let id: String
     let title: String
     let description: String
     let systemImage: String
     let prompt: String
+    var category: AgentWorkflowCategory?
     var tools: [KnownTool] = []
 
     static func workflows(for folder: Folder) -> [AgentWorkflow] {
         switch folder.kind {
-        case .smartClaude:
-            return claudeWorkflows
-        case .smartCodex:
-            return codexWorkflows
+        case .smartPromptLibrary:
+            return promptLibraryWorkflows
         default:
             return []
         }
@@ -422,139 +505,251 @@ private struct AgentWorkflow: Identifiable {
         )
     ]
 
-    private static let codexWorkflows: [AgentWorkflow] = [
+    private static let promptLibraryWorkflows: [AgentWorkflow] = [
         AgentWorkflow(
-            id: "codex-save-audit",
-            title: "Save audit to Codex",
-            description: "Store a structured review in the Codex folder.",
-            systemImage: "checkmark.seal",
+            id: "prompt-user-interview-summary",
+            title: "Granola user interview summary",
+            description: "Turn a raw interview into a clean product readout.",
+            systemImage: "person.crop.rectangle.stack",
             prompt: """
-            When you finish a code audit, save the final report to Vellem using the `add_note` tool.
-            Use `folder_name: "Codex"`.
-            Title the note clearly.
-            Include findings first, then risks, then concrete next steps.
-            """
+            Review the relevant Granola note for this user interview.
+            Use the Vellem MCP throughout. Start with `search_notes` to find prior customer notes, previous interviews, and any existing context in the Codex or research folders.
+            Then produce a structured summary with these sections: who the user is, team and role, current product usage, workflow, goals, needs, expectations, frustrations, workarounds, quotes worth keeping, feature requests, ideas for improvement, and signals that should influence roadmap priority.
+            End with three parts: what changed our understanding, what to do next, and open questions to validate in the next interview.
+            Save the final write-up to Vellem with `add_note`, use a clear title, and store it in the `Codex` folder.
+            If the interview creates concrete tasks, also create a Vellem checklist with `create_todo_list`.
+            """,
+            category: .research,
+            tools: [.granola, .notion, .linear]
         ),
         AgentWorkflow(
-            id: "codex-implementation-todos",
-            title: "Create implementation todos",
-            description: "Turn a plan into a Vellem checklist.",
-            systemImage: "checklist",
+            id: "prompt-meeting-summary-todos",
+            title: "Granola meeting summary and todo",
+            description: "Extract decisions, owners, and next moves from a meeting.",
+            systemImage: "checklist.checked",
             prompt: """
-            Turn the implementation plan into a todo list in Vellem using `create_todo_list`.
-            Use `folder_name: "Codex"`.
-            Keep each task concrete, small, and verifiable.
-            """
+            Review the Granola note for this meeting.
+            Use the Vellem MCP throughout. First run `search_notes` to recover prior notes, decision logs, and open follow-ups on the same topic.
+            Write a tight meeting recap with: purpose, attendees, context, decisions made, work agreed, blockers, unanswered questions, and what needs to happen next.
+            Then convert the action items into an actionable Vellem checklist with `create_todo_list`, each item with a verb and an owner when available.
+            Save the meeting summary to Vellem with `add_note` in the `Codex` folder, and append a short version to today with `append_to_daily`.
+            """,
+            category: .meetings,
+            tools: [.granola, .calendar, .notion]
         ),
         AgentWorkflow(
-            id: "codex-project-memory",
-            title: "Search project memory",
-            description: "Use older notes before making changes.",
-            systemImage: "magnifyingglass",
+            id: "prompt-weekly-research-digest",
+            title: "Weekly research digest",
+            description: "Merge interviews into one clear product signal report.",
+            systemImage: "chart.bar.doc.horizontal",
             prompt: """
-            Before changing the project, search Vellem with `search_notes` for relevant prior decisions, audits, and implementation notes.
-            Prefer notes from the Codex folder.
-            Summarize what matters before you edit files.
-            """
+            Look across the latest Granola interview notes and related Notion research docs.
+            Use the Vellem MCP throughout. Start with `search_notes` to gather previous syntheses and avoid repeating old conclusions.
+            Build a weekly digest grouped by themes: repeated pains, unmet needs, buying signals, product confusion, feature requests, and patterns by segment.
+            Finish with what the product team should change this week.
+            Save the digest with `add_note` to the `Codex` folder, and create a Vellem todo list for the follow-ups that deserve action.
+            """,
+            category: .research,
+            tools: [.granola, .notion]
         ),
         AgentWorkflow(
-            id: "codex-daily-progress",
-            title: "Append progress to today",
-            description: "Keep the daily work log current.",
-            systemImage: "calendar.badge.plus",
+            id: "prompt-calendar-brief",
+            title: "Meeting prep brief",
+            description: "Prepare before a call with context from your stack.",
+            systemImage: "calendar.badge.exclamationmark",
             prompt: """
-            At the end of this task, append a short progress note to today's Vellem note with `append_to_daily`.
-            Include what changed, what was verified, and what remains open.
-            """
+            Review the upcoming Google Calendar event, then gather context from Gmail, Slack, Granola, and Vellem.
+            Use the Vellem MCP throughout. Run `search_notes` first for prior meeting notes, decision logs, and open questions.
+            Write a concise prep brief with attendee context, current project state, last decisions, risks to address, and the five questions that matter most.
+            Save it to Vellem with `add_note` in `Codex`, then append a very short version to today with `append_to_daily`.
+            """,
+            category: .meetings,
+            tools: [.calendar, .gmail, .slack, .granola]
         ),
         AgentWorkflow(
-            id: "codex-bug-repro",
-            title: "Save bug reproduction",
-            description: "Capture steps, expected result, and actual result.",
-            systemImage: "ladybug",
+            id: "prompt-slack-decision-log",
+            title: "Slack decision log",
+            description: "Turn noisy threads into durable decisions.",
+            systemImage: "text.bubble",
             prompt: """
-            When you identify a bug, save a reproduction note to Vellem using `add_note`.
-            Use `folder_name: "Codex"`.
-            Include steps to reproduce, expected result, actual result, likely cause, and files involved.
-            """
+            Review the relevant Slack thread.
+            Use the Vellem MCP throughout. Search Vellem first with `search_notes` for earlier context, then summarize the thread into: issue, options discussed, decision, rationale, trade-offs, people involved, and what still needs an answer.
+            Save the decision log with `add_note` in the `Codex` folder.
+            If the thread contains work to do, create a checklist in Vellem with `create_todo_list`.
+            """,
+            category: .meetings,
+            tools: [.slack]
         ),
         AgentWorkflow(
-            id: "codex-pr-summary",
-            title: "Save PR summary",
-            description: "Keep a short technical summary after changes.",
-            systemImage: "arrow.triangle.pull",
+            id: "prompt-slack-escalations",
+            title: "Slack requests awaiting answer",
+            description: "Find asks that are sitting there and need a reply.",
+            systemImage: "bubble.left.and.exclamationmark.bubble.right",
             prompt: """
-            After finishing the implementation, save a PR-style summary to Vellem using `add_note`.
-            Use `folder_name: "Codex"`.
-            Include changed files, behavior changes, verification, and follow-up risks.
-            """
-        )
-    ]
-
-    private static let claudeWorkflows: [AgentWorkflow] = [
-        AgentWorkflow(
-            id: "claude-research-note",
-            title: "Save research note",
-            description: "Keep research output in the Claude folder.",
-            systemImage: "doc.text.magnifyingglass",
-            prompt: """
-            When you finish the research, save a clear research note to Vellem using `add_note`.
-            Use `folder_name: "Claude"`.
-            Include the question, the answer, useful sources, and open questions.
-            """
+            Scan recent Slack activity and identify requests, mentions, or blocked threads still waiting for an answer.
+            Use the Vellem MCP throughout. Search existing Vellem notes first so you can link each request to the right project context.
+            Return a short triage by priority: what needs a reply today, what can wait, and what should become a task.
+            Save the triage to Vellem with `add_note`, then create a Vellem todo list for the items that need follow-up.
+            """,
+            category: .inbox,
+            tools: [.slack]
         ),
         AgentWorkflow(
-            id: "claude-meeting-prep",
-            title: "Append meeting prep",
-            description: "Add prep notes to today's note.",
-            systemImage: "person.2",
+            id: "prompt-linear-ship-room",
+            title: "Linear ship room",
+            description: "Turn issue movement into a focused execution note.",
+            systemImage: "shippingbox",
             prompt: """
-            Prepare concise meeting notes, then append them to today's Vellem note with `append_to_daily`.
-            Include context, goals, questions to ask, and decisions to confirm.
-            """
+            Review recent Linear issue movement for the project.
+            Use the Vellem MCP throughout. Start with `search_notes` to recover previous plans, bug logs, and release notes.
+            Summarize what moved forward, what is blocked, which comments need follow-up, and what the team should tackle next.
+            Save the execution note with `add_note` in `Codex`, then create a Vellem todo list for next-up tickets and blockers.
+            """,
+            category: .product,
+            tools: [.linear, .notion]
         ),
         AgentWorkflow(
-            id: "claude-action-list",
-            title: "Create action list",
-            description: "Turn discussion into tasks.",
-            systemImage: "checklist",
+            id: "prompt-linear-spec-gap",
+            title: "Spec gap finder",
+            description: "Compare Linear work against Notion docs and find holes.",
+            systemImage: "arrow.left.and.right.text.vertical",
             prompt: """
-            Turn this discussion into a Vellem todo list with `create_todo_list`.
-            Use `folder_name: "Claude"`.
-            Each task should start with a verb and be easy to verify.
-            """
+            Compare the active Linear tickets with the relevant Notion product spec.
+            Use the Vellem MCP throughout. Search Vellem first for prior audits and implementation notes.
+            Produce a gap review with: unclear acceptance criteria, missing dependencies, unresolved design decisions, outdated documentation, and risks before shipping.
+            Save it to Vellem with `add_note` in `Codex`.
+            If the gaps are actionable, create a Vellem checklist with `create_todo_list`.
+            """,
+            category: .product,
+            tools: [.linear, .notion]
         ),
         AgentWorkflow(
-            id: "claude-memory-search",
-            title: "Search memory first",
-            description: "Recover previous notes before answering.",
-            systemImage: "clock.arrow.circlepath",
+            id: "prompt-roadmap-from-signals",
+            title: "Roadmap from signals",
+            description: "Combine interviews, tickets, and support into a priority view.",
+            systemImage: "point.topleft.down.curvedto.point.bottomright.up",
             prompt: """
-            Before answering, search Vellem with `search_notes` for related notes.
-            Use the results as context, then mention which notes influenced the answer.
-            """
+            Pull product signals from Granola, Gmail, Slack, Linear, and Notion.
+            Use the Vellem MCP throughout. Search Vellem for previous roadmap notes and decision logs before you synthesize.
+            Group the insights into themes, score them by urgency and impact, then propose what deserves to move onto the roadmap now, later, or never.
+            Save the roadmap note to Vellem with `add_note`, and create a checklist for the top priority investigations.
+            """,
+            category: .product,
+            tools: [.granola, .gmail, .slack, .linear, .notion]
         ),
         AgentWorkflow(
-            id: "claude-decision-log",
-            title: "Save decision log",
-            description: "Record decisions with rationale.",
-            systemImage: "checkmark.bubble",
+            id: "prompt-figma-feedback-summary",
+            title: "Figma feedback summary",
+            description: "Collect design changes, comments, and what is ready.",
+            systemImage: "paintbrush.pointed",
             prompt: """
-            When a decision is made, save it to Vellem using `add_note`.
-            Use `folder_name: "Claude"`.
-            Include the decision, context, rationale, alternatives considered, and next step.
-            """
+            Review the relevant Figma file and comments.
+            Use the Vellem MCP throughout. Start with `search_notes` to find earlier design reviews, product decisions, and handoff notes.
+            Summarize changed screens, key feedback, decisions made, unresolved UX questions, and what is ready for handoff.
+            Save the summary to Vellem with `add_note` in `Codex`, and add a todo list for the design or engineering follow-ups if needed.
+            """,
+            category: .design,
+            tools: [.figma, .notion]
         ),
         AgentWorkflow(
-            id: "claude-summarize-thread",
-            title: "Summarize thread",
-            description: "Turn a long exchange into a clean note.",
-            systemImage: "text.alignleft",
+            id: "prompt-design-handoff",
+            title: "Design handoff pack",
+            description: "Turn Figma into something engineering can actually use.",
+            systemImage: "square.and.arrow.down.on.square",
             prompt: """
-            Summarize this thread into a clean Vellem note using `add_note`.
-            Use `folder_name: "Claude"`.
-            Keep the summary practical: context, key points, decisions, tasks, and open questions.
-            """
+            Review the target Figma screens and the linked product context.
+            Use the Vellem MCP throughout. Search prior implementation notes in Vellem first.
+            Produce a handoff note with the purpose of the flow, changed states, edge cases, copy details, interaction notes, open implementation questions, and what must not regress.
+            Save it to Vellem with `add_note` in `Codex`, and create a Vellem checklist for the implementation steps.
+            """,
+            category: .design,
+            tools: [.figma, .linear, .notion]
+        ),
+        AgentWorkflow(
+            id: "prompt-notion-spec-summary",
+            title: "Notion spec summary",
+            description: "Shrink a long spec into something readable and useful.",
+            systemImage: "doc.richtext",
+            prompt: """
+            Review the relevant Notion page or database entry.
+            Use the Vellem MCP throughout. Run `search_notes` first for earlier summaries, decisions, and implementation notes.
+            Summarize the spec into: problem, target user, scope, non-goals, key requirements, risks, open questions, and next actions.
+            Save the result to Vellem with `add_note` in `Codex`.
+            If the spec implies concrete work, create a Vellem checklist with `create_todo_list`.
+            """,
+            category: .docs,
+            tools: [.notion]
+        ),
+        AgentWorkflow(
+            id: "prompt-google-doc-brief",
+            title: "Google Doc exec brief",
+            description: "Turn a doc into a compact brief with the decisions exposed.",
+            systemImage: "doc.plaintext",
+            prompt: """
+            Review the Google Doc.
+            Use the Vellem MCP throughout. Search Vellem first for earlier context and duplicate summaries.
+            Write a compact brief with: what this doc is about, what changed, the decisions inside it, what still needs a call, and what the team should do next.
+            Save the brief to Vellem with `add_note`, and append the top three points to today with `append_to_daily` if they matter now.
+            """,
+            category: .docs,
+            tools: [.googleDocs]
+        ),
+        AgentWorkflow(
+            id: "prompt-google-sheet-signals",
+            title: "Google Sheet signal readout",
+            description: "Turn a sheet into product signals, not spreadsheet soup.",
+            systemImage: "tablecells",
+            prompt: """
+            Review the Google Sheet and identify the signals that matter.
+            Use the Vellem MCP throughout. Search Vellem first for previous analyses so you can compare trends instead of restating the obvious.
+            Summarize the important numbers, anomalies, patterns, risks, and questions that need investigation.
+            Save the readout to Vellem with `add_note`, and create a Vellem checklist for the follow-up analyses or fixes.
+            """,
+            category: .docs,
+            tools: [.googleSheets, .linear]
+        ),
+        AgentWorkflow(
+            id: "prompt-google-slides-review",
+            title: "Slides review memo",
+            description: "Review a deck and call out what lands, what confuses, what is missing.",
+            systemImage: "menucard",
+            prompt: """
+            Review the Google Slides deck.
+            Use the Vellem MCP throughout. Search Vellem first for prior positioning notes, product docs, and meeting context.
+            Write a review memo with narrative quality, clarity of the ask, weak slides, missing proof points, and what should change before the next presentation.
+            Save it to Vellem with `add_note` in `Codex`.
+            If the deck needs a revision plan, create a Vellem checklist.
+            """,
+            category: .docs,
+            tools: [.googleSlides, .notion]
+        ),
+        AgentWorkflow(
+            id: "prompt-gmail-replies",
+            title: "Emails needing reply",
+            description: "Surface the mails that should not rot in the inbox.",
+            systemImage: "envelope.badge",
+            prompt: """
+            Review recent Gmail threads and identify emails that need a reply.
+            Use the Vellem MCP throughout. Search Vellem first for linked project notes, previous decisions, and customer context.
+            Group the output into urgent replies, contracts or deliverables, customer signals, and threads that can be ignored.
+            Save the triage to Vellem with `add_note`, and create a Vellem todo list for the replies that must go out today.
+            """,
+            category: .inbox,
+            tools: [.gmail]
+        ),
+        AgentWorkflow(
+            id: "prompt-customer-health-brief",
+            title: "Customer health brief",
+            description: "Merge inbox, Slack, and meetings into one account view.",
+            systemImage: "heart.text.square",
+            prompt: """
+            Pull customer signals from Gmail, Slack, Granola, and Notion.
+            Use the Vellem MCP throughout. Search Vellem first for previous account notes and follow-ups.
+            Build a health brief with current relationship status, goals, friction points, risk signals, asks from the customer, and the next move we should make.
+            Save it with `add_note` in `Codex`, and create a Vellem checklist for the account actions.
+            """,
+            category: .inbox,
+            tools: [.gmail, .slack, .granola, .notion]
         )
     ]
 }
@@ -571,7 +766,7 @@ private struct AgentWorkflowCard: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 8) {
                 Image(systemName: workflow.systemImage)
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(accent.color)
                     .frame(width: 22, height: 22)
 
@@ -641,11 +836,18 @@ struct FolderNoteEditorContainer: View {
 struct TodayNotesListView: View {
     @ObservedObject var store: NotesStore
     @Environment(\.openWindow) private var openWindow
-    @State private var copiedWorkflowID: AgentWorkflow.ID?
     @AppAccent private var accent
+    private let smartFolderInk = Color(nsColor: NSColor(calibratedWhite: 0.22, alpha: 1))
 
     private var notes: [Note] {
-        store.notes.filter { Calendar.current.isDateInToday($0.createdAt) }
+        store.notes
+            .filter { Calendar.current.isDateInToday($0.createdAt) }
+            .sorted { lhs, rhs in
+                if lhs.createdAt == rhs.createdAt {
+                    return lhs.updatedAt > rhs.updatedAt
+                }
+                return lhs.createdAt > rhs.createdAt
+            }
     }
 
     var body: some View {
@@ -656,11 +858,9 @@ struct TodayNotesListView: View {
                 emptyState
             } else {
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 12) {
-                        workflowCards
-
+                    LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(notes) { note in
-                            FolderNoteListRow(note: note, onOpenViewer: {
+                            TodayTimelineRow(note: note, isSelected: store.selectedNoteID == note.id, accent: accent.color, onOpenViewer: {
                                 openInFloatingViewer(note)
                             }) {
                                 store.selectNote(note.id, inToday: true)
@@ -688,8 +888,8 @@ struct TodayNotesListView: View {
     private var header: some View {
         HStack(spacing: 10) {
             Image(systemName: "calendar")
-                .font(.system(size: 24, weight: .semibold))
-                .foregroundStyle(accent.color)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(smartFolderInk)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Today")
@@ -708,67 +908,21 @@ struct TodayNotesListView: View {
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
-    private var workflowCards: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Daily log prompts")
-                    .font(.headline)
-
-                Spacer()
-
-                Text("Copy a prompt, paste it into your agent.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 10)], spacing: 10) {
-                ForEach(AgentWorkflow.dailyLogWorkflows) { workflow in
-                    AgentWorkflowCard(
-                        workflow: workflow,
-                        isCopied: copiedWorkflowID == workflow.id,
-                        targetApp: .claude
-                    ) {
-                        copy(workflow.prompt)
-                        copiedWorkflowID = workflow.id
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                            if copiedWorkflowID == workflow.id {
-                                copiedWorkflowID = nil
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color(nsColor: .windowBackgroundColor))
-        )
-    }
-
     private var emptyState: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                VStack(spacing: 10) {
-                    Image(systemName: "calendar")
-                        .font(.system(size: 34, weight: .regular))
-                        .foregroundStyle(.tertiary)
+        VStack(spacing: 10) {
+            Image(systemName: "calendar")
+                .font(.system(size: 28, weight: .regular))
+                .foregroundStyle(.tertiary)
 
-                    Text("No notes today")
-                        .font(.headline)
+            Text("No notes today")
+                .font(.headline)
 
-                    Text("Notes created today will appear here.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.top, 24)
-
-                workflowCards
-            }
-            .padding(20)
+            Text("Notes created today will appear here in order.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(32)
     }
 
     @ViewBuilder
@@ -797,7 +951,6 @@ struct TodayNotesListView: View {
         }
         Button("Delete", role: .destructive) {
             store.delete(note)
-            store.selectedNoteID = nil
         }
     }
 
@@ -813,6 +966,114 @@ struct TodayNotesListView: View {
     }
 }
 
+private struct TodayTimelineRow: View {
+    let note: Note
+    let isSelected: Bool
+    let accent: Color
+    var onOpenViewer: (() -> Void)? = nil
+    let onSelect: () -> Void
+    @State private var isHovering = false
+
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter
+    }()
+
+    private var timelineTime: String {
+        Self.timeFormatter.string(from: note.createdAt)
+    }
+
+    var body: some View {
+        Button(action: onSelect) {
+            HStack(alignment: .top, spacing: 18) {
+                Text(timelineTime)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(isSelected ? accent : .secondary)
+                    .frame(width: 44, alignment: .trailing)
+                    .padding(.top, 4)
+
+                VStack(spacing: 0) {
+                    Circle()
+                        .fill(isSelected ? accent : (note.isRead ? Color.secondary.opacity(0.32) : accent))
+                        .frame(width: 10, height: 10)
+
+                    Rectangle()
+                        .fill(Color.secondary.opacity(0.14))
+                        .frame(width: 1)
+                        .frame(maxHeight: .infinity)
+                        .padding(.top, 6)
+                }
+                .frame(width: 10)
+
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 6) {
+                            if note.isDailyNote {
+                                Image(systemName: "calendar")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            if !note.isRead {
+                                Circle()
+                                    .fill(accent)
+                                    .frame(width: 7, height: 7)
+                                    .accessibilityLabel("Unread")
+                            }
+
+                            Text(note.title)
+                                .font(.body.weight(note.isRead ? .semibold : .bold))
+                                .foregroundStyle(isSelected ? .primary : .primary)
+                                .lineLimit(1)
+                        }
+
+                        Text(note.preview)
+                            .font(.callout)
+                            .foregroundStyle(isSelected ? Color.primary.opacity(0.8) : Color.secondary)
+                            .lineLimit(2)
+
+                        HStack(spacing: 8) {
+                            Text(note.updatedAt, style: .relative)
+                            Text("\(note.wordCount) words")
+                        }
+                        .font(.caption)
+                        .foregroundStyle(isSelected ? .secondary : .tertiary)
+                    }
+
+                    Spacer(minLength: 0)
+
+                    if let onOpenViewer, isHovering {
+                        Button {
+                            onOpenViewer()
+                        } label: {
+                            Image(systemName: "rectangle.on.rectangle")
+                        }
+                        .buttonStyle(.borderless)
+                        .help("Open in floating window")
+                    }
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(isSelected ? accent : (isHovering ? Color.secondary : Color.secondary.opacity(0.55)))
+                        .padding(.top, 4)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(isSelected ? accent.opacity(0.24) : (isHovering ? accent.opacity(0.14) : Color(nsColor: .windowBackgroundColor)))
+                )
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            isHovering = hovering
+        }
+    }
+}
+
 struct TodayNoteEditorContainer: View {
     @ObservedObject var store: NotesStore
     let note: Note
@@ -824,6 +1085,7 @@ struct TodayNoteEditorContainer: View {
 
 private struct FolderNoteListRow: View {
     let note: Note
+    var isSelected: Bool = false
     var onOpenViewer: (() -> Void)? = nil
     let onSelect: () -> Void
     @State private var isHovering = false
@@ -848,7 +1110,7 @@ private struct FolderNoteListRow: View {
 
                     Text(note.preview)
                         .font(.callout)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(isSelected ? Color.primary.opacity(0.8) : Color.secondary)
                         .lineLimit(2)
 
                     HStack(spacing: 8) {
@@ -856,7 +1118,7 @@ private struct FolderNoteListRow: View {
                         Text("\(note.wordCount) words")
                     }
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(isSelected ? .secondary : .tertiary)
                 }
 
                 Spacer()
@@ -873,7 +1135,7 @@ private struct FolderNoteListRow: View {
 
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.semibold))
-                    .foregroundStyle(isHovering ? .secondary : .tertiary)
+                    .foregroundStyle(isSelected ? accent.color : (isHovering ? Color.secondary : Color.secondary.opacity(0.55)))
                     .padding(.top, 3)
             }
             .contentShape(Rectangle())
@@ -881,7 +1143,7 @@ private struct FolderNoteListRow: View {
             .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(isHovering ? accent.color.opacity(0.16) : Color.clear)
+                    .fill(isSelected ? accent.color.opacity(0.24) : (isHovering ? accent.color.opacity(0.16) : Color.clear))
             )
         }
         .buttonStyle(.plain)

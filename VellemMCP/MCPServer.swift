@@ -354,7 +354,7 @@ final class MCPServer {
             let notes = try store.listNotes(limit: 10_000)
             let f = ISO8601DateFormatter()
             return folders.map { folder in
-                let count = notes.filter { $0.folderID == folder.id }.count
+                let count = notes.filter { noteMatchesFolderDisplay($0, folder: folder) }.count
                 return "\(folder.id)  \(folder.name)  (\(count) notes, created \(f.string(from: folder.createdAt)))"
             }.joined(separator: "\n")
 
@@ -462,6 +462,21 @@ final class MCPServer {
             meta += "folder: \(folderName ?? "<missing>") (\(folderID))\n"
         }
         return meta + "\n---\n\n" + note.text
+    }
+
+    private func noteMatchesFolderDisplay(_ note: Note, folder: Folder) -> Bool {
+        guard !note.isDailyNote else { return false }
+
+        switch folder.kind {
+        case .smartClaude:
+            return note.folderID == folder.id || (note.sourceApp?.localizedCaseInsensitiveContains("claude") == true)
+        case .smartCodex:
+            return note.folderID == folder.id || (note.sourceApp?.localizedCaseInsensitiveContains("codex") == true)
+        case .smartPromptLibrary:
+            return false
+        case .smartServices, .regular:
+            return note.folderID == folder.id
+        }
     }
 
     private func parseTodoItems(_ value: Any?) throws -> [(text: String, checked: Bool)] {

@@ -5,6 +5,18 @@ enum FolderKind: String, Codable, Hashable {
     case smartServices
     case smartClaude
     case smartCodex
+    case smartPromptLibrary
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let rawValue = try container.decode(String.self)
+        self = FolderKind(rawValue: rawValue) ?? .regular
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
+    }
 }
 
 struct Folder: Identifiable, Codable, Hashable {
@@ -24,6 +36,8 @@ struct Folder: Identifiable, Codable, Hashable {
             "terminal.fill"
         case .smartCodex:
             "terminal.fill"
+        case .smartPromptLibrary:
+            "books.vertical.fill"
         case .regular:
             "folder.fill"
         }
@@ -37,6 +51,8 @@ struct Folder: Identifiable, Codable, Hashable {
             "terminal"
         case .smartCodex:
             "terminal"
+        case .smartPromptLibrary:
+            "books.vertical"
         case .regular:
             "folder"
         }

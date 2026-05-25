@@ -20,7 +20,7 @@ struct VellemApp: App {
     var body: some Scene {
         WindowGroup("Vellem", id: "main") {
             ContentView(store: store)
-                .frame(minWidth: 760, minHeight: 520)
+                .frame(minWidth: 1080, minHeight: 620)
                 .tint(accent.color)
                 .background(ExternalNoteEventBridge(store: store))
                 .onOpenURL { url in

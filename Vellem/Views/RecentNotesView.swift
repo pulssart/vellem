@@ -42,7 +42,11 @@ struct RecentNotesView: View {
     @State private var hoveredFolderID: UUID?
     @State private var isHoveringToday = false
     @State private var isRootDropTargeted = false
+    @State private var isAllNotesCollapsed = false
     @AppAccent private var accent
+    private let sidebarIconSize: CGFloat = 18
+    private let sidebarIconFrameWidth: CGFloat = 22
+    private let smartFolderInk = Color(nsColor: NSColor(calibratedWhite: 0.22, alpha: 1))
 
     var body: some View {
         ScrollView {
@@ -80,24 +84,25 @@ struct RecentNotesView: View {
 
         return HStack(spacing: 8) {
             Image(systemName: "calendar")
-                .font(.system(size: 24, weight: .semibold))
-                .foregroundStyle(accent.color)
-                .frame(width: 28, alignment: .leading)
+                .font(.system(size: sidebarIconSize, weight: .semibold))
+                .foregroundStyle(smartFolderInk)
+                .frame(width: sidebarIconFrameWidth, alignment: .leading)
 
             Text("Today")
+                .font(.system(size: 15))
                 .lineLimit(1)
 
             Spacer()
 
             if count > 0 {
                 Text("\(count)")
-                    .font(.caption2)
+                    .font(.system(size: 13))
                     .foregroundStyle(.tertiary)
             }
         }
         .padding(.leading, 8)
         .padding(.trailing, 10)
-        .padding(.vertical, 5)
+        .padding(.vertical, 7)
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(store.isTodaySelected ? accent.color.opacity(0.34) : (isHoveringToday ? accent.color.opacity(0.18) : Color.clear))
@@ -141,27 +146,34 @@ struct RecentNotesView: View {
 
     private var rootNotesSection: some View {
         Group {
-            sectionHeader(store.folders.isEmpty ? "Notes" : "All notes")
-
-            VStack(alignment: .leading, spacing: 2) {
-                ForEach(rootNotes) { note in
-                    row(for: note)
-                }
+            collapsibleSectionHeader(
+                store.folders.isEmpty ? "Notes" : "All notes",
+                isCollapsed: isAllNotesCollapsed
+            ) {
+                isAllNotesCollapsed.toggle()
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .stroke(
-                        isRootDropTargeted ? accent.color : Color.clear,
-                        lineWidth: 1.5
-                    )
-                    .padding(.horizontal, 4)
-            )
-            .dropDestination(for: String.self) { items, _ in
-                handleDrop(items: items, intoFolder: nil)
-            } isTargeted: { hovering in
-                isRootDropTargeted = hovering
+
+            if !isAllNotesCollapsed {
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(allNotes) { note in
+                        row(for: note)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(
+                            isRootDropTargeted ? accent.color : Color.clear,
+                            lineWidth: 1.5
+                        )
+                        .padding(.horizontal, 4)
+                )
+                .dropDestination(for: String.self) { items, _ in
+                    handleDrop(items: items, intoFolder: nil)
+                } isTargeted: { hovering in
+                    isRootDropTargeted = hovering
+                }
             }
         }
     }
@@ -169,13 +181,13 @@ struct RecentNotesView: View {
     private func folderRow(_ folder: Folder) -> some View {
         let isHovering = hoveredFolderID == folder.id
         let isSelected = !store.isTodaySelected && store.selectedFolderID == folder.id
-        let count = store.notes.filter { $0.folderID == folder.id }.count
+        let count = store.noteCountForDisplay(in: folder)
 
         return HStack(spacing: 8) {
             Image(systemName: folderIconName(for: folder, selected: isSelected))
-                .font(.system(size: 24, weight: .semibold))
-                .foregroundStyle(FolderColor.named(folder.color)?.swiftUIColor ?? accent.color)
-                .frame(width: 28, alignment: .leading)
+                .font(.system(size: sidebarIconSize, weight: .semibold))
+                .foregroundStyle(folderIconColor(for: folder))
+                .frame(width: sidebarIconFrameWidth, alignment: .leading)
 
             if renamingFolderID == folder.id {
                 TextField("Folder name", text: $renameDraft, onCommit: {
@@ -186,18 +198,19 @@ struct RecentNotesView: View {
                 .onExitCommand { renamingFolderID = nil }
             } else {
                 Text(folder.name)
+                    .font(.system(size: 15))
                     .lineLimit(1)
                 Spacer()
                 if count > 0 {
                     Text("\(count)")
-                        .font(.caption2)
+                        .font(.system(size: 13))
                         .foregroundStyle(.tertiary)
                 }
             }
         }
         .padding(.leading, 8)
         .padding(.trailing, 10)
-        .padding(.vertical, 5)
+        .padding(.vertical, 7)
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(isSelected ? accent.color.opacity(0.34) : (isHovering ? accent.color.opacity(0.18) : Color.clear))
@@ -222,22 +235,22 @@ struct RecentNotesView: View {
                     renameDraft = folder.name
                     renamingFolderID = folder.id
                 }
-            }
-            Menu("Color") {
-                Button {
-                    store.setFolderColor(folder.id, color: nil)
-                } label: {
-                    Label("Default", systemImage: folder.color == nil ? "checkmark" : "circle")
-                }
-                Divider()
-                ForEach(FolderColor.allCases) { color in
+                Menu("Color") {
                     Button {
-                        store.setFolderColor(folder.id, color: color)
+                        store.setFolderColor(folder.id, color: nil)
                     } label: {
-                        Label {
-                            Text(folder.color == color.rawValue ? "✓ \(color.label)" : color.label)
-                        } icon: {
-                            Image(nsImage: color.dotImage())
+                        Label("Default", systemImage: folder.color == nil ? "checkmark" : "circle")
+                    }
+                    Divider()
+                    ForEach(FolderColor.allCases) { color in
+                        Button {
+                            store.setFolderColor(folder.id, color: color)
+                        } label: {
+                            Label {
+                                Text(folder.color == color.rawValue ? "✓ \(color.label)" : color.label)
+                            } icon: {
+                                Image(nsImage: color.dotImage())
+                            }
                         }
                     }
                 }
@@ -254,12 +267,34 @@ struct RecentNotesView: View {
         selected ? folder.systemImage : folder.outlineSystemImage
     }
 
+    private func folderIconColor(for folder: Folder) -> Color {
+        folder.isSmart ? smartFolderInk : (FolderColor.named(folder.color)?.swiftUIColor ?? .primary)
+    }
+
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
             .font(.caption2)
             .foregroundStyle(.secondary)
             .padding(.horizontal, 12)
             .padding(.top, 6)
+    }
+
+    private func collapsibleSectionHeader(_ title: String, isCollapsed: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: isCollapsed ? "chevron.right" : "chevron.down")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                Text(title)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+            .padding(.horizontal, 12)
+            .padding(.top, 6)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder
@@ -348,11 +383,8 @@ struct RecentNotesView: View {
         store.folders.filter { !$0.isSmart }
     }
 
-    private var rootNotes: [Note] {
-        filteredRegularNotes.filter { note in
-            guard let fid = note.folderID else { return true }
-            return !store.folders.contains(where: { $0.id == fid })
-        }
+    private var allNotes: [Note] {
+        filteredNotes
     }
 
     // MARK: - Actions
@@ -402,6 +434,7 @@ private struct NoteRow: View {
             HStack(spacing: 6) {
                 if note.isDailyNote {
                     Image(systemName: "calendar")
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.secondary)
                 }
 
@@ -425,6 +458,7 @@ private struct NoteRow: View {
                         onOpenViewer()
                     } label: {
                         Image(systemName: "rectangle.on.rectangle")
+                            .font(.system(size: 12, weight: .medium))
                     }
                     .buttonStyle(.borderless)
                     .help("Open in floating window")
@@ -445,7 +479,7 @@ private struct NoteRow: View {
             .lineLimit(1)
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 6)
+        .padding(.vertical, 8)
         .background {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(isSelected ? accent.color.opacity(0.45) : Color.clear)

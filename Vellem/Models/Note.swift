@@ -96,6 +96,16 @@ struct Note: Identifiable, Codable, Hashable {
     var isDailyNote: Bool {
         kind == .daily
     }
+
+    var isFromCodex: Bool {
+        guard let sourceApp else { return false }
+        return sourceApp.localizedCaseInsensitiveContains("codex")
+    }
+
+    var isFromClaude: Bool {
+        guard let sourceApp else { return false }
+        return sourceApp.localizedCaseInsensitiveContains("claude")
+    }
 }
 
 enum NoteKind: String, Codable, Hashable {

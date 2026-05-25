@@ -59,6 +59,8 @@ final class NotesFileStore {
             return "Codex (MCP)"
         case .smartClaude:
             return "Claude (MCP)"
+        case .smartPromptLibrary:
+            return "Codex (MCP)"
         case .smartServices, .regular:
             switch folder.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
             case "codex":

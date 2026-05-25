@@ -65,6 +65,7 @@ final class NotesStore: ObservableObject {
         var changed = false
         changed = ensureSystemFolder(name: "Claude", color: FolderColor.red.rawValue, kind: .smartClaude) || changed
         changed = ensureSystemFolder(name: "Codex", color: FolderColor.blue.rawValue, kind: .smartCodex) || changed
+        changed = ensureSystemFolder(name: "Prompt Library", color: FolderColor.purple.rawValue, kind: .smartPromptLibrary) || changed
         changed = ensureSystemFolder(name: "Services", color: FolderColor.green.rawValue, kind: .smartServices) || changed
 
         if changed {
@@ -142,6 +143,7 @@ final class NotesStore: ObservableObject {
             notes[index].folderID = nil
         }
         if selectedFolderID == folderID { selectedFolderID = nil }
+        normalizeSelection()
         saveFolders()
         save()
     }
@@ -153,6 +155,7 @@ final class NotesStore: ObservableObject {
         notes[index].folderID = folderID
         notes[index].updatedAt = .now
         notes.sort { $0.updatedAt > $1.updatedAt }
+        normalizeSelection()
         save()
     }
 
@@ -384,11 +387,7 @@ final class NotesStore: ObservableObject {
 
     private func applyLoadedNotes(_ loaded: [Note]) {
         notes = loaded
-        if let selectedNoteID, !notes.contains(where: { $0.id == selectedNoteID }) {
-            self.selectedNoteID = isTodaySelected ? nil : notes.first?.id
-        } else if selectedNoteID == nil && !isTodaySelected {
-            selectedNoteID = notes.first?.id
-        }
+        normalizeSelection()
         updateDockBadge()
         WidgetReloader.reload()
     }
@@ -424,10 +423,36 @@ final class NotesStore: ObservableObject {
         return notes.first { $0.id == selectedNoteID }
     }
 
+    func notesForDisplay(in folder: Folder) -> [Note] {
+        notes.filter { noteMatchesDisplay($0, in: folder) }
+    }
+
+    func noteCountForDisplay(in folder: Folder) -> Int {
+        notesForDisplay(in: folder).count
+    }
+
+    func noteMatchesDisplay(_ note: Note, in folder: Folder) -> Bool {
+        guard !note.isDailyNote else { return false }
+
+        switch folder.kind {
+        case .smartClaude:
+            return note.folderID == folder.id || note.isFromClaude
+        case .smartCodex:
+            return note.folderID == folder.id || note.isFromCodex
+        case .smartPromptLibrary:
+            return false
+        case .smartServices, .regular:
+            return note.folderID == folder.id
+        }
+    }
+
     func selectToday() {
         isTodaySelected = true
         selectedFolderID = nil
-        selectedNoteID = nil
+        selectedNoteID = firstTodayNoteID()
+        if let selectedNoteID {
+            markRead(selectedNoteID)
+        }
     }
 
     func selectNote(_ noteID: Note.ID, inToday: Bool = false, inFolder folderID: Folder.ID? = nil) {
@@ -439,8 +464,11 @@ final class NotesStore: ObservableObject {
 
     func selectFolder(_ folderID: Folder.ID) {
         selectedFolderID = folderID
-        selectedNoteID = nil
         isTodaySelected = false
+        selectedNoteID = firstNoteID(inFolderID: folderID)
+        if let selectedNoteID {
+            markRead(selectedNoteID)
+        }
     }
 
     func load() {
@@ -538,11 +566,7 @@ final class NotesStore: ObservableObject {
 
     func delete(_ note: Note) {
         notes.removeAll { $0.id == note.id }
-        if isTodaySelected {
-            selectedNoteID = nil
-        } else {
-            selectedNoteID = notes.first?.id
-        }
+        normalizeSelection()
         save()
     }
 
@@ -636,6 +660,50 @@ final class NotesStore: ObservableObject {
         } catch {
             // Keep the readable fallback title when Foundation Models is not available.
         }
+    }
+
+    private func normalizeSelection() {
+        if let selectedNoteID,
+           let note = notes.first(where: { $0.id == selectedNoteID }),
+           noteMatchesCurrentSelection(note) {
+            return
+        }
+
+        selectedNoteID = firstNoteIDForCurrentSelection()
+    }
+
+    private func noteMatchesCurrentSelection(_ note: Note) -> Bool {
+        if isTodaySelected {
+            return Calendar.current.isDateInToday(note.createdAt)
+        }
+
+        if let selectedFolderID,
+           let folder = folders.first(where: { $0.id == selectedFolderID }) {
+            return noteMatchesDisplay(note, in: folder)
+        }
+
+        return true
+    }
+
+    private func firstNoteIDForCurrentSelection() -> Note.ID? {
+        if isTodaySelected {
+            return firstTodayNoteID()
+        }
+
+        if let selectedFolderID {
+            return firstNoteID(inFolderID: selectedFolderID)
+        }
+
+        return notes.first?.id
+    }
+
+    private func firstTodayNoteID() -> Note.ID? {
+        notes.first { Calendar.current.isDateInToday($0.createdAt) }?.id
+    }
+
+    private func firstNoteID(inFolderID folderID: Folder.ID) -> Note.ID? {
+        guard let folder = folders.first(where: { $0.id == folderID }) else { return nil }
+        return notes.first { noteMatchesDisplay($0, in: folder) }?.id
     }
 
     private func cleanTitle(_ title: String) -> String {
