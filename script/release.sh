@@ -96,6 +96,36 @@ if [ -f "${EMBEDDED_MCP}" ]; then
     "${EMBEDDED_MCP}"
 fi
 
+# ---------- Re-sign nested bundles that xcodebuild leaves on Apple Development / ad-hoc ----------
+echo "▶ Re-signing nested app extensions and Sparkle helpers for distribution…"
+WIDGET_APPEX="${BUILT_APP}/Contents/PlugIns/VellemWidget.appex"
+if [ -d "${WIDGET_APPEX}" ]; then
+  codesign --force --sign "${SIGN_IDENTITY}" \
+    --options runtime --timestamp \
+    --entitlements VellemWidget/VellemWidget.entitlements \
+    "${WIDGET_APPEX}"
+fi
+
+SPARKLE_FW="${BUILT_APP}/Contents/Frameworks/Sparkle.framework"
+if [ -d "${SPARKLE_FW}" ]; then
+  for nested in \
+    "${SPARKLE_FW}/Versions/Current/XPCServices/Downloader.xpc" \
+    "${SPARKLE_FW}/Versions/Current/XPCServices/Installer.xpc" \
+    "${SPARKLE_FW}/Versions/Current/Updater.app" \
+    "${SPARKLE_FW}/Versions/Current/Autoupdate"
+  do
+    if [ -e "${nested}" ]; then
+      codesign --force --sign "${SIGN_IDENTITY}" \
+        --options runtime --timestamp \
+        "${nested}"
+    fi
+  done
+
+  codesign --force --sign "${SIGN_IDENTITY}" \
+    --options runtime --timestamp \
+    "${SPARKLE_FW}"
+fi
+
 # ---------- Re-seal the outer bundle (no --deep: keeps nested Sparkle XPCs' own entitlements) ----------
 echo "▶ Re-sealing outer .app bundle (preserving Sparkle XPC entitlements)…"
 codesign --force --sign "${SIGN_IDENTITY}" \

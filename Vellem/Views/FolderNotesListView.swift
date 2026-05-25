@@ -645,7 +645,7 @@ struct TodayNotesListView: View {
     @AppAccent private var accent
 
     private var notes: [Note] {
-        store.notes.filter { !$0.isDailyNote && Calendar.current.isDateInToday($0.createdAt) }
+        store.notes.filter { Calendar.current.isDateInToday($0.createdAt) }
     }
 
     var body: some View {

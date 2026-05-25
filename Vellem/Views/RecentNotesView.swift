@@ -332,12 +332,12 @@ struct RecentNotesView: View {
         }
     }
 
-    private var filteredRegularNotes: [Note] {
-        filteredNotes.filter { !$0.isDailyNote }
+    private var todayNotes: [Note] {
+        filteredNotes.filter { Calendar.current.isDateInToday($0.createdAt) }
     }
 
-    private var todayNotes: [Note] {
-        filteredRegularNotes.filter { Calendar.current.isDateInToday($0.createdAt) }
+    private var filteredRegularNotes: [Note] {
+        filteredNotes.filter { !$0.isDailyNote }
     }
 
     private var systemFolders: [Folder] {
