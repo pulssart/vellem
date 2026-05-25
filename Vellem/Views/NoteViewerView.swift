@@ -33,7 +33,7 @@ struct NoteViewerView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 34)
                 .padding(.vertical, 18)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -172,6 +172,24 @@ struct NoteViewerView: View {
                 continue
             }
 
+            if let fence = codeFenceMarker(in: cleaned) {
+                let language = cleaned.dropFirst(fence.count).trimmingCharacters(in: .whitespaces)
+                var codeLines: [String] = []
+                var cursor = index + 1
+                while cursor < lines.count {
+                    let next = lines[cursor]
+                    if next.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix(fence) {
+                        cursor += 1
+                        break
+                    }
+                    codeLines.append(next)
+                    cursor += 1
+                }
+                blocks.append(.code(codeLines.joined(separator: "\n"), language: language.isEmpty ? nil : language))
+                index = cursor
+                continue
+            }
+
             // Table: header row + separator row + N data rows
             if isTableRow(cleaned),
                index + 1 < lines.count,
@@ -194,16 +212,28 @@ struct NoteViewerView: View {
 
             if let image = MarkdownImage.parse(cleaned) {
                 blocks.append(.image(image))
-            } else if cleaned.hasPrefix("### ") {
-                blocks.append(.heading(String(cleaned.dropFirst(4)), level: 3))
-            } else if cleaned.hasPrefix("## ") {
-                blocks.append(.heading(String(cleaned.dropFirst(3)), level: 2))
-            } else if cleaned.hasPrefix("# ") {
-                blocks.append(.heading(String(cleaned.dropFirst(2)), level: 1))
+            } else if let heading = parseHeading(cleaned) {
+                blocks.append(.heading(heading.text, level: heading.level))
             } else if let todo = parseTodo(cleaned, lineIndex: index) {
                 blocks.append(todo)
+            } else if cleaned == "---" || cleaned == "***" || cleaned == "___" {
+                blocks.append(.divider)
+            } else if isQuoteLine(cleaned) {
+                var quoteLines: [String] = []
+                var cursor = index
+                while cursor < lines.count {
+                    let next = lines[cursor].trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard isQuoteLine(next) else { break }
+                    quoteLines.append(stripQuoteMarker(from: next))
+                    cursor += 1
+                }
+                blocks.append(.quote(quoteLines.joined(separator: "\n")))
+                index = cursor
+                continue
             } else if cleaned.hasPrefix("- ") || cleaned.hasPrefix("* ") {
                 blocks.append(.bullet(String(cleaned.dropFirst(2))))
+            } else if let ordered = parseOrderedList(cleaned) {
+                blocks.append(.ordered(marker: ordered.marker, text: ordered.text))
             } else {
                 blocks.append(.paragraph(cleaned))
             }
@@ -258,6 +288,53 @@ struct NoteViewerView: View {
         return .todo(text: todo.text, checked: todo.checked, lineIndex: lineIndex)
     }
 
+    private func codeFenceMarker(in line: String) -> String? {
+        if line.hasPrefix("```") { return "```" }
+        if line.hasPrefix("~~~") { return "~~~" }
+        return nil
+    }
+
+    private func parseHeading(_ line: String) -> (level: Int, text: String)? {
+        var level = 0
+        for character in line {
+            guard character == "#" else { break }
+            level += 1
+        }
+        guard (1...6).contains(level),
+              line.count > level,
+              line[line.index(line.startIndex, offsetBy: level)] == " " else {
+            return nil
+        }
+        return (level, String(line.dropFirst(level + 1)))
+    }
+
+    private func isQuoteLine(_ line: String) -> Bool {
+        line == ">" || line.hasPrefix("> ")
+    }
+
+    private func stripQuoteMarker(from line: String) -> String {
+        line == ">" ? "" : String(line.dropFirst(2))
+    }
+
+    private func parseOrderedList(_ line: String) -> (marker: String, text: String)? {
+        guard let marker = orderedListMarker(in: line) else { return nil }
+        return (marker.trimmingCharacters(in: .whitespaces), String(line.dropFirst(marker.count)))
+    }
+
+    private func orderedListMarker(in line: String) -> String? {
+        var cursor = line.startIndex
+        var hasDigit = false
+        while cursor < line.endIndex, line[cursor].isNumber {
+            hasDigit = true
+            cursor = line.index(after: cursor)
+        }
+        guard hasDigit, cursor < line.endIndex else { return nil }
+        guard line[cursor] == "." || line[cursor] == ")" else { return nil }
+        let afterDelimiter = line.index(after: cursor)
+        guard afterDelimiter < line.endIndex, line[afterDelimiter] == " " else { return nil }
+        return String(line[...afterDelimiter])
+    }
+
     private func toggleTodo(at lineIndex: Int, in note: Note) {
         var lines = note.text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
         guard lineIndex >= 0, lineIndex < lines.count else { return }
@@ -294,6 +371,17 @@ struct NoteViewerView: View {
                     .lineSpacing(bodyLineSpacing)
             }
             .padding(.bottom, bulletBottomPadding)
+        case .ordered(let marker, let value):
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(marker)
+                    .font(.system(size: bodyTextSize))
+                    .foregroundStyle(.secondary)
+                    .frame(minWidth: 24, alignment: .trailing)
+                Text(inlineMarkdown(value))
+                    .font(.system(size: bodyTextSize))
+                    .lineSpacing(bodyLineSpacing)
+            }
+            .padding(.bottom, bulletBottomPadding)
         case .todo(let value, let checked, let lineIndex):
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Button {
@@ -314,6 +402,41 @@ struct NoteViewerView: View {
                     .lineSpacing(bodyLineSpacing)
             }
             .padding(.bottom, bulletBottomPadding)
+        case .quote(let value):
+            HStack(spacing: 10) {
+                RoundedRectangle(cornerRadius: 2, style: .continuous)
+                    .fill(accent.color.opacity(0.6))
+                    .frame(width: 3)
+                Text(inlineMarkdown(value))
+                    .font(.system(size: bodyTextSize).italic())
+                    .foregroundStyle(.secondary)
+                    .lineSpacing(bodyLineSpacing)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        case .divider:
+            Divider().padding(.vertical, 6)
+        case .code(let value, let language):
+            VStack(alignment: .leading, spacing: 8) {
+                if let language {
+                    Text(language.uppercased())
+                        .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                }
+                ScrollView(.horizontal, showsIndicators: false) {
+                    Text(value.isEmpty ? " " : value)
+                        .font(.system(size: max(13, bodyTextSize - 1), design: .monospaced))
+                        .foregroundStyle(.primary)
+                        .textSelection(.enabled)
+                        .padding(12)
+                }
+            }
+            .background(Color(nsColor: .controlBackgroundColor).opacity(0.75))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(Color(nsColor: .separatorColor).opacity(0.7), lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .padding(.vertical, 5)
         case .table(let headers, let rows, let alignments):
             MarkdownTableView(
                 headers: headers,
@@ -332,7 +455,10 @@ struct NoteViewerView: View {
         switch level {
         case 1: .system(size: 28 + textSizeOffset)
         case 2: .system(size: 22 + textSizeOffset)
-        default: .system(size: 18 + textSizeOffset)
+        case 3: .system(size: 18 + textSizeOffset)
+        case 4: .system(size: 16 + textSizeOffset)
+        case 5: .system(size: 15 + textSizeOffset)
+        default: .system(size: 14 + textSizeOffset)
         }
     }
 
@@ -361,7 +487,11 @@ private enum ViewerBlock {
     case heading(String, level: Int)
     case paragraph(String)
     case bullet(String)
+    case ordered(marker: String, text: String)
     case todo(text: String, checked: Bool, lineIndex: Int)
+    case quote(String)
+    case divider
+    case code(String, language: String?)
     case table(headers: [String], rows: [[String]], alignments: [TableAlignment])
     case image(MarkdownImage)
     case space

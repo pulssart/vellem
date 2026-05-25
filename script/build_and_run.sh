@@ -7,11 +7,13 @@ PROJECT_NAME="Vellem.xcodeproj"
 SCHEME="Vellem"
 CONFIGURATION="Debug"
 BUNDLE_ID="com.adriendonot.Vellem"
+LEGACY_BUNDLE_ID="com.adriendonot.Supanote"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DERIVED_DATA="$ROOT_DIR/build/DerivedData"
 INSTALL_DIR="/Applications"
 INSTALLED_APP_BUNDLE="$INSTALL_DIR/$APP_NAME.app"
+LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister"
 MAC_GROUP_NOTES="$HOME/Library/Group Containers/MKAFV9VL9V.com.adriendonot.Vellem/notes.json"
 LEGACY_GROUP_NOTES="$HOME/Library/Group Containers/group.com.adriendonot.Vellem/notes.json"
 APP_SUPPORT_NOTES="$HOME/Library/Application Support/Vellem/notes.json"
@@ -19,6 +21,8 @@ APP_SUPPORT_NOTES="$HOME/Library/Application Support/Vellem/notes.json"
 cd "$ROOT_DIR"
 
 pkill -x "$APP_NAME" >/dev/null 2>&1 || true
+pkill -x "Supanote" >/dev/null 2>&1 || true
+pkill -x "SupanoteWidget" >/dev/null 2>&1 || true
 
 if command -v xcodegen >/dev/null 2>&1; then
   xcodegen generate
@@ -45,6 +49,34 @@ TARGET_BUILD_DIR="$(
 APP_BUNDLE="$TARGET_BUILD_DIR/$APP_NAME.app"
 BUILT_WIDGET="$APP_BUNDLE/Contents/PlugIns/${APP_NAME}Widget.appex"
 INSTALLED_WIDGET="$INSTALLED_APP_BUNDLE/Contents/PlugIns/${APP_NAME}Widget.appex"
+
+cleanup_stale_services() {
+  local stale_app
+
+  for stale_app in "/Applications/Supanote.app" "$HOME/Applications/Supanote.app"; do
+    if [ -d "$stale_app" ]; then
+      /usr/bin/pluginkit -r "$stale_app/Contents/PlugIns/SupanoteWidget.appex" >/dev/null 2>&1 || true
+      "$LSREGISTER" -u "$stale_app" >/dev/null 2>&1 || true
+      rm -rf "$stale_app"
+    fi
+  done
+
+  while IFS= read -r stale_app; do
+    [ -n "$stale_app" ] || continue
+    /usr/bin/pluginkit -r "$stale_app/Contents/PlugIns/SupanoteWidget.appex" >/dev/null 2>&1 || true
+    "$LSREGISTER" -u "$stale_app" >/dev/null 2>&1 || true
+    rm -rf "$stale_app"
+  done < <(find "$HOME/Library/Developer/Xcode/DerivedData" -name "Supanote.app" -type d -prune 2>/dev/null)
+
+  while IFS= read -r stale_app; do
+    [ -n "$stale_app" ] || continue
+    "$LSREGISTER" -u "$stale_app" >/dev/null 2>&1 || true
+  done < <(find "$HOME/Library/Developer/Xcode/DerivedData" -name "$APP_NAME.app" -type d -prune 2>/dev/null)
+
+  if [ -d "$HOME/Applications/$APP_NAME.app" ]; then
+    "$LSREGISTER" -u "$HOME/Applications/$APP_NAME.app" >/dev/null 2>&1 || true
+  fi
+}
 
 merge_notes() {
   local tmp_file
@@ -75,6 +107,7 @@ merge_notes() {
 }
 
 open_app() {
+  cleanup_stale_services
   mkdir -p "$INSTALL_DIR"
   rm -rf "$INSTALLED_APP_BUNDLE"
   /usr/bin/ditto "$APP_BUNDLE" "$INSTALLED_APP_BUNDLE"
@@ -82,7 +115,8 @@ open_app() {
   if [ -d "$BUILT_WIDGET" ]; then
     /usr/bin/pluginkit -r "$BUILT_WIDGET" >/dev/null 2>&1 || true
   fi
-  /System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister -f -R -trusted "$INSTALLED_APP_BUNDLE"
+  "$LSREGISTER" -f -R -trusted "$INSTALLED_APP_BUNDLE"
+  /System/Library/CoreServices/pbs -flush >/dev/null 2>&1 || true
   if [ -d "$INSTALLED_WIDGET" ]; then
     /usr/bin/pluginkit -a "$INSTALLED_WIDGET" >/dev/null 2>&1 || true
   fi

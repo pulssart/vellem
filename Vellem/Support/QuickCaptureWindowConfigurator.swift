@@ -4,6 +4,7 @@ import SwiftUI
 
 struct QuickCaptureWindowConfigurator: NSViewRepresentable {
     var floatsAboveOtherWindows: Bool
+    var surfaceColor: NSColor
 
     func makeCoordinator() -> Coordinator {
         Coordinator()
@@ -31,13 +32,13 @@ struct QuickCaptureWindowConfigurator: NSViewRepresentable {
         window.titlebarAppearsTransparent = true
         window.isMovableByWindowBackground = true
         window.isOpaque = true
-        window.backgroundColor = Self.surfaceColor
+        window.backgroundColor = surfaceColor
         window.hasShadow = true
         window.styleMask.insert(.fullSizeContentView)
         window.styleMask.insert(.resizable)
         window.titlebarSeparatorStyle = .none
         window.minSize = NSSize(width: 360, height: 240)
-        paintWindowFrame(window)
+        paintWindowFrame(window, color: surfaceColor)
         window.standardWindowButton(.closeButton)?.isHidden = false
         window.standardWindowButton(.miniaturizeButton)?.isHidden = false
         window.standardWindowButton(.zoomButton)?.isHidden = false
@@ -45,8 +46,8 @@ struct QuickCaptureWindowConfigurator: NSViewRepresentable {
         coordinator.animateArrivalIfNeeded(for: window)
     }
 
-    private func paintWindowFrame(_ window: NSWindow) {
-        let backgroundColor = Self.surfaceColor.cgColor
+    private func paintWindowFrame(_ window: NSWindow, color: NSColor) {
+        let backgroundColor = color.cgColor
         let views = [
             window.contentView,
             window.contentView?.superview,
@@ -58,10 +59,6 @@ struct QuickCaptureWindowConfigurator: NSViewRepresentable {
             view?.wantsLayer = true
             view?.layer?.backgroundColor = backgroundColor
         }
-    }
-
-    private static var surfaceColor: NSColor {
-        NSColor(calibratedRed: 1.0, green: 0.94, blue: 0.70, alpha: 1.0)
     }
 
     final class Coordinator {

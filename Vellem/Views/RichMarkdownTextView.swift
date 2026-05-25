@@ -451,14 +451,8 @@ struct RichMarkdownTextView: NSViewRepresentable {
             }
 
             // Headings
-            if line.hasPrefix("### ") {
-                return heading(prefix: "### ", body: String(line.dropFirst(4)), level: 3)
-            }
-            if line.hasPrefix("## ") {
-                return heading(prefix: "## ", body: String(line.dropFirst(3)), level: 2)
-            }
-            if line.hasPrefix("# ") {
-                return heading(prefix: "# ", body: String(line.dropFirst(2)), level: 1)
+            if let parsedHeading = parseHeading(line) {
+                return heading(prefix: parsedHeading.prefix, body: parsedHeading.text, level: parsedHeading.level)
             }
 
             // Quote
@@ -489,6 +483,16 @@ struct RichMarkdownTextView: NSViewRepresentable {
                 return divider
             }
 
+            if trimmed.hasPrefix("```") || trimmed.hasPrefix("~~~") {
+                return NSAttributedString(
+                    string: line,
+                    attributes: [
+                        .font: NSFont.monospacedSystemFont(ofSize: baseFontSize - 1, weight: .regular),
+                        .foregroundColor: NSColor.secondaryLabelColor
+                    ]
+                )
+            }
+
             // Bullet — same trick as todo: attachment is the "-" or "*", trailing space is real.
             if line.hasPrefix("- ") || line.hasPrefix("* ") {
                 let prefix = String(line.prefix(2))
@@ -510,7 +514,50 @@ struct RichMarkdownTextView: NSViewRepresentable {
                 return attr
             }
 
+            if let ordered = parseOrderedList(line) {
+                let attr = NSMutableAttributedString(
+                    string: ordered.marker + " ",
+                    attributes: [
+                        .font: baseFont,
+                        .foregroundColor: NSColor.tertiaryLabelColor
+                    ]
+                )
+                attr.append(styledBody(ordered.text))
+                return attr
+            }
+
             return styledBody(line)
+        }
+
+        private func parseHeading(_ line: String) -> (level: Int, prefix: String, text: String)? {
+            var level = 0
+            for character in line {
+                guard character == "#" else { break }
+                level += 1
+            }
+            guard (1...6).contains(level),
+                  line.count > level,
+                  line[line.index(line.startIndex, offsetBy: level)] == " " else {
+                return nil
+            }
+            let prefix = String(repeating: "#", count: level) + " "
+            return (level, prefix, String(line.dropFirst(level + 1)))
+        }
+
+        private func parseOrderedList(_ line: String) -> (marker: String, text: String)? {
+            var cursor = line.startIndex
+            var hasDigit = false
+            while cursor < line.endIndex, line[cursor].isNumber {
+                hasDigit = true
+                cursor = line.index(after: cursor)
+            }
+            guard hasDigit, cursor < line.endIndex else { return nil }
+            guard line[cursor] == "." || line[cursor] == ")" else { return nil }
+            let afterDelimiter = line.index(after: cursor)
+            guard afterDelimiter < line.endIndex, line[afterDelimiter] == " " else { return nil }
+            let marker = String(line[...cursor])
+            let bodyStart = line.index(after: afterDelimiter)
+            return (marker, String(line[bodyStart...]))
         }
 
         private func heading(prefix: String, body: String, level: Int) -> NSAttributedString {
@@ -518,7 +565,10 @@ struct RichMarkdownTextView: NSViewRepresentable {
             switch level {
             case 1: extra = 12
             case 2: extra = 6
-            default: extra = 2
+            case 3: extra = 2
+            case 4: extra = 0
+            case 5: extra = -1
+            default: extra = -2
             }
             let font = NSFont.boldSystemFont(ofSize: baseFontSize + extra)
             let merged = NSMutableAttributedString(
@@ -616,6 +666,21 @@ struct RichMarkdownTextView: NSViewRepresentable {
             }
 
             while i < chars.count {
+                // Inline code: `…`
+                if chars[i] == "`",
+                   let close = findMarker(after: i + 1, in: chars, marker: "`"),
+                   close != i + 1 {
+                    flushRun()
+                    result.append(NSAttributedString(string: "`", attributes: markerAttrs))
+                    let inner = String(chars[(i + 1)..<close])
+                    result.append(NSAttributedString(
+                        string: inner,
+                        attributes: codeAttrs(baseAttrs: baseAttrs)
+                    ))
+                    result.append(NSAttributedString(string: "`", attributes: markerAttrs))
+                    i = close + 1
+                    continue
+                }
                 // Bold: **…**
                 if i + 1 < chars.count, chars[i] == "*", chars[i + 1] == "*",
                    let close = findMarker(after: i + 2, in: chars, marker: "**") {
@@ -678,6 +743,13 @@ struct RichMarkdownTextView: NSViewRepresentable {
                 i += 1
             }
             flushRun()
+        }
+
+        private func codeAttrs(baseAttrs: [NSAttributedString.Key: Any]) -> [NSAttributedString.Key: Any] {
+            var attrs = baseAttrs
+            attrs[.font] = NSFont.monospacedSystemFont(ofSize: baseFontSize - 1, weight: .regular)
+            attrs[.backgroundColor] = NSColor.controlBackgroundColor
+            return attrs
         }
 
         private func findMarker(after start: Int, in chars: [Character], marker: String) -> Int? {

@@ -20,6 +20,7 @@ struct NoteEditorView: View {
     @AppAccent private var accent
 
     private let editor = FoundationNoteEditor()
+    private let noteHorizontalPadding: CGFloat = 36
 
     var body: some View {
         VStack(spacing: 0) {
@@ -46,7 +47,7 @@ struct NoteEditorView: View {
                     MarkdownRenderedView(
                         text: $text,
                         textSizeStep: previewTextSizeStep,
-                        contentPadding: EdgeInsets(top: 8, leading: 4, bottom: 18, trailing: 4)
+                        contentPadding: EdgeInsets(top: 8, leading: 12, bottom: 18, trailing: 12)
                     )
                     .onChange(of: text) { _, newValue in
                         guard !isApplyingStoreUpdate else { return }
@@ -72,7 +73,7 @@ struct NoteEditorView: View {
                     ScramblePreviewView(frame: scrambleFrame, textSizeStep: previewTextSizeStep)
                 }
             }
-                .padding(.horizontal)
+                .padding(.horizontal, noteHorizontalPadding)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(nsColor: .textBackgroundColor))
 

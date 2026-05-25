@@ -41,11 +41,15 @@ struct QuickCaptureView: View {
         .foregroundStyle(inkColor)
         .tint(inkColor)
         .background(surfaceColor)
-        .background(QuickCaptureWindowConfigurator(floatsAboveOtherWindows: floatsAboveOtherWindows))
+        .background(QuickCaptureWindowConfigurator(floatsAboveOtherWindows: floatsAboveOtherWindows, surfaceColor: surfaceNSColor))
     }
 
     private var surfaceColor: Color {
-        Color(nsColor: accent.nsColor.blended(withFraction: 0.78, of: .windowBackgroundColor) ?? accent.nsColor)
+        Color(nsColor: surfaceNSColor)
+    }
+
+    private var surfaceNSColor: NSColor {
+        accent.nsColor.blended(withFraction: 0.78, of: .windowBackgroundColor) ?? accent.nsColor
     }
 
     private var inkColor: Color {

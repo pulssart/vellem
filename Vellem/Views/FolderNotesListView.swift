@@ -85,28 +85,30 @@ struct FolderNotesListView: View {
     @ViewBuilder
     private var workflowCards: some View {
         if !workflows.isEmpty {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(folder.kind == .smartPromptLibrary ? "Prompt library" : "Ready-to-use workflows")
-                        .font(.headline)
+            VStack(alignment: .leading, spacing: folder.kind == .smartPromptLibrary ? 22 : 10) {
+                if folder.kind != .smartPromptLibrary {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Ready-to-use workflows")
+                            .font(.headline)
 
-                    Spacer()
+                        Spacer()
 
-                    Text(folder.kind == .smartPromptLibrary ? "Copy a prompt, paste it into Codex." : "Copy a prompt, paste it into \(folder.name).")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        Text("Copy a prompt, paste it into \(folder.name).")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 if folder.kind == .smartPromptLibrary {
                     ForEach(AgentWorkflowCategory.allCases) { category in
                         let categoryWorkflows = workflows.filter { $0.category == category }
                         if !categoryWorkflows.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
+                            VStack(alignment: .leading, spacing: 12) {
                                 Text(category.title)
                                     .font(.subheadline.weight(.semibold))
                                     .foregroundStyle(.secondary)
 
-                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 10)], spacing: 10) {
+                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 320), spacing: 18)], spacing: 18) {
                                     ForEach(categoryWorkflows) { workflow in
                                         workflowCard(workflow)
                                     }
@@ -115,7 +117,7 @@ struct FolderNotesListView: View {
                         }
                     }
                 } else {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 10)], spacing: 10) {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 14)], spacing: 14) {
                         ForEach(workflows) { workflow in
                             workflowCard(workflow)
                         }
@@ -168,21 +170,6 @@ struct FolderNotesListView: View {
             } else if folder.kind == .smartPromptLibrary {
                 ScrollView {
                     VStack(spacing: 16) {
-                        VStack(spacing: 10) {
-                            Image(systemName: folder.outlineSystemImage)
-                                .font(.system(size: emptyStateIconSize, weight: .regular))
-                                .foregroundStyle(folder.isSmart ? smartFolderInk : (FolderColor.named(folder.color)?.swiftUIColor ?? accent.color))
-
-                            Text("Prompt Library")
-                                .font(.headline)
-
-                            Text("A large set of ready-to-use prompts, grouped by category.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 24)
-
                         workflowCards
                     }
                     .padding(20)
@@ -763,49 +750,62 @@ private struct AgentWorkflowCard: View {
     @State private var isHovering = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top, spacing: 8) {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top) {
                 Image(systemName: workflow.systemImage)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(accent.color)
-                    .frame(width: 22, height: 22)
+                    .frame(width: 34, height: 34)
+                    .background(
+                        RoundedRectangle(cornerRadius: 9, style: .continuous)
+                            .fill(accent.color.opacity(isHovering ? 0.16 : 0.10))
+                    )
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(workflow.title)
-                        .font(.body.weight(.semibold))
-                        .lineLimit(1)
-
-                    Text(workflow.description)
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                }
-
-                Spacer(minLength: 8)
+                Spacer()
 
                 Button(action: onCopy) {
                     Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
-                        .frame(width: 18, height: 18)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(accent.color)
+                        .frame(width: 26, height: 26)
+                        .background(
+                            Circle()
+                                .fill(accent.color.opacity(isHovering ? 0.14 : 0.08))
+                        )
                 }
                 .buttonStyle(.borderless)
                 .help(isCopied ? "Copied" : "Copy prompt")
             }
 
+            VStack(alignment: .leading, spacing: 8) {
+                Text(workflow.title)
+                    .font(.title3.weight(.semibold))
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text(workflow.description)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+
             if !workflow.tools.isEmpty {
-                ToolBadgeRow(tools: workflow.tools, size: 16)
-                    .padding(.leading, 30)
+                ToolBadgeRow(tools: workflow.tools, size: 18)
             }
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, minHeight: 86, alignment: .topLeading)
+        .padding(18)
+        .frame(maxWidth: .infinity, minHeight: 156, alignment: .topLeading)
         .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(isHovering ? accent.color.opacity(0.08) : Color(nsColor: .windowBackgroundColor))
-                .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(isHovering ? accent.color.opacity(0.07) : Color(nsColor: .windowBackgroundColor))
+                .shadow(color: Color.black.opacity(isHovering ? 0.09 : 0.045), radius: isHovering ? 14 : 8, x: 0, y: isHovering ? 8 : 4)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(isHovering ? accent.color.opacity(0.55) : Color(nsColor: .separatorColor).opacity(0.55), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(isHovering ? accent.color.opacity(0.50) : Color(nsColor: .separatorColor).opacity(0.35), lineWidth: 1)
         )
         .contentShape(Rectangle())
         .onTapGesture {

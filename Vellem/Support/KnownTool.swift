@@ -48,8 +48,10 @@ enum KnownTool: String, CaseIterable, Identifiable, Hashable {
 
     var bundledAssetName: String? {
         switch self {
+        case .slack: "Slack"
         case .gmail: "Gmail"
         case .calendar: "GoogleCalendar"
+        case .notion: "Notion"
         default: nil
         }
     }

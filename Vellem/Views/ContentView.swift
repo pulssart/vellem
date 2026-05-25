@@ -8,37 +8,10 @@ struct ContentView: View {
     @AppAccent private var accent
 
     var body: some View {
-        Group {
-            if usesThreeColumnLayout {
-                NavigationSplitView {
-                    RecentNotesView(store: store)
-                } content: {
-                    if store.isTodaySelected {
-                        TodayNotesListView(store: store)
-                            .navigationSplitViewColumnWidth(min: 300, ideal: 360)
-                    } else if let folder = selectedFolder {
-                        FolderNotesListView(store: store, folder: folder)
-                            .navigationSplitViewColumnWidth(min: 300, ideal: 360)
-                    } else {
-                        EmptySelectionContentView()
-                            .navigationSplitViewColumnWidth(min: 280, ideal: 320)
-                    }
-                } detail: {
-                    scopedDetailView
-                }
-            } else {
-                NavigationSplitView {
-                    RecentNotesView(store: store)
-                } detail: {
-                    if let folder = selectedFolder, folder.kind == .smartPromptLibrary {
-                        FolderNotesListView(store: store, folder: folder)
-                    } else if let note = store.selectedNote {
-                        NoteEditorView(store: store, note: note)
-                    } else {
-                        EmptyNotesView(store: store)
-                    }
-                }
-            }
+        NavigationSplitView {
+            RecentNotesView(store: store)
+        } detail: {
+            mainContent
         }
         .toolbarBackground(accent.color.opacity(0.28), for: .windowToolbar)
         .toolbarBackground(.visible, for: .windowToolbar)
@@ -98,6 +71,38 @@ struct ContentView: View {
 
         guard let selectedFolder else { return false }
         return selectedFolder.kind != .smartPromptLibrary
+    }
+
+    @ViewBuilder
+    private var mainContent: some View {
+        if let folder = selectedFolder, folder.kind == .smartPromptLibrary {
+            FolderNotesListView(store: store, folder: folder)
+        } else if usesThreeColumnLayout {
+            HStack(spacing: 0) {
+                scopedNotesList
+                    .frame(width: 360)
+
+                Divider()
+
+                scopedDetailView
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if let note = store.selectedNote {
+            NoteEditorView(store: store, note: note)
+        } else {
+            EmptyNotesView(store: store)
+        }
+    }
+
+    @ViewBuilder
+    private var scopedNotesList: some View {
+        if store.isTodaySelected {
+            TodayNotesListView(store: store)
+        } else if let folder = selectedFolder {
+            FolderNotesListView(store: store, folder: folder)
+        } else {
+            EmptySelectionContentView()
+        }
     }
 
     @ViewBuilder
