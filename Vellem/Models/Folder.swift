@@ -70,7 +70,13 @@ struct Folder: Identifiable, Codable, Hashable {
         name = try c.decode(String.self, forKey: .name)
         createdAt = try c.decode(Date.self, forKey: .createdAt)
         color = try c.decodeIfPresent(String.self, forKey: .color)
-        kind = try c.decodeIfPresent(FolderKind.self, forKey: .kind) ?? .regular
+        // Tolerate unknown legacy kinds (e.g. removed enum cases on disk) by
+        // falling back to .regular instead of failing the whole folder array.
+        if let rawKind = try c.decodeIfPresent(String.self, forKey: .kind) {
+            kind = FolderKind(rawValue: rawKind) ?? .regular
+        } else {
+            kind = .regular
+        }
     }
 }
 

@@ -87,47 +87,67 @@ if [ ! -d "${BUILT_APP}" ]; then
 fi
 echo "  → built: ${BUILT_APP}"
 
-# ---------- Re-sign the embedded MCP binary with Developer ID + hardened runtime ----------
-echo "▶ Re-signing embedded vellem-mcp with Developer ID + hardened runtime…"
+# ---------- Sign nested binaries inside-out with Developer ID + hardened runtime ----------
+# We do NOT use --deep on the outer bundle because that would overwrite Sparkle's
+# XPC service entitlements with the host app's sandbox entitlements, breaking
+# the installer. Instead, sign each component individually with the right options.
+
+SPARKLE_FW="${BUILT_APP}/Contents/Frameworks/Sparkle.framework"
+
+# Sparkle XPC services: preserve their original entitlements, re-sign with Developer ID + timestamp
+for xpc in "${SPARKLE_FW}/Versions/B/XPCServices/Downloader.xpc" \
+           "${SPARKLE_FW}/Versions/B/XPCServices/Installer.xpc"; do
+  if [ -d "$xpc" ]; then
+    echo "▶ Signing $(basename "$xpc")…"
+    codesign --force --sign "${SIGN_IDENTITY}" \
+      --options runtime --timestamp \
+      --preserve-metadata=entitlements \
+      "$xpc"
+  fi
+done
+
+# Sparkle Updater.app and Autoupdate helper
+if [ -d "${SPARKLE_FW}/Versions/B/Updater.app" ]; then
+  echo "▶ Signing Sparkle Updater.app…"
+  codesign --force --sign "${SIGN_IDENTITY}" \
+    --options runtime --timestamp \
+    "${SPARKLE_FW}/Versions/B/Updater.app"
+fi
+
+if [ -f "${SPARKLE_FW}/Versions/B/Autoupdate" ]; then
+  echo "▶ Signing Sparkle Autoupdate helper…"
+  codesign --force --sign "${SIGN_IDENTITY}" \
+    --options runtime --timestamp \
+    "${SPARKLE_FW}/Versions/B/Autoupdate"
+fi
+
+# Re-seal the Sparkle framework itself
+echo "▶ Re-sealing Sparkle.framework…"
+codesign --force --sign "${SIGN_IDENTITY}" \
+  --options runtime --timestamp \
+  "${SPARKLE_FW}/Versions/B"
+
+# Embedded MCP CLI binary
 EMBEDDED_MCP="${BUILT_APP}/Contents/Resources/vellem-mcp"
 if [ -f "${EMBEDDED_MCP}" ]; then
+  echo "▶ Signing vellem-mcp…"
   codesign --force --sign "${SIGN_IDENTITY}" \
     --options runtime --timestamp \
     "${EMBEDDED_MCP}"
 fi
 
-# ---------- Re-sign nested bundles that xcodebuild leaves on Apple Development / ad-hoc ----------
-echo "▶ Re-signing nested app extensions and Sparkle helpers for distribution…"
-WIDGET_APPEX="${BUILT_APP}/Contents/PlugIns/VellemWidget.appex"
-if [ -d "${WIDGET_APPEX}" ]; then
+# Widget extension - sign with its own entitlements (strips any stray get-task-allow)
+WIDGET_EXT="${BUILT_APP}/Contents/PlugIns/VellemWidget.appex"
+if [ -d "${WIDGET_EXT}" ]; then
+  echo "▶ Signing VellemWidget.appex…"
   codesign --force --sign "${SIGN_IDENTITY}" \
     --options runtime --timestamp \
     --entitlements VellemWidget/VellemWidget.entitlements \
-    "${WIDGET_APPEX}"
+    "${WIDGET_EXT}"
 fi
 
-SPARKLE_FW="${BUILT_APP}/Contents/Frameworks/Sparkle.framework"
-if [ -d "${SPARKLE_FW}" ]; then
-  for nested in \
-    "${SPARKLE_FW}/Versions/Current/XPCServices/Downloader.xpc" \
-    "${SPARKLE_FW}/Versions/Current/XPCServices/Installer.xpc" \
-    "${SPARKLE_FW}/Versions/Current/Updater.app" \
-    "${SPARKLE_FW}/Versions/Current/Autoupdate"
-  do
-    if [ -e "${nested}" ]; then
-      codesign --force --sign "${SIGN_IDENTITY}" \
-        --options runtime --timestamp \
-        "${nested}"
-    fi
-  done
-
-  codesign --force --sign "${SIGN_IDENTITY}" \
-    --options runtime --timestamp \
-    "${SPARKLE_FW}"
-fi
-
-# ---------- Re-seal the outer bundle (no --deep: keeps nested Sparkle XPCs' own entitlements) ----------
-echo "▶ Re-sealing outer .app bundle (preserving Sparkle XPC entitlements)…"
+# Finally, re-seal the outer .app with the host entitlements (no --deep)
+echo "▶ Re-sealing outer .app bundle…"
 codesign --force --sign "${SIGN_IDENTITY}" \
   --options runtime --timestamp \
   --entitlements Vellem/Vellem.entitlements \
