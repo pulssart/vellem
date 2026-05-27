@@ -115,8 +115,7 @@ struct VellemApp: App {
         } else if url.host == "note",
                   let idString = url.pathComponents.dropFirst().first,
                   let uuid = UUID(uuidString: idString) {
-            store.viewerNoteID = uuid
-            openWindow(id: "note-viewer")
+            NotificationCenter.default.post(name: .vellemOpenNoteViewer, object: uuid)
             NSApp.activate(ignoringOtherApps: true)
         } else {
             NSApp.activate(ignoringOtherApps: true)
