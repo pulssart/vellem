@@ -134,6 +134,7 @@ hook it into Claude as a real context layer for design.`;
 
   // --- Hero -----------------------------------------------------------------
   function Hero({ heroWord = "forget" }) {
+    const { release } = useReleases();
     return (
       <section style={{
         position: "relative",
@@ -150,9 +151,15 @@ hook it into Claude as a real context layer for design.`;
             <VellemIcon size={36} />
             <span style={{ fontSize: 19, fontWeight: 700, letterSpacing: "-0.01em", color: INK }}>Vellem</span>
           </div>
-          <nav style={{ display: "flex", gap: 28, fontSize: 14, color: INK_SOFT }}>
-            <span>Manifesto</span><span>How it works</span><span>14 tools</span><span>Download</span>
-          </nav>
+          {release && (
+            <span style={{
+              fontSize: 12, fontWeight: 700, letterSpacing: "0.04em",
+              fontFamily: "'JetBrains Mono', monospace",
+              color: "#9A7B12", background: "#FBEFC0",
+              padding: "5px 12px", borderRadius: 999,
+              border: "1px solid #F1DF8E",
+            }}>{release.tag_name}</span>
+          )}
         </div>
 
         {/* Manifesto */}
