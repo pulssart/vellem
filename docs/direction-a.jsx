@@ -135,6 +135,76 @@ hook it into Claude as a real context layer for design.`;
   // --- Hero -----------------------------------------------------------------
   function Hero({ heroWord = "forget" }) {
     const { release } = useReleases();
+
+    const L1 = "They read.";
+    const L2 = "They write.";
+    const L3 = `They ${heroWord}.`;
+    const W_START = 5; // "They ".length
+    const W_END = W_START + heroWord.length;
+    const SPD = 52;
+
+    const [phase, setPhase] = React.useState("t1");
+    const [c1, setC1] = React.useState(0);
+    const [c2, setC2] = React.useState(0);
+    const [c3, setC3] = React.useState(0);
+
+    React.useEffect(() => {
+      let t;
+      const j = () => Math.random() * 28;
+      switch (phase) {
+        case "t1":
+          t = c1 < L1.length
+            ? setTimeout(() => setC1(v => v + 1), SPD + j())
+            : setTimeout(() => setPhase("gap1"), 260);
+          break;
+        case "gap1":
+          t = setTimeout(() => setPhase("t2"), 480);
+          break;
+        case "t2":
+          t = c2 < L2.length
+            ? setTimeout(() => setC2(v => v + 1), SPD + j())
+            : setTimeout(() => setPhase("gap2"), 260);
+          break;
+        case "gap2":
+          t = setTimeout(() => setPhase("t3"), 480);
+          break;
+        case "t3":
+          t = c3 < L3.length
+            ? setTimeout(() => setC3(v => v + 1), SPD + j())
+            : setTimeout(() => setPhase("hold"), 280);
+          break;
+        case "hold":
+          t = setTimeout(() => setPhase("erase"), 2400);
+          break;
+        case "erase":
+          t = c3 > 0
+            ? setTimeout(() => setC3(v => v - 1), 16)
+            : setTimeout(() => setPhase("gap3"), 720);
+          break;
+        case "gap3":
+          t = setTimeout(() => setPhase("retype"), 440);
+          break;
+        case "retype":
+          t = c3 < L3.length
+            ? setTimeout(() => setC3(v => v + 1), SPD + j())
+            : setTimeout(() => setPhase("hold"), 280);
+          break;
+        default: break;
+      }
+      return () => clearTimeout(t);
+    }, [phase, c1, c2, c3]);
+
+    const caretL1 = phase === "t1";
+    const caretL2 = phase === "gap1" || phase === "t2";
+    const caretL3 = phase === "gap2" || phase === "t3" || phase === "erase" || phase === "retype";
+
+    const l3prefix = L3.slice(0, Math.min(c3, W_START));
+    const l3word   = c3 > W_START ? heroWord.slice(0, Math.min(c3 - W_START, heroWord.length)) : "";
+    const l3dot    = c3 > W_END ? "." : "";
+    const l3full   = c3 === L3.length;
+
+    const row = { display: "block", minHeight: "0.97em" };
+
     return (
       <section style={{
         position: "relative",
@@ -174,19 +244,28 @@ hook it into Claude as a real context layer for design.`;
             fontSize: 168, lineHeight: 0.95,
             letterSpacing: "-0.045em", color: INK,
           }}>
-            They read.
-            <br />
-            They write.
-            <br />
-            <span style={{ display: "inline-block", position: "relative" }}>
-              They <em style={{ fontStyle: "italic", color: "#9A7B12" }}>{heroWord}</em>.
-              <span aria-hidden style={{
-                position: "absolute",
-                left: -10, right: -10, top: "52%", height: 6,
-                background: "#9A7B12",
-                transform: "rotate(-1.5deg)",
-                opacity: 0.85,
-              }} />
+            <span style={row}>
+              {L1.slice(0, c1)}{caretL1 && <Caret color={INK} />}
+            </span>
+            <span style={row}>
+              {L2.slice(0, c2)}{caretL2 && <Caret color={INK} />}
+            </span>
+            <span style={row}>
+              <span style={{ display: "inline-block", position: "relative" }}>
+                {l3prefix}
+                {l3word && <em style={{ fontStyle: "italic", color: "#9A7B12" }}>{l3word}</em>}
+                {l3dot}
+                {caretL3 && <Caret color={INK} />}
+                {l3full && (
+                  <span aria-hidden style={{
+                    position: "absolute",
+                    left: -10, right: -10, top: "52%", height: 6,
+                    background: "#9A7B12",
+                    transform: "rotate(-1.5deg)",
+                    opacity: 0.85,
+                  }} />
+                )}
+              </span>
             </span>
           </h1>
 
