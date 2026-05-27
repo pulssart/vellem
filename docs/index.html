@@ -16,36 +16,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-
-<template id="__bundler_thumbnail">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-    <rect width="100" height="100" fill="#F5E8AE"/>
-    <g transform="translate(50 50)" fill="#FFFDF4" stroke="#E8C547" stroke-width="0.5">
-      <path d="M0 -28 C 6 -20, 6 -7, 0 -1 C -6 -7, -6 -20, 0 -28 Z" transform="rotate(0)"/>
-      <path d="M0 -28 C 6 -20, 6 -7, 0 -1 C -6 -7, -6 -20, 0 -28 Z" transform="rotate(45)"/>
-      <path d="M0 -28 C 6 -20, 6 -7, 0 -1 C -6 -7, -6 -20, 0 -28 Z" transform="rotate(90)"/>
-      <path d="M0 -28 C 6 -20, 6 -7, 0 -1 C -6 -7, -6 -20, 0 -28 Z" transform="rotate(135)"/>
-      <path d="M0 -28 C 6 -20, 6 -7, 0 -1 C -6 -7, -6 -20, 0 -28 Z" transform="rotate(180)"/>
-      <path d="M0 -28 C 6 -20, 6 -7, 0 -1 C -6 -7, -6 -20, 0 -28 Z" transform="rotate(225)"/>
-      <path d="M0 -28 C 6 -20, 6 -7, 0 -1 C -6 -7, -6 -20, 0 -28 Z" transform="rotate(270)"/>
-      <path d="M0 -28 C 6 -20, 6 -7, 0 -1 C -6 -7, -6 -20, 0 -28 Z" transform="rotate(315)"/>
-      <circle r="4" fill="#E8C547" stroke="none"/>
-    </g>
-  </svg>
-</template>
 <style>
   html, body { margin: 0; padding: 0; background: #FFFDF4; color: #15140F; font-family: 'Inter Tight', system-ui, sans-serif; }
   * { box-sizing: border-box; }
-  /* Tiny exploration link in the corner */
-  .vlm-explore-link {
-    position: fixed; left: 16px; bottom: 16px; z-index: 50;
-    font-size: 11px; font-family: 'JetBrains Mono', monospace;
-    color: #8A7E50; background: rgba(255,253,244,0.85);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    padding: 6px 10px; border-radius: 999px;
-    border: 1px solid #F1DF8E; text-decoration: none;
-  }
-  .vlm-explore-link:hover { color: #1A170E; background: #FBEFC0; }
 </style>
 
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
@@ -54,50 +27,22 @@
 </head>
 <body>
 <div id="root"></div>
-<a href="directions-canvas.html" class="vlm-explore-link">← see all 3 directions</a>
 
 <script type="text/babel" src="shared.jsx"></script>
-<script type="text/babel" src="tweaks-panel.jsx"></script>
 <script type="text/babel" src="direction-a.jsx"></script>
 
 <script type="text/babel" data-presets="react">
-const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
-  "heroWord": "forget",
-  "showLiveDemo": false,
-  "showProblem": true,
-  "showTools": true,
-  "showNative": true,
-  "showSetup": true,
-  "showWhatsNew": true
-}/*EDITMODE-END*/;
-
 function VellemLanding() {
-  const [tweaks, setTweak] = window.useTweaks(TWEAK_DEFAULTS);
-  const DirA = window.DirectionA;
-  const {
-    TweaksPanel, TweakSection, TweakRadio, TweakToggle,
-  } = window;
-  return (
-    <div>
-      <DirA width="100%" tweaks={tweaks} />
-      <TweaksPanel title="Vellem · tweaks">
-        <TweakSection label="Hero" />
-        <TweakRadio
-          label="Verb"
-          value={tweaks.heroWord}
-          options={["forget", "vanish", "fade"]}
-          onChange={(v) => setTweak("heroWord", v)}
-        />
-        <TweakSection label="Sections" />
-        <TweakToggle label="Live demo"   value={tweaks.showLiveDemo} onChange={(v) => setTweak("showLiveDemo", v)} />
-        <TweakToggle label="The problem" value={tweaks.showProblem}  onChange={(v) => setTweak("showProblem", v)} />
-        <TweakToggle label="14 tools"    value={tweaks.showTools}    onChange={(v) => setTweak("showTools", v)} />
-        <TweakToggle label="Native bits" value={tweaks.showNative}   onChange={(v) => setTweak("showNative", v)} />
-        <TweakToggle label="Setup"       value={tweaks.showSetup}    onChange={(v) => setTweak("showSetup", v)} />
-        <TweakToggle label="What's new"  value={tweaks.showWhatsNew} onChange={(v) => setTweak("showWhatsNew", v)} />
-      </TweaksPanel>
-    </div>
-  );
+  const tweaks = {
+    heroWord: "forget",
+    showLiveDemo: false,
+    showProblem: true,
+    showTools: true,
+    showNative: true,
+    showSetup: true,
+    showWhatsNew: true,
+  };
+  return <window.DirectionA width="100%" tweaks={tweaks} />;
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<VellemLanding />);
