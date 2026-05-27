@@ -46,7 +46,13 @@ struct RecentNotesView: View {
     @AppAccent private var accent
     private let sidebarIconSize: CGFloat = 18
     private let sidebarIconFrameWidth: CGFloat = 22
-    private let smartFolderInk = Color(nsColor: NSColor(calibratedWhite: 0.22, alpha: 1))
+    private var smartFolderInk: Color {
+        Color(nsColor: NSColor(name: nil, dynamicProvider: { appearance in
+            appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+                ? NSColor(calibratedWhite: 0.85, alpha: 1)
+                : NSColor(calibratedWhite: 0.22, alpha: 1)
+        }))
+    }
 
     var body: some View {
         ScrollView {
