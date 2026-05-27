@@ -10,6 +10,11 @@ struct ContentView: View {
     var body: some View {
         NavigationSplitView {
             RecentNotesView(store: store)
+                .navigationSplitViewColumnWidth(
+                    min: sidebarColumnMinWidth,
+                    ideal: sidebarColumnIdealWidth,
+                    max: sidebarColumnMaxWidth
+                )
         } detail: {
             mainContent
         }
@@ -115,6 +120,12 @@ struct ContentView: View {
             EmptyDetailSelectionView()
         }
     }
+
+    private var sidebarColumnMinWidth: CGFloat { 220 }
+
+    private var sidebarColumnIdealWidth: CGFloat { 280 }
+
+    private var sidebarColumnMaxWidth: CGFloat { 380 }
 
     private func isCreatedToday(_ note: Note) -> Bool {
         Calendar.current.isDateInToday(note.createdAt)

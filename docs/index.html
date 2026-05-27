@@ -1,599 +1,106 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vellem — The notes app for your AI agents</title>
-<meta name="description" content="Vellem is the notebook for your AI agents. A native macOS app that gives Claude, Codex and any MCP client a beautiful place to capture, organize and revisit what they learn — and stays great for your own thoughts too.">
-<meta property="og:title" content="Vellem — The notes app for your AI agents">
-<meta property="og:description" content="Give Claude, Codex and any MCP client a real place to take notes. Native macOS, beautiful, yours.">
-<meta property="og:type" content="website">
-<meta property="og:image" content="https://pulssart.github.io/vellem/app-icon-og.png">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://pulssart.github.io/vellem/app-icon-og.png">
-<link rel="icon" type="image/png" href="app-icon.png">
-<link rel="apple-touch-icon" href="app-icon@2x.png">
+<meta charset="utf-8" />
+<title>Vellem — The notebook for your AI agents</title>
+<meta name="description" content="Vellem gives Claude, Codex and any MCP client a real place to take notes. A native macOS notebook — beautiful, local-first, yours." />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta property="og:title" content="Vellem — The notebook for your AI agents" />
+<meta property="og:description" content="Give Claude, Codex and any MCP client a real place to take notes. Native macOS, beautiful, yours." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="https://pulssart.github.io/vellem/assets/vellem-icon@2x.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://pulssart.github.io/vellem/assets/vellem-screenshot.jpg" />
+<link rel="icon" type="image/png" href="assets/vellem-icon.png" />
+<link rel="apple-touch-icon" href="assets/vellem-icon@2x.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<template id="__bundler_thumbnail">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <rect width="100" height="100" fill="#F5E8AE"/>
+    <g transform="translate(50 50)" fill="#FFFDF4" stroke="#E8C547" stroke-width="0.5">
+      <path d="M0 -28 C 6 -20, 6 -7, 0 -1 C -6 -7, -6 -20, 0 -28 Z" transform="rotate(0)"/>
+      <path d="M0 -28 C 6 -20, 6 -7, 0 -1 C -6 -7, -6 -20, 0 -28 Z" transform="rotate(45)"/>
+      <path d="M0 -28 C 6 -20, 6 -7, 0 -1 C -6 -7, -6 -20, 0 -28 Z" transform="rotate(90)"/>
+      <path d="M0 -28 C 6 -20, 6 -7, 0 -1 C -6 -7, -6 -20, 0 -28 Z" transform="rotate(135)"/>
+      <path d="M0 -28 C 6 -20, 6 -7, 0 -1 C -6 -7, -6 -20, 0 -28 Z" transform="rotate(180)"/>
+      <path d="M0 -28 C 6 -20, 6 -7, 0 -1 C -6 -7, -6 -20, 0 -28 Z" transform="rotate(225)"/>
+      <path d="M0 -28 C 6 -20, 6 -7, 0 -1 C -6 -7, -6 -20, 0 -28 Z" transform="rotate(270)"/>
+      <path d="M0 -28 C 6 -20, 6 -7, 0 -1 C -6 -7, -6 -20, 0 -28 Z" transform="rotate(315)"/>
+      <circle r="4" fill="#E8C547" stroke="none"/>
+    </g>
+  </svg>
+</template>
 <style>
-  :root {
-    --bg: #fafaf7;
-    --fg: #1a1a1a;
-    --muted: #6b6b6b;
-    --accent: #d4a017;
-    --accent-soft: #fdf6e3;
-    --border: rgba(0,0,0,0.08);
-    --radius: 14px;
-    --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif;
+  html, body { margin: 0; padding: 0; background: #FFFDF4; color: #15140F; font-family: 'Inter Tight', system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  /* Tiny exploration link in the corner */
+  .vlm-explore-link {
+    position: fixed; left: 16px; bottom: 16px; z-index: 50;
+    font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: #8A7E50; background: rgba(255,253,244,0.85);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    padding: 6px 10px; border-radius: 999px;
+    border: 1px solid #F1DF8E; text-decoration: none;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #111110;
-      --fg: #f5f5f0;
-      --muted: #9a9a95;
-      --accent: #f5c244;
-      --accent-soft: rgba(245, 194, 68, 0.12);
-      --border: rgba(255,255,255,0.08);
-    }
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { background: var(--bg); color: var(--fg); font-family: var(--font); -webkit-font-smoothing: antialiased; }
-  body {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 64px 24px 48px;
-    line-height: 1.55;
-  }
-  .wrap { max-width: 720px; width: 100%; }
-  header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    margin-bottom: 48px;
-  }
-  .logo {
-    display: block;
-    width: 96px; height: 96px;
-    margin: 0 auto 20px;
-    image-rendering: -webkit-optimize-contrast;
-    filter: drop-shadow(0 8px 20px rgba(0,0,0,0.10));
-  }
-  h1 { font-size: 52px; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 14px; line-height: 1.05; }
-  .eyebrow {
-    display: inline-block;
-    font-size: 11.5px;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--accent);
-    padding: 5px 12px;
-    background: var(--accent-soft);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    margin: 0 auto 22px;
-  }
-  .tagline { font-size: 18px; color: var(--muted); max-width: 560px; margin: 0 auto; line-height: 1.6; }
-
-  .pitch {
-    margin-bottom: 48px;
-    padding: 0 4px;
-  }
-  .pitch h2 { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 12px; }
-  .pitch p { font-size: 17px; color: var(--muted); line-height: 1.65; }
-  .pitch em { font-style: italic; color: var(--fg); }
-
-  .mcp-block {
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 28px;
-    margin-bottom: 48px;
-    background: var(--bg);
-  }
-  .mcp-block h2 { font-size: 18px; font-weight: 600; margin-bottom: 10px; }
-  .mcp-block p { font-size: 14.5px; color: var(--muted); margin-bottom: 14px; }
-  .mcp-block p.small { font-size: 13px; margin-top: 14px; margin-bottom: 0; }
-  .mcp-block em { color: var(--fg); font-style: italic; }
-  .mcp-block code { background: var(--accent-soft); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: "SF Mono", Menlo, Consolas, monospace; }
-  .mcp-block pre {
-    background: var(--accent-soft);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px 18px;
-    overflow-x: auto;
-    font-size: 13px;
-    line-height: 1.6;
-    margin-bottom: 0;
-  }
-  .mcp-block pre code {
-    background: transparent;
-    padding: 0;
-    font-size: inherit;
-  }
-  .feature code { background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; font-size: 0.85em; font-family: "SF Mono", Menlo, Consolas, monospace; }
-
-  .screenshot {
-    margin: 0 0 56px;
-    border-radius: var(--radius);
-    overflow: hidden;
-    border: 1px solid var(--border);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.10);
-  }
-  .screenshot img {
-    display: block;
-    width: 100%;
-    height: auto;
-  }
-  @media (prefers-color-scheme: dark) {
-    .screenshot { box-shadow: 0 12px 40px rgba(0,0,0,0.40); }
-  }
-
-  .download-card {
-    background: var(--accent-soft);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 28px 28px 24px;
-    margin-bottom: 48px;
-    text-align: center;
-  }
-  .download-card .version { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
-  .download-btn {
-    display: inline-flex; align-items: center; gap: 10px;
-    background: var(--fg); color: var(--bg);
-    font-size: 16px; font-weight: 600;
-    padding: 14px 26px;
-    border-radius: 10px;
-    text-decoration: none;
-    transition: transform 0.08s ease, opacity 0.15s ease;
-  }
-  .download-btn:hover { transform: translateY(-1px); }
-  .download-btn:active { transform: translateY(0); opacity: 0.85; }
-  .download-btn[aria-disabled="true"] { opacity: 0.5; pointer-events: none; }
-  .download-meta { display: block; margin-top: 12px; font-size: 12px; color: var(--muted); }
-  .download-meta a { color: var(--muted); text-decoration: underline; }
-
-  .features { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 56px; }
-  @media (max-width: 520px) { .features { grid-template-columns: 1fr; } }
-  .feature h3 { font-size: 15px; margin-bottom: 4px; font-weight: 600; }
-  .feature p { font-size: 14px; color: var(--muted); line-height: 1.5; }
-
-  .tools-block {
-    margin-bottom: 56px;
-    padding-top: 4px;
-  }
-  .tools-block h2 {
-    font-size: 26px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    margin-bottom: 10px;
-  }
-  .tools-intro {
-    font-size: 16px;
-    color: var(--muted);
-    line-height: 1.65;
-    margin-bottom: 24px;
-  }
-  .tool-group {
-    border-top: 1px solid var(--border);
-    padding-top: 20px;
-    margin-top: 22px;
-  }
-  .tool-group h3 {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    margin-bottom: 14px;
-    font-weight: 650;
-  }
-  .tool-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 18px 24px;
-  }
-  @media (max-width: 620px) { .tool-grid { grid-template-columns: 1fr; } }
-  .tool-item code {
-    display: inline-block;
-    background: var(--accent-soft);
-    color: var(--fg);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 12.5px;
-    font-family: "SF Mono", Menlo, Consolas, monospace;
-    margin-bottom: 6px;
-  }
-  .tool-item p {
-    font-size: 14px;
-    color: var(--muted);
-    line-height: 1.5;
-  }
-
-  .install-steps {
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px 28px;
-    margin-bottom: 48px;
-  }
-  .install-steps h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 16px; font-weight: 600; }
-  .install-steps ol { padding-left: 22px; font-size: 14.5px; }
-  .install-steps li { margin-bottom: 8px; }
-  .install-steps code { background: var(--accent-soft); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; font-family: "SF Mono", Menlo, Consolas, monospace; }
-
-  .changelog {
-    margin-bottom: 56px;
-    padding-top: 4px;
-  }
-  .changelog > summary {
-    list-style: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    user-select: none;
-    padding: 4px 0;
-  }
-  .changelog > summary::-webkit-details-marker { display: none; }
-  .changelog > summary h2 {
-    font-size: 26px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    margin: 0;
-  }
-  .changelog-chevron {
-    width: 22px; height: 22px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--muted);
-    transition: transform 0.18s ease;
-  }
-  .changelog[open] > summary .changelog-chevron { transform: rotate(90deg); }
-  .changelog > summary:hover .changelog-chevron { color: var(--fg); }
-  .changelog-intro {
-    font-size: 16px;
-    color: var(--muted);
-    line-height: 1.65;
-    margin-bottom: 24px;
-    margin-top: 14px;
-  }
-  .release {
-    border-top: 1px solid var(--border);
-    padding-top: 18px;
-    margin-top: 18px;
-  }
-  .release-head {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 10px;
-  }
-  .release-tag {
-    display: inline-block;
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    padding: 3px 10px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    font-family: "SF Mono", Menlo, Consolas, monospace;
-  }
-  .release-title { font-size: 17px; font-weight: 600; }
-  .release-date { font-size: 12.5px; color: var(--muted); margin-left: auto; }
-  .release-body { font-size: 14.5px; color: var(--muted); line-height: 1.6; }
-  .release-body p { margin-bottom: 8px; }
-  .release-body ul { padding-left: 20px; margin: 4px 0 8px; }
-  .release-body li { margin-bottom: 4px; }
-  .release-body code { background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; font-size: 0.88em; font-family: "SF Mono", Menlo, Consolas, monospace; color: var(--fg); }
-  .release-body strong { color: var(--fg); }
-  .release-body a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
-  .release-body a:hover { border-bottom-color: var(--accent); }
-  .changelog-empty { font-size: 14px; color: var(--muted); font-style: italic; }
-  .changelog-more {
-    display: inline-block;
-    margin-top: 22px;
-    font-size: 13px;
-    color: var(--muted);
-    text-decoration: none;
-    border-bottom: 1px solid var(--border);
-  }
-  .changelog-more:hover { color: var(--fg); }
-
-  footer { font-size: 13px; color: var(--muted); text-align: center; margin-top: auto; padding-top: 32px; }
-  footer a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
-  footer a:hover { color: var(--fg); }
+  .vlm-explore-link:hover { color: #1A170E; background: #FBEFC0; }
 </style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <img class="logo" src="app-icon@2x.png" alt="Vellem app icon" width="96" height="96">
-    <span class="eyebrow">The notebook for your AI agents</span>
-    <h1>Vellem</h1>
-    <p class="tagline">Your AI agents read, write, search. They never remember. Vellem gives Claude, Codex and any MCP client a real place to take notes — beautiful, native, yours.</p>
-  </header>
+<div id="root"></div>
+<a href="directions-canvas.html" class="vlm-explore-link">← see all 3 directions</a>
 
-  <div class="download-card">
-    <div class="version" id="version">Latest release</div>
-    <a class="download-btn" id="download" href="#" aria-disabled="true">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Download for macOS
-    </a>
-    <span class="download-meta">Universal • macOS 26+ • Signed &amp; notarized<br><a id="release-link" href="https://github.com/pulssart/vellem/releases" target="_blank" rel="noopener">All releases</a></span>
-  </div>
+<script type="text/babel" src="shared.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="direction-a.jsx"></script>
 
-  <figure class="screenshot">
-    <img src="screenshot.jpg" alt="Vellem on macOS — main window with the Claude folder, a note viewer, and the Quick Capture pop-up" loading="lazy">
-  </figure>
+<script type="text/babel" data-presets="react">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "heroWord": "forget",
+  "showLiveDemo": false,
+  "showProblem": true,
+  "showTools": true,
+  "showNative": true,
+  "showSetup": true,
+  "showWhatsNew": true
+}/*EDITMODE-END*/;
 
-  <section class="pitch">
-    <h2>Why give your agents a notebook?</h2>
-    <p>Every session with Claude or Codex ends with research, plans, decisions, code reviews — that vanish when the window closes. Vellem makes that work persist in a place <em>you</em> own. A real macOS app. Searchable. Foldered. Yours forever.</p>
-  </section>
-
-  <div class="features">
-    <div class="feature">
-      <h3>🤖 MCP-native, not bolted on</h3>
-      <p>Vellem ships its own MCP server. 14 tools: add notes, todo lists, daily logs, folders, full-text search. Your agent doesn't ask permission — it just writes.</p>
+function VellemLanding() {
+  const [tweaks, setTweak] = window.useTweaks(TWEAK_DEFAULTS);
+  const DirA = window.DirectionA;
+  const {
+    TweaksPanel, TweakSection, TweakRadio, TweakToggle,
+  } = window;
+  return (
+    <div>
+      <DirA width="100%" tweaks={tweaks} />
+      <TweaksPanel title="Vellem · tweaks">
+        <TweakSection label="Hero" />
+        <TweakRadio
+          label="Verb"
+          value={tweaks.heroWord}
+          options={["forget", "vanish", "fade"]}
+          onChange={(v) => setTweak("heroWord", v)}
+        />
+        <TweakSection label="Sections" />
+        <TweakToggle label="Live demo"   value={tweaks.showLiveDemo} onChange={(v) => setTweak("showLiveDemo", v)} />
+        <TweakToggle label="The problem" value={tweaks.showProblem}  onChange={(v) => setTweak("showProblem", v)} />
+        <TweakToggle label="14 tools"    value={tweaks.showTools}    onChange={(v) => setTweak("showTools", v)} />
+        <TweakToggle label="Native bits" value={tweaks.showNative}   onChange={(v) => setTweak("showNative", v)} />
+        <TweakToggle label="Setup"       value={tweaks.showSetup}    onChange={(v) => setTweak("showSetup", v)} />
+        <TweakToggle label="What's new"  value={tweaks.showWhatsNew} onChange={(v) => setTweak("showWhatsNew", v)} />
+      </TweaksPanel>
     </div>
-    <div class="feature">
-      <h3>📁 One folder per agent</h3>
-      <p>Claude writes to <code>Claude</code>. Codex to <code>Codex</code>. Smart folders out of the box. You always know who said what.</p>
-    </div>
-    <div class="feature">
-      <h3>👀 You stay the reader</h3>
-      <p>While your agents fill the database, you keep the beautiful native UI: menu bar capture, global hotkey, widgets, Today view, Markdown rendering with interactive todos.</p>
-    </div>
-    <div class="feature">
-      <h3>🔒 Local-first, private</h3>
-      <p>Everything lives on your Mac. No cloud, no sync server, no telemetry. Apple App Group container, NSFileCoordinator. Your agents' work never leaves your machine.</p>
-    </div>
-  </div>
+  );
+}
 
-  <section class="tools-block">
-    <h2>The MCP tools inside Vellem</h2>
-    <p class="tools-intro">Vellem gives agents a small, practical toolkit for memory. They can write, retrieve, update, and organize notes without asking you to copy text between windows.</p>
-
-    <div class="tool-group">
-      <h3>Capture</h3>
-      <div class="tool-grid">
-        <div class="tool-item">
-          <code>add_note</code>
-          <p>Create a Markdown note, set an optional title, and place it in a folder by name or id.</p>
-        </div>
-        <div class="tool-item">
-          <code>append_to_daily</code>
-          <p>Add a snippet to today's daily note. If today's note does not exist yet, Vellem creates it.</p>
-        </div>
-        <div class="tool-item">
-          <code>create_todo_list</code>
-          <p>Turn a list of tasks into a proper Vellem note with interactive Markdown checkboxes.</p>
-        </div>
-        <div class="tool-item">
-          <code>add_todo</code>
-          <p>Add one task to an existing note, checked or unchecked, without rewriting the whole note.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="tool-group">
-      <h3>Read and search</h3>
-      <div class="tool-grid">
-        <div class="tool-item">
-          <code>list_notes</code>
-          <p>Return recent notes with ids, titles, previews, note type, and update dates.</p>
-        </div>
-        <div class="tool-item">
-          <code>search_notes</code>
-          <p>Search note titles and bodies, case insensitive, with a controllable result limit.</p>
-        </div>
-        <div class="tool-item">
-          <code>get_note</code>
-          <p>Fetch the full content of a note by id when an agent needs exact context.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="tool-group">
-      <h3>Edit</h3>
-      <div class="tool-grid">
-        <div class="tool-item">
-          <code>update_note</code>
-          <p>Replace a note body with a new Markdown version when the agent has a better draft.</p>
-        </div>
-        <div class="tool-item">
-          <code>delete_note</code>
-          <p>Remove a note by id when something was captured by mistake.</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="tool-group">
-      <h3>Organize</h3>
-      <div class="tool-grid">
-        <div class="tool-item">
-          <code>list_folders</code>
-          <p>List every folder, including ids, names, creation dates, and note counts.</p>
-        </div>
-        <div class="tool-item">
-          <code>create_folder</code>
-          <p>Create a folder by name, or reuse the existing one if it is already there.</p>
-        </div>
-        <div class="tool-item">
-          <code>delete_folder</code>
-          <p>Delete a folder while keeping its notes. The notes move back to the root.</p>
-        </div>
-        <div class="tool-item">
-          <code>set_folder_color</code>
-          <p>Set a folder color, or clear it, using the same palette as the app.</p>
-        </div>
-        <div class="tool-item">
-          <code>move_note</code>
-          <p>Move a note into a folder by id or name, create the folder if needed, or remove the note from its folder.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="mcp-block">
-    <h2>Plug it into Claude in 10 seconds</h2>
-    <p>After installing Vellem, add this to <code>claude_desktop_config.json</code> and restart Claude:</p>
-    <pre><code>{
-  "mcpServers": {
-    "vellem": {
-      "command": "/Applications/Vellem.app/Contents/Resources/vellem-mcp"
-    }
-  }
-}</code></pre>
-    <p class="small">Claude can now say <em>"I'll save that report to Vellem"</em> — and actually do it. Same idea for Codex, or any MCP client.</p>
-  </section>
-
-  <details class="changelog" id="whats-new">
-    <summary>
-      <span class="changelog-chevron" aria-hidden="true">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </span>
-      <h2>What's new</h2>
-    </summary>
-    <p class="changelog-intro">Each release pulled live from GitHub. Vellem auto-updates from <strong>1.0.3</strong> onward.</p>
-    <div id="changelog-list">
-      <p class="changelog-empty">Loading release notes…</p>
-    </div>
-    <a class="changelog-more" href="https://github.com/pulssart/vellem/releases" target="_blank" rel="noopener">See full release history on GitHub →</a>
-  </details>
-
-  <div class="install-steps">
-    <h2>Install Vellem</h2>
-    <ol>
-      <li>Click <strong>Download for macOS</strong> above.</li>
-      <li>Open the <code>Vellem-x.y.z.dmg</code> file.</li>
-      <li>Drag <strong>Vellem</strong> into your <strong>Applications</strong> folder.</li>
-      <li>Launch from Spotlight or Launchpad. macOS will ask once if you're sure — click <strong>Open</strong>.</li>
-    </ol>
-  </div>
-
-  <footer>
-    Made with care • <a href="https://github.com/pulssart/vellem" target="_blank" rel="noopener">Source on GitHub</a>
-  </footer>
-</div>
-
-<script>
-  const repo = "pulssart/vellem";
-
-  // Minimal, safe markdown → HTML (escape first, then apply a few patterns).
-  function escapeHTML(s) {
-    return s.replace(/[&<>"']/g, c => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-    }[c]));
-  }
-  function renderMarkdown(md) {
-    if (!md) return "";
-    const lines = md.split(/\r?\n/);
-    let html = "";
-    let inList = false;
-    const flushList = () => { if (inList) { html += "</ul>"; inList = false; } };
-
-    for (const raw of lines) {
-      const line = raw.trimEnd();
-      if (!line.trim()) { flushList(); continue; }
-
-      const bullet = line.match(/^\s*[-*]\s+(.*)$/);
-      const heading = line.match(/^#{1,6}\s+(.*)$/);
-
-      if (heading) {
-        flushList();
-        html += `<p><strong>${inline(heading[1])}</strong></p>`;
-        continue;
-      }
-      if (bullet) {
-        if (!inList) { html += "<ul>"; inList = true; }
-        html += `<li>${inline(bullet[1])}</li>`;
-        continue;
-      }
-      flushList();
-      html += `<p>${inline(line)}</p>`;
-    }
-    flushList();
-    return html;
-  }
-  function inline(s) {
-    s = escapeHTML(s);
-    s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
-    s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-    s = s.replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-    return s;
-  }
-  function formatDate(iso) {
-    const d = new Date(iso);
-    return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-  }
-
-  // Single fetch for the release list, used for both the download button
-  // and the "What's new" section. Resilient to the /releases/latest
-  // endpoint occasionally 504-ing.
-  (async () => {
-    const dlBtn = document.getElementById("download");
-    const versionEl = document.getElementById("version");
-    const list = document.getElementById("changelog-list");
-
-    let releases = null;
-    try {
-      const res = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=20`, {
-        headers: { Accept: "application/vnd.github+json" }
-      });
-      if (!res.ok) throw new Error(`GitHub API ${res.status}`);
-      releases = await res.json();
-    } catch (err) {
-      console.warn("Vellem release list fetch failed:", err);
-    }
-
-    const visible = (releases || []).filter(r => !r.draft && !r.prerelease);
-
-    // Download button
-    if (visible.length) {
-      const latest = visible[0];
-      const dmg = (latest.assets || []).find(a => a.name.toLowerCase().endsWith(".dmg"));
-      if (dmg) {
-        dlBtn.href = dmg.browser_download_url;
-        dlBtn.removeAttribute("aria-disabled");
-        versionEl.textContent = `${latest.tag_name || latest.name || "Latest"} • ${(dmg.size / (1024 * 1024)).toFixed(1)} MB`;
-      } else {
-        // Latest release has no DMG: still let users reach the releases page.
-        dlBtn.href = `https://github.com/${repo}/releases/latest`;
-        dlBtn.removeAttribute("aria-disabled");
-        versionEl.textContent = `${latest.tag_name || latest.name || "Latest"}`;
-      }
-    } else {
-      // GitHub API failed or no releases: fall back to the releases page.
-      dlBtn.href = `https://github.com/${repo}/releases/latest`;
-      dlBtn.removeAttribute("aria-disabled");
-      versionEl.textContent = "Open releases on GitHub";
-    }
-
-    // What's new
-    if (visible.length) {
-      list.innerHTML = visible.map(r => {
-        const tag = escapeHTML(r.tag_name || "");
-        const title = escapeHTML((r.name || r.tag_name || "").replace(/^Vellem\s*/i, ""));
-        const date = r.published_at ? formatDate(r.published_at) : "";
-        const body = renderMarkdown(r.body || "") || '<p><em>No notes provided.</em></p>';
-        return `
-          <article class="release">
-            <header class="release-head">
-              <span class="release-tag">${tag}</span>
-              <span class="release-title">${title}</span>
-              <span class="release-date">${date}</span>
-            </header>
-            <div class="release-body">${body}</div>
-          </article>
-        `;
-      }).join("");
-    } else {
-      list.innerHTML = '<p class="changelog-empty">Could not load release notes from GitHub.</p>';
-    }
-  })();
+ReactDOM.createRoot(document.getElementById('root')).render(<VellemLanding />);
 </script>
 </body>
 </html>

@@ -14,6 +14,8 @@ DERIVED_DATA="$ROOT_DIR/build/DerivedData"
 INSTALL_DIR="/Applications"
 INSTALLED_APP_BUNDLE="$INSTALL_DIR/$APP_NAME.app"
 LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister"
+SYMROOT="$DERIVED_DATA/Build/Products"
+OBJROOT="$DERIVED_DATA/Build/Intermediates.noindex"
 MAC_GROUP_NOTES="$HOME/Library/Group Containers/MKAFV9VL9V.com.adriendonot.Vellem/notes.json"
 LEGACY_GROUP_NOTES="$HOME/Library/Group Containers/group.com.adriendonot.Vellem/notes.json"
 APP_SUPPORT_NOTES="$HOME/Library/Application Support/Vellem/notes.json"
@@ -34,6 +36,8 @@ xcodebuild \
   -configuration "$CONFIGURATION" \
   -destination "platform=macOS" \
   -derivedDataPath "$DERIVED_DATA" \
+  SYMROOT="$SYMROOT" \
+  OBJROOT="$OBJROOT" \
   build
 
 TARGET_BUILD_DIR="$(
@@ -43,12 +47,13 @@ TARGET_BUILD_DIR="$(
     -configuration "$CONFIGURATION" \
     -destination "platform=macOS" \
     -derivedDataPath "$DERIVED_DATA" \
+    SYMROOT="$SYMROOT" \
+    OBJROOT="$OBJROOT" \
     -showBuildSettings 2>/dev/null |
     awk -F' = ' '/TARGET_BUILD_DIR = / { print $2; exit }'
 )"
 APP_BUNDLE="$TARGET_BUILD_DIR/$APP_NAME.app"
 BUILT_WIDGET="$APP_BUNDLE/Contents/PlugIns/${APP_NAME}Widget.appex"
-INSTALLED_WIDGET="$INSTALLED_APP_BUNDLE/Contents/PlugIns/${APP_NAME}Widget.appex"
 
 cleanup_stale_services() {
   local stale_app
@@ -107,20 +112,15 @@ merge_notes() {
 }
 
 open_app() {
-  cleanup_stale_services
-  mkdir -p "$INSTALL_DIR"
-  rm -rf "$INSTALLED_APP_BUNDLE"
-  /usr/bin/ditto "$APP_BUNDLE" "$INSTALLED_APP_BUNDLE"
   merge_notes
   if [ -d "$BUILT_WIDGET" ]; then
     /usr/bin/pluginkit -r "$BUILT_WIDGET" >/dev/null 2>&1 || true
   fi
-  "$LSREGISTER" -f -R -trusted "$INSTALLED_APP_BUNDLE"
-  /System/Library/CoreServices/pbs -flush >/dev/null 2>&1 || true
-  if [ -d "$INSTALLED_WIDGET" ]; then
-    /usr/bin/pluginkit -a "$INSTALLED_WIDGET" >/dev/null 2>&1 || true
+  "$LSREGISTER" -f -R -trusted "$APP_BUNDLE"
+  if [ -d "$BUILT_WIDGET" ]; then
+    /usr/bin/pluginkit -a "$BUILT_WIDGET" >/dev/null 2>&1 || true
   fi
-  /usr/bin/open -n "$INSTALLED_APP_BUNDLE"
+  /usr/bin/open -n "$APP_BUNDLE"
 }
 
 case "$MODE" in
@@ -142,7 +142,7 @@ case "$MODE" in
     open_app
     sleep 1
     pgrep -x "$APP_NAME" >/dev/null
-    echo "$APP_NAME is running from $INSTALLED_APP_BUNDLE"
+    echo "$APP_NAME is running from $APP_BUNDLE"
     ;;
   *)
     echo "usage: $0 [run|--debug|--logs|--telemetry|--verify]" >&2
