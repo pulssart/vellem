@@ -112,6 +112,12 @@ struct VellemApp: App {
         if url.host == "new" {
             openQuickCapture()
             hideMainWindowAfterOpeningQuickCapture()
+        } else if url.host == "note",
+                  let idString = url.pathComponents.dropFirst().first,
+                  let uuid = UUID(uuidString: idString) {
+            store.viewerNoteID = uuid
+            openWindow(id: "note-viewer")
+            NSApp.activate(ignoringOtherApps: true)
         } else {
             NSApp.activate(ignoringOtherApps: true)
         }

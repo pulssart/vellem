@@ -224,17 +224,20 @@ private struct WidgetNoteRow: View {
     let previewLineLimit: Int
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(note.title)
-                .font(.callout)
-                .fontWeight(.medium)
-                .lineLimit(1)
-            Text(note.preview)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(previewLineLimit)
+        Link(destination: URL(string: "vellem://note/\(note.id.uuidString)")!) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(note.title)
+                    .font(.callout)
+                    .fontWeight(.medium)
+                    .lineLimit(1)
+                Text(note.preview)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(previewLineLimit)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .buttonStyle(.plain)
     }
 }
 
