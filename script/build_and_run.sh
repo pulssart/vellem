@@ -11,8 +11,10 @@ LEGACY_BUNDLE_ID="com.adriendonot.Supanote"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DERIVED_DATA="$ROOT_DIR/build/DerivedData"
-INSTALL_DIR="/Applications"
+INSTALL_DIR="$HOME/Applications"
 INSTALLED_APP_BUNDLE="$INSTALL_DIR/$APP_NAME.app"
+SYSTEM_INSTALL_DIR="/Applications"
+SYSTEM_INSTALLED_APP_BUNDLE="$SYSTEM_INSTALL_DIR/$APP_NAME.app"
 LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister"
 SYMROOT="$DERIVED_DATA/Build/Products"
 OBJROOT="$DERIVED_DATA/Build/Intermediates.noindex"
@@ -113,14 +115,32 @@ merge_notes() {
 
 open_app() {
   merge_notes
-  if [ -d "$BUILT_WIDGET" ]; then
-    /usr/bin/pluginkit -r "$BUILT_WIDGET" >/dev/null 2>&1 || true
-  fi
-  "$LSREGISTER" -f -R -trusted "$APP_BUNDLE"
-  if [ -d "$BUILT_WIDGET" ]; then
-    /usr/bin/pluginkit -a "$BUILT_WIDGET" >/dev/null 2>&1 || true
-  fi
-  /usr/bin/open -n "$APP_BUNDLE"
+
+  local widget_ext="${APP_NAME}Widget.appex"
+
+  # Un-register old widget extensions from both locations BEFORE copying the new bundle,
+  # so stale widget kinds (e.g. a removed kind) are fully evicted from the plugin database.
+  for old_widget in \
+      "$INSTALLED_APP_BUNDLE/Contents/PlugIns/$widget_ext" \
+      "$SYSTEM_INSTALLED_APP_BUNDLE/Contents/PlugIns/$widget_ext"; do
+    [ -d "$old_widget" ] && /usr/bin/pluginkit -r "$old_widget" >/dev/null 2>&1 || true
+  done
+
+  # Install to ~/Applications (used by Claude Desktop MCP config)
+  mkdir -p "$INSTALL_DIR"
+  /usr/bin/ditto "$APP_BUNDLE" "$INSTALLED_APP_BUNDLE"
+
+  # Also keep /Applications in sync
+  /usr/bin/ditto "$APP_BUNDLE" "$SYSTEM_INSTALLED_APP_BUNDLE" 2>/dev/null || true
+
+  # Re-register widget extensions for both locations.
+  "$LSREGISTER" -f -R -trusted "$INSTALLED_APP_BUNDLE"
+  INSTALLED_WIDGET="$INSTALLED_APP_BUNDLE/Contents/PlugIns/$widget_ext"
+  SYSTEM_WIDGET="$SYSTEM_INSTALLED_APP_BUNDLE/Contents/PlugIns/$widget_ext"
+  [ -d "$INSTALLED_WIDGET" ] && /usr/bin/pluginkit -a "$INSTALLED_WIDGET" >/dev/null 2>&1 || true
+  [ -d "$SYSTEM_WIDGET" ]    && /usr/bin/pluginkit -a "$SYSTEM_WIDGET"    >/dev/null 2>&1 || true
+
+  /usr/bin/open -n "$INSTALLED_APP_BUNDLE"
 }
 
 case "$MODE" in

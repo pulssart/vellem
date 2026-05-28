@@ -10,8 +10,11 @@ final class NotesFileStore {
     private let decoder: JSONDecoder
 
     init() {
-        let home = FileManager.default.homeDirectoryForCurrentUser
-        let container = home.appending(path: "Library/Group Containers/MKAFV9VL9V.com.adriendonot.Vellem")
+        // Use the proper App Group container API instead of a hardcoded path.
+        let container = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: "MKAFV9VL9V.com.adriendonot.Vellem"
+        ) ?? FileManager.default.homeDirectoryForCurrentUser
+            .appending(path: "Library/Group Containers/MKAFV9VL9V.com.adriendonot.Vellem")
         self.fileURL = container.appending(path: "notes.json")
         self.foldersURL = container.appending(path: "folders.json")
         self.encoder = JSONEncoder()
@@ -23,8 +26,10 @@ final class NotesFileStore {
 
     func addNote(text: String, generatedTitle: String? = nil, folderID: UUID? = nil) throws -> Note {
         var notes = try load()
-        let resolvedFolderID = try resolveFolderID(folderID)
-        let sourceApp = try sourceApp(for: resolvedFolderID)
+        // Load folders once and pass through — avoids two separate JSON parses.
+        let folders = try loadFolders()
+        let resolvedFolderID = try resolveFolderID(folderID, folders: folders)
+        let sourceApp = sourceApp(for: resolvedFolderID, folders: folders)
         let note = Note(
             text: text,
             generatedTitle: generatedTitle,
@@ -39,20 +44,19 @@ final class NotesFileStore {
         return note
     }
 
-    private func resolveFolderID(_ folderID: UUID?) throws -> UUID? {
+    private func resolveFolderID(_ folderID: UUID?, folders: [Folder]? = nil) throws -> UUID? {
         guard let folderID else { return nil }
-        let folders = try loadFolders()
-        guard folders.contains(where: { $0.id == folderID }) else {
+        let resolved = try folders ?? loadFolders()
+        guard resolved.contains(where: { $0.id == folderID }) else {
             throw MCPError.notFound("Folder \(folderID) not found.")
         }
         return folderID
     }
 
-    private func sourceApp(for folderID: UUID?) throws -> String {
+    private func sourceApp(for folderID: UUID?, folders: [Folder]? = nil) -> String {
         guard let folderID else { return "MCP" }
-        guard let folder = try loadFolders().first(where: { $0.id == folderID }) else {
-            return "MCP"
-        }
+        let all = (try? folders ?? loadFolders()) ?? []
+        guard let folder = all.first(where: { $0.id == folderID }) else { return "MCP" }
 
         switch folder.kind {
         case .smartCodex:
@@ -81,12 +85,16 @@ final class NotesFileStore {
 
         if let index = notes.firstIndex(where: { $0.kind == .daily && cal.isDate($0.createdAt, inSameDayAs: now) }) {
             var updated = notes[index]
-            let separator = updated.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "" : "\n\n"
-            updated.text += separator + text
+            // Match the app's append format: ## HH:mm timestamp block.
+            let time = DateFormatter.localizedString(from: now, dateStyle: .none, timeStyle: .short)
+            let block = "## \(time)\n\(text.trimmingCharacters(in: .whitespacesAndNewlines))"
+            let existing = updated.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            updated.text = existing.isEmpty ? block : "\(existing)\n\n\(block)"
             updated.updatedAt = now
             updated.sourceApp = sourceApp
-            notes[index] = updated
-            notes.sort { $0.updatedAt > $1.updatedAt }
+            // Move updated note to front (updatedAt = now).
+            notes.remove(at: index)
+            notes.insert(updated, at: 0)
             try save(notes)
             return updated
         }
@@ -114,9 +122,10 @@ final class NotesFileStore {
 
     func searchNotes(query: String, limit: Int) throws -> [Note] {
         let notes = try load()
-        let q = query.lowercased()
+        // range(of:options:) avoids creating two lowercased String copies per note.
         let filtered = notes.filter { n in
-            n.title.lowercased().contains(q) || n.text.lowercased().contains(q)
+            n.title.range(of: query, options: .caseInsensitive) != nil ||
+            n.text.range(of: query, options: .caseInsensitive) != nil
         }
         return Array(filtered.prefix(max(1, limit)))
     }
@@ -126,12 +135,15 @@ final class NotesFileStore {
         return notes.first { $0.id == id }
     }
 
-    func updateNote(id: UUID, text: String) throws -> Note {
+    func updateNote(id: UUID, text: String, title: String? = nil) throws -> Note {
         var notes = try load()
         guard let index = notes.firstIndex(where: { $0.id == id }) else {
             throw MCPError.notFound("Note \(id) not found.")
         }
         notes[index].text = text
+        // If an explicit title is provided use it; otherwise clear the generated
+        // title so it is re-derived from the new first heading / first line.
+        notes[index].generatedTitle = title?.isEmpty == false ? title : nil
         notes[index].updatedAt = Date()
         let updated = notes[index]
         notes.sort { $0.updatedAt > $1.updatedAt }
@@ -311,10 +323,16 @@ final class NotesFileStore {
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
     }
 
+    // Same format as NotesStore.dailyTitleFormatter — daily notes have a consistent title
+    // whether created via the app or via MCP.
+    private static let dailyTitleFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = .current
+        f.setLocalizedDateFormatFromTemplate("EEE d MMM")
+        return f
+    }()
+
     private func dailyTitle(for date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d, yyyy"
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        return "Today, \(formatter.string(from: date))"
+        "Today, \(Self.dailyTitleFormatter.string(from: date))"
     }
 }

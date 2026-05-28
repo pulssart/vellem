@@ -8,6 +8,10 @@ final class MCPServer {
     private let serverName = "vellem"
     private let serverVersion = "1.0.0"
 
+    // Shared formatter — ISO8601DateFormatter is expensive to instantiate.
+    // nonisolated(unsafe) is safe here: the formatter is read-only after init.
+    private nonisolated(unsafe) static let iso8601: ISO8601DateFormatter = ISO8601DateFormatter()
+
     func run() {
         FileHandle.standardError.write("vellem-mcp listening on stdio\n".data(using: .utf8)!)
         while let line = readLine(strippingNewline: true) {
@@ -153,10 +157,11 @@ final class MCPServer {
             ),
             tool(
                 "update_note",
-                description: "Replace a note's body text by id. The whole note text is replaced.",
+                description: "Replace a note's body text by id. The whole note text is replaced. Optionally supply an explicit title; if omitted the title is re-derived from the new first heading or first line.",
                 properties: [
                     "id": ["type": "string"],
-                    "text": ["type": "string", "description": "New markdown body."]
+                    "text": ["type": "string", "description": "New markdown body."],
+                    "title": ["type": "string", "description": "Optional explicit title. If omitted, derived from the first heading / first line of the new text."]
                 ],
                 required: ["id", "text"]
             ),
@@ -337,7 +342,8 @@ final class MCPServer {
             guard let text = args["text"] as? String else {
                 throw MCPError.invalidArguments("`text` is required.")
             }
-            let note = try store.updateNote(id: uuid, text: text)
+            let titleArg = args["title"] as? String
+            let note = try store.updateNote(id: uuid, text: text, title: titleArg)
             return "Updated note \(note.id). Title: \(note.title). Words: \(note.wordCount)."
 
         case "delete_note":
@@ -439,22 +445,20 @@ final class MCPServer {
         id: \(note.id)
         title: \(note.title)
         words: \(note.wordCount)
-        updatedAt: \(ISO8601DateFormatter().string(from: note.updatedAt))
+        updatedAt: \(Self.iso8601.string(from: note.updatedAt))
         """
     }
 
     private func formatList(_ notes: [Note]) -> String {
         guard !notes.isEmpty else { return "No notes." }
-        let f = ISO8601DateFormatter()
         return notes.map { n in
             let kindLabel = n.isDailyNote ? "[daily] " : ""
-            return "\(n.id)  \(kindLabel)\(n.title)  (\(n.wordCount)w, updated \(f.string(from: n.updatedAt)))\n  \(n.preview.prefix(120))"
+            return "\(n.id)  \(kindLabel)\(n.title)  (\(n.wordCount)w, updated \(Self.iso8601.string(from: n.updatedAt)))\n  \(n.preview.prefix(120))"
         }.joined(separator: "\n\n")
     }
 
     private func formatFullNote(_ note: Note) -> String {
-        let f = ISO8601DateFormatter()
-        var meta = "id: \(note.id)\ntitle: \(note.title)\nkind: \(note.isDailyNote ? "daily" : "regular")\nupdatedAt: \(f.string(from: note.updatedAt))\n"
+        var meta = "id: \(note.id)\ntitle: \(note.title)\nkind: \(note.isDailyNote ? "daily" : "regular")\nupdatedAt: \(Self.iso8601.string(from: note.updatedAt))\n"
         if let src = note.sourceApp { meta += "sourceApp: \(src)\n" }
         if let url = note.sourceURL { meta += "sourceURL: \(url.absoluteString)\n" }
         if let folderID = note.folderID {
@@ -469,9 +473,9 @@ final class MCPServer {
 
         switch folder.kind {
         case .smartClaude:
-            return note.folderID == folder.id || (note.sourceApp?.localizedCaseInsensitiveContains("claude") == true)
+            return note.folderID == folder.id || note.isFromClaude
         case .smartCodex:
-            return note.folderID == folder.id || (note.sourceApp?.localizedCaseInsensitiveContains("codex") == true)
+            return note.folderID == folder.id || note.isFromCodex
         case .smartPromptLibrary:
             return false
         case .smartServices, .regular:
