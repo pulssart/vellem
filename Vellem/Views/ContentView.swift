@@ -45,9 +45,7 @@ struct ContentView: View {
         }
         .onAppear {
             guard !hasCompletedOnboarding else { return }
-            DispatchQueue.main.async {
-                showsOnboarding = true
-            }
+            showsOnboarding = true
         }
         .onReceive(NotificationCenter.default.publisher(for: .vellemShowOnboarding)) { _ in
             showsOnboarding = true
@@ -83,14 +81,14 @@ struct ContentView: View {
         if let folder = selectedFolder, folder.kind == .smartPromptLibrary {
             FolderNotesListView(store: store, folder: folder)
         } else if usesThreeColumnLayout {
-            HStack(spacing: 0) {
+            HSplitView {
                 scopedNotesList
-                    .frame(width: 360)
-
-                Divider()
+                    .frame(minWidth: 220, idealWidth: 320, maxWidth: 560)
 
                 scopedDetailView
+                    .frame(minWidth: 380)
             }
+            .background(SplitViewAutosave(name: "VellemNoteListSplit"))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let note = store.selectedNote {
             NoteEditorView(store: store, note: note)

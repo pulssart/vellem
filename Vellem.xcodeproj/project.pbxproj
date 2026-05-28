@@ -36,6 +36,7 @@
 		9701F78808A345A405B23AEB /* ScrambleTextEffect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BCB06CB1FECF1A8F5BC6E6D /* ScrambleTextEffect.swift */; };
 		9A57A0453CCBD40B8265E252 /* VellemApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4237C4F0B607897B8B1D6069 /* VellemApp.swift */; };
 		9AE5D39B5FB80AEF1C4478DE /* NoteNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC017F0B5E3C20165F74A1F8 /* NoteNotifications.swift */; };
+		A10521FE98F14E281828A713 /* SplitViewAutosave.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AA2CC87B4754004C3968D88 /* SplitViewAutosave.swift */; };
 		A7D9892DF8EC810BB4B30D99 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A21C416FE49D8BACA6D8E9A2 /* SettingsView.swift */; };
 		A8CD39ED4AE7AA148B71A201 /* VellemWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF48CECE3EAB55C21C890A37 /* VellemWidget.swift */; };
 		B8C4116198FB6B75DA86E333 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = E2E99B783493520DDA1312EA /* Sparkle */; };
@@ -92,6 +93,7 @@
 		07546495A4639F9FA7727639 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		0C55CFE4DA2FAE52B9A01F7B /* GlobalHotKeyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKeyService.swift; sourceTree = "<group>"; };
 		173FC39ED423E0E6F6889FD9 /* MCPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPServer.swift; sourceTree = "<group>"; };
+		1AA2CC87B4754004C3968D88 /* SplitViewAutosave.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplitViewAutosave.swift; sourceTree = "<group>"; };
 		1C69FD53E41A13CCC596052D /* AppPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferences.swift; sourceTree = "<group>"; };
 		1EDEBE5538AFEF3E24768584 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		2C4A1A4671C57414972898E1 /* Vellem.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Vellem.entitlements; sourceTree = "<group>"; };
@@ -246,6 +248,7 @@
 				9D31FD034B4CD8D85C052A6A /* QuickCaptureWindowConfigurator.swift */,
 				5BCB06CB1FECF1A8F5BC6E6D /* ScrambleTextEffect.swift */,
 				F4691F7E3E47E6CF811638C9 /* ShortcutFormatter.swift */,
+				1AA2CC87B4754004C3968D88 /* SplitViewAutosave.swift */,
 				F9FBFC33F50F0D1A99BA19B8 /* WidgetReloader.swift */,
 			);
 			path = Support;
@@ -482,6 +485,7 @@
 				E797706A6007BFD3E21E36C0 /* ShortcutFormatter.swift in Sources */,
 				2898251A6A595DE42B505DE5 /* ShortcutRecorderView.swift in Sources */,
 				8AEF03B8D881872153AE07BA /* SlashCommandProcessor.swift in Sources */,
+				A10521FE98F14E281828A713 /* SplitViewAutosave.swift in Sources */,
 				CE35CCA9346942A425296E88 /* UpdateController.swift in Sources */,
 				9A57A0453CCBD40B8265E252 /* VellemApp.swift in Sources */,
 				02D7C882CCFAAD0226BD6D61 /* WidgetReloader.swift in Sources */,
