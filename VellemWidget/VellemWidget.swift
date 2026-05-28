@@ -91,7 +91,9 @@ struct VellemProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<VellemEntry>) -> Void) {
-        completion(Timeline(entries: [entry()], policy: .after(.now.addingTimeInterval(30))))
+        // The main app calls WidgetCenter.shared.reloadAllTimelines() after every save.
+        // This policy is a background fallback for when the app isn't running.
+        completion(Timeline(entries: [entry()], policy: .after(.now.addingTimeInterval(900))))
     }
 
     private func entry() -> VellemEntry {
@@ -107,7 +109,15 @@ struct VellemProvider: TimelineProvider {
             return VellemEntry(date: .now, notes: [], status: "Missing notes file")
         }
 
-        guard let data = try? Data(contentsOf: url) else {
+        // Use NSFileCoordinator for safe concurrent access with the main app.
+        var data: Data?
+        var coordinationError: NSError?
+        let coordinator = NSFileCoordinator(filePresenter: nil)
+        coordinator.coordinate(readingItemAt: url, options: [], error: &coordinationError) { coordURL in
+            data = try? Data(contentsOf: coordURL)
+        }
+
+        guard let data else {
             return VellemEntry(date: .now, notes: [], status: "Can't read notes")
         }
 
@@ -255,24 +265,9 @@ struct VellemWidget: Widget {
     }
 }
 
-struct VellemLargeWidget: Widget {
-    let kind = "VellemLargeWidget"
-
-    var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: VellemProvider()) { entry in
-            VellemWidgetView(entry: entry)
-        }
-        .configurationDisplayName("Vellem Large")
-        .description("More recent notes in a larger view.")
-        .supportedFamilies([.systemLarge])
-        .contentMarginsDisabled()
-    }
-}
-
 @main
 struct VellemWidgetBundle: WidgetBundle {
     var body: some Widget {
         VellemWidget()
-        VellemLargeWidget()
     }
 }
