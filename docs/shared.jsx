@@ -1,20 +1,24 @@
 // Shared data + small primitives for the three Vellem landing directions.
 
 const MCP_TOOLS = [
-  { name: "add_note",         verb: "create",  desc: "Drop a new Markdown note into Vellem." },
-  { name: "append_to_daily",  verb: "append",  desc: "Tack a snippet onto today's daily note." },
-  { name: "create_todo_list", verb: "create",  desc: "Spin up a checklist with interactive todos." },
-  { name: "add_todo",         verb: "append",  desc: "Add one task to an existing note." },
-  { name: "list_notes",       verb: "read",    desc: "List notes, most recent first." },
-  { name: "search_notes",     verb: "read",    desc: "Full-text search title and body." },
-  { name: "get_note",         verb: "read",    desc: "Pull a note's full content by id." },
-  { name: "update_note",      verb: "write",   desc: "Replace a note's body in place." },
-  { name: "delete_note",      verb: "destroy", desc: "Remove a note for good." },
-  { name: "list_folders",     verb: "read",    desc: "Enumerate every folder + note count." },
-  { name: "create_folder",    verb: "create",  desc: "Make a new folder, idempotently." },
-  { name: "delete_folder",    verb: "destroy", desc: "Remove a folder, keep its notes." },
-  { name: "set_folder_color", verb: "write",   desc: "Tint a folder yellow, blue, pink…" },
-  { name: "move_note",        verb: "write",   desc: "Reshelf a note into another folder." },
+  { name: "add_note",              verb: "create",  desc: "Drop a new Markdown note into Vellem." },
+  { name: "append_to_daily",       verb: "append",  desc: "Tack a snippet onto today's daily note." },
+  { name: "get_daily_log",         verb: "read",    desc: "Fetch today's daily note in one call." },
+  { name: "create_todo_list",      verb: "create",  desc: "Spin up a checklist with interactive todos." },
+  { name: "add_todo",              verb: "append",  desc: "Add one task to an existing note." },
+  { name: "list_notes",            verb: "read",    desc: "List notes, most recent first." },
+  { name: "list_recent_notes",     verb: "read",    desc: "Notes updated in the last N days." },
+  { name: "search_notes",          verb: "read",    desc: "Full-text search title and body." },
+  { name: "search_notes_semantic", verb: "read",    desc: "Search by meaning — on-device NLEmbedding." },
+  { name: "get_note",              verb: "read",    desc: "Pull a note's full content by id." },
+  { name: "get_related_notes",     verb: "read",    desc: "Find notes semantically close to a given one." },
+  { name: "update_note",           verb: "write",   desc: "Replace, append, or prepend a note's body." },
+  { name: "delete_note",           verb: "destroy", desc: "Remove a note for good." },
+  { name: "list_folders",          verb: "read",    desc: "Enumerate every folder + note count." },
+  { name: "create_folder",         verb: "create",  desc: "Make a new folder, idempotently." },
+  { name: "delete_folder",         verb: "destroy", desc: "Remove a folder, keep its notes." },
+  { name: "set_folder_color",      verb: "write",   desc: "Tint a folder yellow, blue, pink…" },
+  { name: "move_note",             verb: "write",   desc: "Reshelf a note into another folder." },
 ];
 
 // The "Claude writes a note" agent typing animation hook.

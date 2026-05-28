@@ -423,7 +423,7 @@ hook it into Claude as a real context layer for design.`;
                 fontSize: 76, lineHeight: 0.95, letterSpacing: "-0.035em",
                 color: INK, fontWeight: 400,
               }}>
-                Fourteen verbs.
+                Eighteen verbs.
                 <br /><em style={{ color: "#9A7B12" }}>One notebook.</em>
               </h2>
             </div>
@@ -913,8 +913,18 @@ hook it into Claude as a real context layer for design.`;
               <VellemIcon size={32} />
               <span style={{ fontSize: 16, fontWeight: 700, color: INK }}>Vellem</span>
             </div>
-            <div>MIT · made in France · v1.0.8</div>
-            <div style={{ marginTop: 4, color: "#A89248" }}>github · all releases · privacy</div>
+            <div>MIT · made in France · v1.0.10</div>
+            <div style={{ marginTop: 4, color: "#A89248" }}>
+              Made by{" "}
+              <a
+                href="https://www.linkedin.com/in/adriendonot/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "inherit", textDecoration: "underline" }}
+              >
+                Adrien DONOT
+              </a>
+            </div>
           </div>
         </div>
       </section>
