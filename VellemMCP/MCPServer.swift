@@ -4,6 +4,7 @@ import Foundation
 /// Implements: initialize, tools/list, tools/call, ping.
 final class MCPServer {
     private let store = NotesFileStore()
+    private lazy var semantic = SemanticIndex()
     private let protocolVersion = "2024-11-05"
     private let serverName = "vellem"
     private let serverVersion = "1.0.0"
@@ -140,12 +141,47 @@ final class MCPServer {
             ),
             tool(
                 "search_notes",
-                description: "Search notes by query. Matches title and body, case-insensitive.",
+                description: "Search notes by query. Matches title and body, case-insensitive (literal substring match). For meaning-based search use `search_notes_semantic`.",
                 properties: [
                     "query": ["type": "string", "description": "Search string."],
                     "limit": ["type": "integer", "description": "Maximum results. Default 20.", "minimum": 1, "maximum": 200]
                 ],
                 required: ["query"]
+            ),
+            tool(
+                "search_notes_semantic",
+                description: "Search notes by semantic meaning using Apple's on-device NLEmbedding (French & English supported). Returns notes ranked by cosine similarity to the query. Use this when the user asks in their own words rather than with exact keywords. The first call builds the embedding cache (one-shot ~seconds for large collections); subsequent calls are fast.",
+                properties: [
+                    "query": ["type": "string", "description": "Natural-language query, e.g. \"how to onboard a new teammate\"."],
+                    "limit": ["type": "integer", "description": "Maximum results. Default 10.", "minimum": 1, "maximum": 50],
+                    "min_score": ["type": "number", "description": "Optional similarity floor in [0,1]. Notes scoring below are dropped. Default 0.2."]
+                ],
+                required: ["query"]
+            ),
+            tool(
+                "get_related_notes",
+                description: "Given a note id, return the most semantically similar OTHER notes from the collection. Uses the same NLEmbedding pipeline as `search_notes_semantic`.",
+                properties: [
+                    "id": ["type": "string", "description": "Source note UUID."],
+                    "limit": ["type": "integer", "description": "Maximum results. Default 5.", "minimum": 1, "maximum": 50],
+                    "min_score": ["type": "number", "description": "Optional similarity floor in [0,1]. Default 0.3."]
+                ],
+                required: ["id"]
+            ),
+            tool(
+                "list_recent_notes",
+                description: "List notes updated within the last N days, most recent first. Use this when the user says \"this week\", \"recent\", \"lately\", etc. For an unbounded list use `list_notes`.",
+                properties: [
+                    "days": ["type": "integer", "description": "Window in days. 0 = today only, 1 = today + yesterday, 7 = last week, etc. Default 7.", "minimum": 0, "maximum": 365],
+                    "limit": ["type": "integer", "description": "Maximum results. Default 50.", "minimum": 1, "maximum": 200]
+                ],
+                required: []
+            ),
+            tool(
+                "get_daily_log",
+                description: "Return today's daily note (the one written by `append_to_daily`). Returns null content with status `missing` if no daily note exists yet.",
+                properties: [:],
+                required: []
             ),
             tool(
                 "get_note",
@@ -157,11 +193,12 @@ final class MCPServer {
             ),
             tool(
                 "update_note",
-                description: "Replace a note's body text by id. The whole note text is replaced. Optionally supply an explicit title; if omitted the title is re-derived from the new first heading or first line.",
+                description: "Modify a note's body by id. Supports three modes: `replace` (default) overwrites the whole body, `append` adds the new text at the end, `prepend` inserts it at the start. The `title` argument is only honored in replace mode; in append/prepend the title is re-derived from the resulting first heading or first line.",
                 properties: [
                     "id": ["type": "string"],
-                    "text": ["type": "string", "description": "New markdown body."],
-                    "title": ["type": "string", "description": "Optional explicit title. If omitted, derived from the first heading / first line of the new text."]
+                    "text": ["type": "string", "description": "Markdown text to apply."],
+                    "title": ["type": "string", "description": "Optional explicit title (replace mode only). If omitted, derived from the first heading / first line of the new text."],
+                    "mode": ["type": "string", "description": "How to apply `text`. One of `replace`, `append`, `prepend`. Default `replace`.", "enum": ["replace", "append", "prepend"]]
                 ],
                 required: ["id", "text"]
             ),
@@ -324,6 +361,56 @@ final class MCPServer {
             if notes.isEmpty { return "No notes match \"\(query)\"." }
             return formatList(notes)
 
+        case "search_notes_semantic":
+            guard let query = (args["query"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !query.isEmpty else {
+                throw MCPError.invalidArguments("`query` is required.")
+            }
+            let limit = (args["limit"] as? Int) ?? 10
+            let minScore = parseNumber(args["min_score"]) ?? 0.2
+            let allNotes = try store.allNotes()
+            semantic.pruneMissing(keeping: Set(allNotes.map(\.id)))
+            let matches = semantic.topMatches(forQuery: query, in: allNotes, limit: limit)
+                .filter { $0.score >= minScore }
+            if matches.isEmpty {
+                return "No notes match \"\(query)\" semantically (min_score \(format(minScore))). The collection is \(allNotes.count) notes."
+            }
+            return formatScoredList(matches)
+
+        case "get_related_notes":
+            guard let idString = args["id"] as? String,
+                  let uuid = UUID(uuidString: idString) else {
+                throw MCPError.invalidArguments("`id` must be a valid UUID.")
+            }
+            guard try store.getNote(id: uuid) != nil else {
+                throw MCPError.notFound("Note \(idString) not found.")
+            }
+            let limit = (args["limit"] as? Int) ?? 5
+            let minScore = parseNumber(args["min_score"]) ?? 0.3
+            let allNotes = try store.allNotes()
+            semantic.pruneMissing(keeping: Set(allNotes.map(\.id)))
+            let matches = semantic.topMatches(forNoteID: uuid, in: allNotes, limit: limit)
+                .filter { $0.score >= minScore }
+            if matches.isEmpty {
+                return "No related notes found above score \(format(minScore)). The collection is \(allNotes.count) notes."
+            }
+            return formatScoredList(matches)
+
+        case "list_recent_notes":
+            let days = (args["days"] as? Int) ?? 7
+            let limit = (args["limit"] as? Int) ?? 50
+            let notes = try store.recentNotes(days: days, limit: limit)
+            if notes.isEmpty {
+                return "No notes updated in the last \(days) day\(days == 1 ? "" : "s")."
+            }
+            return formatList(notes)
+
+        case "get_daily_log":
+            guard let note = try store.dailyNote(for: Date()) else {
+                return "status: missing\nNo daily note exists for today. Use `append_to_daily` to start one."
+            }
+            return formatFullNote(note)
+
         case "get_note":
             guard let idString = args["id"] as? String,
                   let uuid = UUID(uuidString: idString) else {
@@ -342,9 +429,22 @@ final class MCPServer {
             guard let text = args["text"] as? String else {
                 throw MCPError.invalidArguments("`text` is required.")
             }
-            let titleArg = args["title"] as? String
-            let note = try store.updateNote(id: uuid, text: text, title: titleArg)
-            return "Updated note \(note.id). Title: \(note.title). Words: \(note.wordCount)."
+            let modeRaw = (args["mode"] as? String)?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased() ?? "replace"
+            let note: Note
+            switch modeRaw {
+            case "", "replace":
+                let titleArg = args["title"] as? String
+                note = try store.updateNote(id: uuid, text: text, title: titleArg)
+            case "append":
+                note = try store.appendToNote(id: uuid, text: text)
+            case "prepend":
+                note = try store.prependToNote(id: uuid, text: text)
+            default:
+                throw MCPError.invalidArguments("`mode` must be one of replace, append, prepend.")
+            }
+            return "Updated note \(note.id) (\(modeRaw == "" ? "replace" : modeRaw)). Title: \(note.title). Words: \(note.wordCount)."
 
         case "delete_note":
             guard let idString = args["id"] as? String,
@@ -455,6 +555,28 @@ final class MCPServer {
             let kindLabel = n.isDailyNote ? "[daily] " : ""
             return "\(n.id)  \(kindLabel)\(n.title)  (\(n.wordCount)w, updated \(Self.iso8601.string(from: n.updatedAt)))\n  \(n.preview.prefix(120))"
         }.joined(separator: "\n\n")
+    }
+
+    private func formatScoredList(_ matches: [(note: Note, score: Double)]) -> String {
+        guard !matches.isEmpty else { return "No matches." }
+        return matches.map { match in
+            let n = match.note
+            let kindLabel = n.isDailyNote ? "[daily] " : ""
+            return "\(n.id)  score=\(format(match.score))  \(kindLabel)\(n.title)  (\(n.wordCount)w, updated \(Self.iso8601.string(from: n.updatedAt)))\n  \(n.preview.prefix(120))"
+        }.joined(separator: "\n\n")
+    }
+
+    private func format(_ score: Double) -> String {
+        String(format: "%.3f", score)
+    }
+
+    /// JSON-RPC numeric args arrive as either Int or Double depending on the
+    /// client — normalize both into Double.
+    private func parseNumber(_ raw: Any?) -> Double? {
+        if let d = raw as? Double { return d }
+        if let i = raw as? Int { return Double(i) }
+        if let s = raw as? String, let d = Double(s) { return d }
+        return nil
     }
 
     private func formatFullNote(_ note: Note) -> String {

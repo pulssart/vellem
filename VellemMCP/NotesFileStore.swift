@@ -160,6 +160,87 @@ final class NotesFileStore {
         try save(notes)
     }
 
+    /// Append `text` to the end of an existing note, separated by a blank line.
+    /// Clears the cached `generatedTitle` so the title is re-derived from the
+    /// first heading / first line of the resulting text.
+    func appendToNote(id: UUID, text: String) throws -> Note {
+        let appendix = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !appendix.isEmpty else {
+            throw MCPError.invalidArguments("`text` cannot be empty.")
+        }
+        var notes = try load()
+        guard let index = notes.firstIndex(where: { $0.id == id }) else {
+            throw MCPError.notFound("Note \(id) not found.")
+        }
+        let existing = notes[index].text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let separator = existing.isEmpty ? "" : "\n\n"
+        notes[index].text = existing + separator + appendix
+        notes[index].generatedTitle = nil
+        notes[index].updatedAt = Date()
+        let updated = notes[index]
+        notes.remove(at: index)
+        notes.insert(updated, at: 0)
+        try save(notes)
+        return updated
+    }
+
+    /// Prepend `text` to the start of an existing note. Title is re-derived
+    /// from the new first line — so callers that need a stable title should
+    /// keep that line at the top of `text` (e.g. start with a `# Heading`).
+    func prependToNote(id: UUID, text: String) throws -> Note {
+        let prefix = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !prefix.isEmpty else {
+            throw MCPError.invalidArguments("`text` cannot be empty.")
+        }
+        var notes = try load()
+        guard let index = notes.firstIndex(where: { $0.id == id }) else {
+            throw MCPError.notFound("Note \(id) not found.")
+        }
+        let existing = notes[index].text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let separator = existing.isEmpty ? "" : "\n\n"
+        notes[index].text = prefix + separator + existing
+        notes[index].generatedTitle = nil
+        notes[index].updatedAt = Date()
+        let updated = notes[index]
+        notes.remove(at: index)
+        notes.insert(updated, at: 0)
+        try save(notes)
+        return updated
+    }
+
+    /// Return notes updated within the last `days` days, in updatedAt-desc
+    /// order, capped at `limit`. Day 0 is interpreted as "today only".
+    func recentNotes(days: Int, limit: Int) throws -> [Note] {
+        let calendar = Calendar.current
+        let safeDays = max(0, days)
+        guard let cutoff = calendar.date(byAdding: .day, value: -safeDays, to: Date()) else {
+            return []
+        }
+        // Anchor to start-of-day so callers asking "last 1 day" get yesterday
+        // morning onward, not exactly 24h ago.
+        let startOfCutoff = calendar.startOfDay(for: cutoff)
+
+        let notes = try load() // already sorted by updatedAt desc
+        return Array(notes.lazy
+            .filter { $0.updatedAt >= startOfCutoff }
+            .prefix(max(1, limit)))
+    }
+
+    /// Return the daily-kind note for the given `date` if one exists.
+    func dailyNote(for date: Date) throws -> Note? {
+        let calendar = Calendar.current
+        let notes = try load()
+        return notes.first { note in
+            note.kind == .daily && calendar.isDate(note.createdAt, inSameDayAs: date)
+        }
+    }
+
+    /// Read-only loader used by tools that need to score across the whole
+    /// collection without going through the higher-level paginated APIs.
+    func allNotes() throws -> [Note] {
+        try load()
+    }
+
     // MARK: - Folder API
 
     func listFolders() throws -> [Folder] {

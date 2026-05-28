@@ -29,6 +29,7 @@
 		54690B4AA0C9E9E226529359 /* MenuBarComposerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80643F8C5478A89576230AD2 /* MenuBarComposerView.swift */; };
 		58831C737EBD42FE4454A836 /* MarkdownRenderedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B2CDF4595B418B17F37DADB /* MarkdownRenderedView.swift */; };
 		70C6B44386B992D079C562D4 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EDEBE5538AFEF3E24768584 /* ContentView.swift */; };
+		79E9329659229BB0C753F6C0 /* SemanticIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFB1FD55F0199DDABC78CF9D /* SemanticIndex.swift */; };
 		85144DC533CB2E009D744CFE /* Note.swift in Sources */ = {isa = PBXBuildFile; fileRef = F43EB7BE5864CF10191833D0 /* Note.swift */; };
 		8612FF8D23469433262DEB6E /* RecentNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49692AD4B5AEBC7BD61F296C /* RecentNotesView.swift */; };
 		8AEF03B8D881872153AE07BA /* SlashCommandProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2FAA89E775B8E613C683386 /* SlashCommandProcessor.swift */; };
@@ -119,6 +120,7 @@
 		ACA8C9B235D9FB2554B024F0 /* NoteEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteEditorView.swift; sourceTree = "<group>"; };
 		ACB9D1E2FE88D0AB3CDAA5CE /* ShortcutRecorderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutRecorderView.swift; sourceTree = "<group>"; };
 		AF48CECE3EAB55C21C890A37 /* VellemWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VellemWidget.swift; sourceTree = "<group>"; };
+		AFB1FD55F0199DDABC78CF9D /* SemanticIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticIndex.swift; sourceTree = "<group>"; };
 		B06165260A0578E62B687404 /* CaptureSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSource.swift; sourceTree = "<group>"; };
 		B208E6F6B8EA843429D1F4E7 /* Vellem.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vellem.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BA292A9529D9F4B8D4131BC9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -232,6 +234,7 @@
 				5334D67E5540F6D3D13CAF7E /* main.swift */,
 				173FC39ED423E0E6F6889FD9 /* MCPServer.swift */,
 				EF9C21FE93547103DFB5A2A4 /* NotesFileStore.swift */,
+				AFB1FD55F0199DDABC78CF9D /* SemanticIndex.swift */,
 			);
 			path = VellemMCP;
 			sourceTree = "<group>";
@@ -445,6 +448,7 @@
 				3BE9405A30E0F1F7573A70E5 /* MCPServer.swift in Sources */,
 				85144DC533CB2E009D744CFE /* Note.swift in Sources */,
 				FE3CF6FC4076808D22813584 /* NotesFileStore.swift in Sources */,
+				79E9329659229BB0C753F6C0 /* SemanticIndex.swift in Sources */,
 				FBDF83D5EF29D67A5234A546 /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
