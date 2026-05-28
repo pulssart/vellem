@@ -314,7 +314,8 @@ struct ExternalNoteEventBridge: NSViewRepresentable {
 
     func updateNSView(_ nsView: NSView, context: Context) {
         context.coordinator.store = store
-        context.coordinator.start()
+        // start() is guarded by observer == nil — no need to call it again here;
+        // it already ran in makeNSView and re-calling it on every re-render is wasteful.
     }
 
     static func dismantleNSView(_ nsView: NSView, coordinator: Coordinator) {

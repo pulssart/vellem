@@ -11,7 +11,12 @@ struct FolderNotesListView: View {
     @AppAccent private var accent
     private let headerIconSize: CGFloat = 20
     private let emptyStateIconSize: CGFloat = 28
-    private let smartFolderInk = Color(nsColor: NSColor(calibratedWhite: 0.22, alpha: 1))
+    // Static + adaptive: fixes dark-mode invisible icon bug, avoids per-render allocation.
+    private static let smartFolderInk = Color(nsColor: NSColor(name: nil, dynamicProvider: { appearance in
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(calibratedWhite: 0.85, alpha: 1)
+            : NSColor(calibratedWhite: 0.22, alpha: 1)
+    }))
 
     private var notes: [Note] {
         store.notesForDisplay(in: folder)
@@ -136,7 +141,7 @@ struct FolderNotesListView: View {
         HStack(spacing: 10) {
             Image(systemName: folder.systemImage)
                 .font(.system(size: headerIconSize, weight: .semibold))
-                .foregroundStyle(folder.isSmart ? smartFolderInk : (FolderColor.named(folder.color)?.swiftUIColor ?? accent.color))
+                .foregroundStyle(folder.isSmart ? Self.smartFolderInk : (FolderColor.named(folder.color)?.swiftUIColor ?? accent.color))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(folder.name)
@@ -197,7 +202,7 @@ struct FolderNotesListView: View {
         VStack(spacing: 16) {
             Image(systemName: folder.outlineSystemImage)
                 .font(.system(size: emptyStateIconSize, weight: .regular))
-                .foregroundStyle(folder.isSmart ? smartFolderInk : (FolderColor.named(folder.color)?.swiftUIColor ?? accent.color))
+                .foregroundStyle(folder.isSmart ? Self.smartFolderInk : (FolderColor.named(folder.color)?.swiftUIColor ?? accent.color))
 
             VStack(spacing: 5) {
                 Text("Connect \(folder.name) to Vellem")
@@ -232,7 +237,8 @@ struct FolderNotesListView: View {
                 Button {
                     copy(guide.clipboardText)
                     copiedIntegrationSetup = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .seconds(1.5))
                         copiedIntegrationSetup = false
                     }
                 } label: {
@@ -308,10 +314,9 @@ struct FolderNotesListView: View {
         ) {
             copy(workflow.prompt)
             copiedWorkflowID = workflow.id
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                if copiedWorkflowID == workflow.id {
-                    copiedWorkflowID = nil
-                }
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1.5))
+                if copiedWorkflowID == workflow.id { copiedWorkflowID = nil }
             }
         }
     }
@@ -837,7 +842,11 @@ struct TodayNotesListView: View {
     @ObservedObject var store: NotesStore
     @Environment(\.openWindow) private var openWindow
     @AppAccent private var accent
-    private let smartFolderInk = Color(nsColor: NSColor(calibratedWhite: 0.22, alpha: 1))
+    private static let smartFolderInk = Color(nsColor: NSColor(name: nil, dynamicProvider: { appearance in
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(calibratedWhite: 0.85, alpha: 1)
+            : NSColor(calibratedWhite: 0.22, alpha: 1)
+    }))
 
     private var notes: [Note] {
         store.notes
@@ -889,7 +898,7 @@ struct TodayNotesListView: View {
         HStack(spacing: 10) {
             Image(systemName: "calendar")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(smartFolderInk)
+                .foregroundStyle(Self.smartFolderInk)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Today")

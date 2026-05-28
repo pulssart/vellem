@@ -46,13 +46,12 @@ struct RecentNotesView: View {
     @AppAccent private var accent
     private let sidebarIconSize: CGFloat = 18
     private let sidebarIconFrameWidth: CGFloat = 22
-    private var smartFolderInk: Color {
-        Color(nsColor: NSColor(name: nil, dynamicProvider: { appearance in
-            appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-                ? NSColor(calibratedWhite: 0.85, alpha: 1)
-                : NSColor(calibratedWhite: 0.22, alpha: 1)
-        }))
-    }
+    // Static: NSColor(dynamicProvider:) adapts at draw time — no need to recreate each render.
+    private static let smartFolderInk = Color(nsColor: NSColor(name: nil, dynamicProvider: { appearance in
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(calibratedWhite: 0.85, alpha: 1)
+            : NSColor(calibratedWhite: 0.22, alpha: 1)
+    }))
 
     var body: some View {
         ScrollView {
@@ -91,7 +90,7 @@ struct RecentNotesView: View {
         return HStack(spacing: 8) {
             Image(systemName: "calendar")
                 .font(.system(size: sidebarIconSize, weight: .semibold))
-                .foregroundStyle(smartFolderInk)
+                .foregroundStyle(Self.smartFolderInk)
                 .frame(width: sidebarIconFrameWidth, alignment: .leading)
 
             Text("Today")
@@ -274,7 +273,7 @@ struct RecentNotesView: View {
     }
 
     private func folderIconColor(for folder: Folder) -> Color {
-        folder.isSmart ? smartFolderInk : (FolderColor.named(folder.color)?.swiftUIColor ?? .primary)
+        folder.isSmart ? Self.smartFolderInk : (FolderColor.named(folder.color)?.swiftUIColor ?? .primary)
     }
 
     private func sectionHeader(_ title: String) -> some View {

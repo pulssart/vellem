@@ -13,12 +13,16 @@ final class NotesStore: ObservableObject {
 
     var viewerNote: Note? {
         guard let viewerNoteID else { return nil }
-        return notes.first { $0.id == viewerNoteID }
+        return notesByID[viewerNoteID]
     }
 
     var unreadCount: Int {
-        notes.filter { !$0.isRead }.count
+        notes.reduce(0) { $0 + ($1.isRead ? 0 : 1) }
     }
+
+    // O(1) lookup index — kept in sync via $notes publisher
+    private var notesByID: [Note.ID: Note] = [:]
+    private var indexCancellable: AnyCancellable?
 
     private let fileURL: URL
     private let foldersURL: URL
@@ -37,6 +41,10 @@ final class NotesStore: ObservableObject {
         self.fileURL = fileURL
         self.foldersURL = foldersURL
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        // Keep notesByID in sync whenever notes array changes (fires in willSet with new value).
+        indexCancellable = $notes.sink { [weak self] newNotes in
+            self?.notesByID = Dictionary(uniqueKeysWithValues: newNotes.map { ($0.id, $0) })
+        }
         load()
         loadFolders()
         ensureSmartFolders()
@@ -59,6 +67,11 @@ final class NotesStore: ObservableObject {
 
     var servicesFolderID: Folder.ID? {
         folders.first { $0.kind == .smartServices }?.id
+    }
+
+    var selectedNote: Note? {
+        guard let selectedNoteID else { return notes.first }
+        return notesByID[selectedNoteID] ?? notes.first
     }
 
     private func ensureSmartFolders() {
@@ -152,9 +165,10 @@ final class NotesStore: ObservableObject {
         guard let index = notes.firstIndex(where: { $0.id == noteID }) else { return }
         guard notes[index].folderID != folderID else { return }
         if let folderID, !folders.contains(where: { $0.id == folderID }) { return }
-        notes[index].folderID = folderID
-        notes[index].updatedAt = .now
-        notes.sort { $0.updatedAt > $1.updatedAt }
+        var moved = notes.remove(at: index)
+        moved.folderID = folderID
+        moved.updatedAt = .now
+        notes.insert(moved, at: 0)
         normalizeSelection()
         save()
     }
@@ -207,14 +221,14 @@ final class NotesStore: ObservableObject {
             eventMask: [.write, .extend, .delete, .rename, .revoke],
             queue: .main
         )
-        source.setEventHandler { [weak self] in
-            guard let self else { return }
+        source.setEventHandler { [weak self, weak source] in
+            guard let self, let source else { return }
             let flags = source.data
             if flags.contains(.delete) || flags.contains(.rename) || flags.contains(.revoke) {
                 source.cancel()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                    self.attachFoldersWatcher()
-                    self.scheduleFoldersReload()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                    self?.attachFoldersWatcher()
+                    self?.scheduleFoldersReload()
                 }
             } else {
                 self.scheduleFoldersReload()
@@ -256,14 +270,14 @@ final class NotesStore: ObservableObject {
             eventMask: [.write, .extend, .delete, .rename, .revoke],
             queue: .main
         )
-        source.setEventHandler { [weak self] in
-            guard let self else { return }
+        source.setEventHandler { [weak self, weak source] in
+            guard let self, let source else { return }
             let flags = source.data
             if flags.contains(.delete) || flags.contains(.rename) || flags.contains(.revoke) {
                 source.cancel()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                    self.attachExternalEventWatcher()
-                    self.scheduleExternalEventReload()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                    self?.attachExternalEventWatcher()
+                    self?.scheduleExternalEventReload()
                 }
             } else {
                 self.scheduleExternalEventReload()
@@ -309,15 +323,15 @@ final class NotesStore: ObservableObject {
             eventMask: [.write, .extend, .delete, .rename, .revoke],
             queue: .main
         )
-        source.setEventHandler { [weak self] in
-            guard let self else { return }
+        source.setEventHandler { [weak self, weak source] in
+            guard let self, let source else { return }
             let flags = source.data
             if flags.contains(.delete) || flags.contains(.rename) || flags.contains(.revoke) {
                 // Atomic writes replace the file; re-attach to the new inode after a tick.
                 source.cancel()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                    self.attachWatcher()
-                    self.scheduleReload()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                    self?.attachWatcher()
+                    self?.scheduleReload()
                 }
             } else {
                 self.scheduleReload()
@@ -340,43 +354,51 @@ final class NotesStore: ObservableObject {
     }
 
     private func reloadIfChanged() {
-        do {
-            let data = try Data(contentsOf: fileURL)
-            let loaded = try decoder.decode([Note].self, from: data)
-                .sorted { $0.updatedAt > $1.updatedAt }
-            guard loaded != notes else { return }
-            let existingNoteIDs = Set(notes.map(\.id))
-            let externalNewNotes = loaded.filter { !existingNoteIDs.contains($0.id) }
-            applyLoadedNotes(loaded)
-            for note in externalNewNotes {
-                notifyExternalNewNote(note, source: note.sourceApp ?? "MCP")
+        let url = fileURL
+        Task.detached(priority: .utility) { [weak self] in
+            do {
+                let data = try Data(contentsOf: url)
+                let loaded = try JSONDecoder().decode([Note].self, from: data)
+                    .sorted { $0.updatedAt > $1.updatedAt }
+                await MainActor.run { [weak self] in
+                    guard let self, loaded != self.notes else { return }
+                    let existingNoteIDs = Set(self.notes.map(\.id))
+                    let externalNewNotes = loaded.filter { !existingNoteIDs.contains($0.id) }
+                    self.applyLoadedNotes(loaded)
+                    for note in externalNewNotes {
+                        self.notifyExternalNewNote(note, source: note.sourceApp ?? "MCP")
+                    }
+                }
+            } catch {
+                // Likely mid-write; the next event will retry.
             }
-        } catch {
-            // Likely mid-write; the next event will retry.
         }
     }
 
     func handleExternalNoteCreated(noteID: Note.ID, source: String?) {
         appendNotificationDiagnostic("handleExternalNoteCreated note=\(noteID.uuidString)")
-        reloadFromDisk()
-        if let note = notes.first(where: { $0.id == noteID }) {
-            notifyExternalNewNote(note, source: source ?? note.sourceApp ?? "MCP")
-            return
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+        Task { @MainActor [weak self] in
             guard let self else { return }
-            self.reloadFromDisk()
-            if let note = self.notes.first(where: { $0.id == noteID }) {
+            await self.reloadFromDisk()
+            if let note = self.notesByID[noteID] {
+                self.notifyExternalNewNote(note, source: source ?? note.sourceApp ?? "MCP")
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(250))
+            await self.reloadFromDisk()
+            if let note = self.notesByID[noteID] {
                 self.notifyExternalNewNote(note, source: source ?? note.sourceApp ?? "MCP")
             }
         }
     }
 
-    private func reloadFromDisk() {
+    private func reloadFromDisk() async {
+        let url = fileURL
         do {
-            let data = try Data(contentsOf: fileURL)
-            let loaded = try decoder.decode([Note].self, from: data)
+            let data = try await Task.detached(priority: .utility) {
+                try Data(contentsOf: url)
+            }.value
+            let loaded = try JSONDecoder().decode([Note].self, from: data)
                 .sorted { $0.updatedAt > $1.updatedAt }
             guard loaded != notes else { return }
             applyLoadedNotes(loaded)
@@ -394,6 +416,8 @@ final class NotesStore: ObservableObject {
 
     private func notifyExternalNewNote(_ note: Note, source: String) {
         guard notifiedExternalNoteIDs.insert(note.id).inserted else { return }
+        // Cap size to avoid unbounded growth during long sessions.
+        if notifiedExternalNoteIDs.count > 500 { notifiedExternalNoteIDs.removeAll() }
         appendNotificationDiagnostic("notifyExternalNewNote note=\(note.id.uuidString)")
         NoteNotifications.notifyNewNote(note, source: source)
     }
@@ -401,26 +425,24 @@ final class NotesStore: ObservableObject {
     private func appendNotificationDiagnostic(_ message: String) {
         let line = "\(Date()) \(message)\n"
         let url = AppGroup.containerURL.appending(path: "notification-debug.log")
-        do {
-            try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-            if FileManager.default.fileExists(atPath: url.path),
-               let handle = try? FileHandle(forWritingTo: url) {
-                try handle.seekToEnd()
-                if let data = line.data(using: .utf8) {
-                    try handle.write(contentsOf: data)
+        // File I/O on a background thread — diagnostics must never block the main thread.
+        Task.detached(priority: .background) {
+            do {
+                try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+                if FileManager.default.fileExists(atPath: url.path),
+                   let handle = try? FileHandle(forWritingTo: url) {
+                    try handle.seekToEnd()
+                    if let data = line.data(using: .utf8) {
+                        try handle.write(contentsOf: data)
+                    }
+                    try handle.close()
+                } else {
+                    try line.write(to: url, atomically: true, encoding: .utf8)
                 }
-                try handle.close()
-            } else {
-                try line.write(to: url, atomically: true, encoding: .utf8)
+            } catch {
+                // Diagnostics should never affect note capture.
             }
-        } catch {
-            // Diagnostics should never affect note capture.
         }
-    }
-
-    var selectedNote: Note? {
-        guard let selectedNoteID else { return notes.first }
-        return notes.first { $0.id == selectedNoteID }
     }
 
     func notesForDisplay(in folder: Folder) -> [Note] {
@@ -428,7 +450,7 @@ final class NotesStore: ObservableObject {
     }
 
     func noteCountForDisplay(in folder: Folder) -> Int {
-        notesForDisplay(in: folder).count
+        notes.reduce(0) { $0 + (noteMatchesDisplay($1, in: folder) ? 1 : 0) }
     }
 
     func noteMatchesDisplay(_ note: Note, in folder: Folder) -> Bool {
@@ -520,11 +542,10 @@ final class NotesStore: ObservableObject {
         guard let index = notes.firstIndex(where: { $0.id == noteID }) else { return }
         guard notes[index].text != text else { return }
 
-        var updated = notes[index]
+        var updated = notes.remove(at: index)
         updated.text = text
         updated.updatedAt = .now
-        notes[index] = updated
-        notes.sort { $0.updatedAt > $1.updatedAt }
+        notes.insert(updated, at: 0)
         selectedNoteID = updated.id
         save()
 
@@ -589,9 +610,10 @@ final class NotesStore: ObservableObject {
                 notes[index].sourceURL = source.url
             }
             notes[index].generatedTitle = title
-            selectedNoteID = notes[index].id
+            let movedNote = notes.remove(at: index)
+            notes.insert(movedNote, at: 0)
+            selectedNoteID = movedNote.id
             isTodaySelected = false
-            notes.sort { $0.updatedAt > $1.updatedAt }
             save()
             let updatedNote = notes.first { $0.id == selectedNoteID } ?? notes[0]
             if text != nil {
@@ -632,13 +654,14 @@ final class NotesStore: ObservableObject {
                 return
             }
 
-            notes[index].text = formattedText
-            notes[index].updatedAt = .now
+            var reformatted = notes.remove(at: index)
+            reformatted.text = formattedText
+            reformatted.updatedAt = .now
             if !preservesTitle {
                 let title = try? await editor.title(for: formattedText)
-                notes[index].generatedTitle = title.map(cleanTitle)
+                reformatted.generatedTitle = title.map(cleanTitle)
             }
-            notes.sort { $0.updatedAt > $1.updatedAt }
+            notes.insert(reformatted, at: 0)
             save()
         } catch {
             if !preservesTitle {
@@ -731,11 +754,15 @@ final class NotesStore: ObservableObject {
         return words.joined(separator: " ")
     }
 
+    private static let dailyTitleFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = .current
+        f.setLocalizedDateFormatFromTemplate("EEE d MMM")
+        return f
+    }()
+
     private func dailyTitle(for date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = .current
-        formatter.setLocalizedDateFormatFromTemplate("EEE d MMM")
-        return "Today, \(formatter.string(from: date))"
+        "Today, \(Self.dailyTitleFormatter.string(from: date))"
     }
 
     private func append(_ entry: String, toDailyText text: String) -> String {
