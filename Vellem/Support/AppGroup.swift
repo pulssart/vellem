@@ -21,6 +21,10 @@ enum AppGroup {
         containerURL.appending(path: "folders.json")
     }
 
+    static var embeddingsURL: URL {
+        containerURL.appending(path: "embeddings.json")
+    }
+
     static var attachmentsURL: URL {
         containerURL.appending(path: "Attachments", directoryHint: .isDirectory)
     }

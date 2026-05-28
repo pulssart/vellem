@@ -1,3 +1,25 @@
+# Vellem 1.0.11
+
+This release focuses on the agent notebook workflow, safer widget links, cleaner note actions, and a calmer first-run onboarding.
+
+## What changed
+
+. The onboarding flow was redesigned around five product steps, with a softer accent gradient, shorter modal, richer copy, and one-click MCP setup copy for Claude and Codex.
+. Note context menus are now shared across Today, folders, and recent notes, so note actions stay consistent.
+. The note detail header now makes provenance, edit and preview mode, and word count easier to read.
+. Codex and Claude setup guidance now supports faster copy flows for MCP config.
+
+## Fixes
+
+. Widget deeplinks no longer rely on force-unwrapped raw URLs.
+. The sidebar search field no longer steals focus on app launch.
+. Embedding cache entries are pruned when notes disappear, avoiding stale semantic search data.
+. Semantic search now blends lexical and embedding signals for more useful matches.
+
+## Validation
+
+. Built and launched locally with `bash script/build_and_run.sh run`.
+
 # Vellem 1.0.8
 
 This release focuses on the main notes experience, Prompt Library polish, Markdown rendering, macOS Services reliability, and the new app icon.

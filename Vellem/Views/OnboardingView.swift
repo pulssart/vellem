@@ -3,53 +3,64 @@ import SwiftUI
 struct OnboardingView: View {
     @Binding var isPresented: Bool
     @AppStorage(AppPreferences.hasCompletedOnboardingKey) private var hasCompletedOnboarding = false
+    @AppAccent private var accent
     @State private var selectedStep = 0
 
     private let steps = OnboardingStep.all
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
+        ZStack {
+            onboardingBackground
 
-            OnboardingStepView(step: steps[selectedStep])
+            VStack(spacing: 15) {
+                header
+
+                OnboardingStepView(
+                    step: steps[selectedStep],
+                    foreground: foreground
+                )
                 .id(steps[selectedStep].id)
-                .transition(.opacity)
-            .frame(width: 540, height: 320)
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .move(edge: .trailing)),
+                    removal: .opacity.combined(with: .move(edge: .leading))
+                ))
+                .frame(height: 194)
 
-            footer
+                footer
+            }
+            .padding(22)
         }
-        .frame(width: 540)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .frame(width: 590, height: 340)
+        .foregroundStyle(foreground)
     }
 
     private var header: some View {
-        HStack {
+        HStack(alignment: .center, spacing: 14) {
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
-                .frame(width: 44, height: 44)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .frame(width: 48, height: 48)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .shadow(color: shadowColor.opacity(0.18), radius: 12, y: 6)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Welcome to Vellem")
-                    .font(.title3.weight(.semibold))
-                Text("Four things worth knowing.")
-                    .foregroundStyle(.secondary)
+                Text("Welcome to Vellem.")
+                    .font(.system(size: 28, weight: .regular, design: .serif))
+                Text("A notebook agents can actually use.")
+                    .font(.callout)
+                    .foregroundStyle(foreground.opacity(0.62))
             }
 
             Spacer()
         }
-        .padding(.horizontal, 28)
-        .padding(.top, 26)
-        .padding(.bottom, 10)
     }
 
     private var footer: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             HStack(spacing: 6) {
                 ForEach(steps.indices, id: \.self) { index in
-                    Circle()
-                        .fill(index == selectedStep ? Color.accentColor : Color.secondary.opacity(0.28))
-                        .frame(width: 7, height: 7)
+                    Capsule()
+                        .fill(index == selectedStep ? foreground : foreground.opacity(0.28))
+                        .frame(width: index == selectedStep ? 22 : 7, height: 7)
                 }
             }
 
@@ -62,6 +73,11 @@ struct OnboardingView: View {
                     }
                 }
                 .keyboardShortcut(.leftArrow, modifiers: [])
+                .buttonStyle(.plain)
+                .foregroundStyle(foreground.opacity(0.78))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(foreground.opacity(0.10), in: Capsule())
             }
 
             Button(selectedStep == steps.count - 1 ? "Done" : "Next") {
@@ -75,84 +91,194 @@ struct OnboardingView: View {
                 }
             }
             .keyboardShortcut(.defaultAction)
+            .buttonStyle(.plain)
+            .foregroundStyle(buttonForeground)
+            .padding(.horizontal, 17)
+            .padding(.vertical, 9)
+            .background(buttonBackground, in: Capsule())
         }
-        .padding(.horizontal, 28)
-        .padding(.vertical, 22)
-        .background(Color(nsColor: .controlBackgroundColor).opacity(0.55))
+    }
+
+    private var onboardingBackground: some View {
+        LinearGradient(
+            colors: [
+                Color(nsColor: accent.onboardingGradientTop),
+                Color(nsColor: accent.onboardingGradientBottom)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+
+    private var foreground: Color {
+        .black
+    }
+
+    private var backgroundColor: Color {
+        Color(nsColor: accent.onboardingGradientBottom)
+    }
+
+    private var buttonBackground: Color {
+        foreground
+    }
+
+    private var buttonForeground: Color {
+        backgroundColor
+    }
+
+    private var shadowColor: Color {
+        .black
     }
 }
 
 private struct OnboardingStepView: View {
     let step: OnboardingStep
+    let foreground: Color
+
+    @State private var copiedClient: OnboardingMCPClient?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Image(systemName: step.symbol)
-                .font(.system(size: 36, weight: .semibold))
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(Color.accentColor)
-
-            VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 7) {
                 Text(step.title)
-                    .font(.title2.weight(.semibold))
+                    .font(.system(size: 23, weight: .regular, design: .serif))
                     .fixedSize(horizontal: false, vertical: true)
 
                 Text(step.body)
-                    .font(.body)
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 14))
+                    .foregroundStyle(foreground.opacity(0.66))
                     .lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            if let callout = step.callout {
-                Text(callout)
-                    .font(.callout.weight(.medium))
-                    .foregroundStyle(.primary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 9)
-                    .background(Color.accentColor.opacity(0.14), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            if step.showsConnectionSetup {
+                connectionSetup
             }
 
             Spacer()
         }
-        .padding(.horizontal, 28)
-        .padding(.top, 24)
+        .padding(.horizontal, 8)
+        .padding(.top, 4)
+        .padding(.bottom, 8)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    }
+
+    private var connectionSetup: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                ForEach(OnboardingMCPClient.allCases) { client in
+                    Button {
+                        copy(client.config)
+                        copiedClient = client
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .seconds(1.4))
+                            if copiedClient == client { copiedClient = nil }
+                        }
+                    } label: {
+                        Label(
+                            copiedClient == client ? "Copied for \(client.title)" : "Copy for \(client.title)",
+                            systemImage: copiedClient == client ? "checkmark" : "doc.on.doc"
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(foreground)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(foreground.opacity(0.10), in: Capsule())
+                }
+
+                Spacer()
+            }
+
+            Text("Paste it into your client config, restart the app, then ask the agent to save plans and notes to Vellem.")
+                .font(.caption)
+                .foregroundStyle(foreground.opacity(0.58))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.top, 4)
+    }
+
+    private func copy(_ value: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(value, forType: .string)
     }
 }
 
 private struct OnboardingStep: Identifiable {
     let id = UUID()
-    let symbol: String
     let title: String
     let body: String
-    let callout: String?
+    var showsConnectionSetup = false
 
     static var all: [OnboardingStep] {
         [
             OnboardingStep(
-                symbol: "keyboard",
-                title: "Open Quick Note from anywhere",
-                body: "Use the keyboard shortcut to bring up the small Quick Note window. Write the thought, save it, and Vellem gets out of your way.",
-                callout: "Default shortcut: \(ShortcutFormatter.string(for: AppPreferences.quickCaptureShortcut))"
+                title: "Capture before you sort.",
+                body: "Open Quick Capture from anywhere, save the thought, then get back to what you were doing. Vellem is built for messy inputs first, clean structure later. The default shortcut is \(ShortcutFormatter.string(for: AppPreferences.quickCaptureShortcut)), but the important part is the rhythm: write now, organize when it actually matters."
             ),
             OnboardingStep(
-                symbol: "point.3.connected.trianglepath.dotted",
-                title: "Connect Claude or Codex",
-                body: "Open the Claude or Codex folder in the sidebar, copy the MCP config, then add it to your client. After that, agents can write notes directly into Vellem.",
-                callout: nil
+                title: "Let agents write their traces.",
+                body: "Claude, Codex, and other MCP clients can create notes, append to today, update existing work, and keep their source visible. Vellem keeps those traces in plain notes instead of hiding them in chat history. The result is easier to scan, easier to quote, and easier to reuse later."
             ),
             OnboardingStep(
-                symbol: "text.cursor",
-                title: "Save text from your browser",
-                body: "Select text in any browser, right click, open Services, then choose Add to Vellem. The selection is saved as a note.",
-                callout: "Works with any app that exposes selected text to macOS Services."
+                title: "Find the thread again.",
+                body: "Use search for exact text, semantic search for meaning, Today for the current flow, and related notes when one note should lead to the next. Semantic search runs locally with Apple's on-device embeddings, so it feels like memory without turning your notebook into a black box."
             ),
             OnboardingStep(
-                symbol: "sparkles",
-                title: "Improve notes with Apple Foundation Models",
-                body: "Vellem includes tools that can clean up, format, rewrite, translate, and adjust the style of your notes with Apple Foundation Models.",
-                callout: "If the model is not available on this Mac, Vellem will say so."
+                title: "Turn rough notes into work.",
+                body: "Markdown rendering, todos, widgets, and Apple Foundation Models help notes become usable without leaving the app. Clean up a rough capture, rewrite a paragraph, translate a note, or keep the original as it is. The point is to make small edits feel close to the note itself."
+            ),
+            OnboardingStep(
+                title: "Connect your agent.",
+                body: "Copy the setup for Claude or Codex, paste it into the client config, then restart the app. From there, the agent can save plans, reports, diagnostics, and running notes into Vellem with the right folder already attached.",
+                showsConnectionSetup: true
             )
         ]
+    }
+}
+
+private enum OnboardingMCPClient: String, CaseIterable, Identifiable {
+    case claude
+    case codex
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .claude:
+            "Claude"
+        case .codex:
+            "Codex"
+        }
+    }
+
+    var config: String {
+        switch self {
+        case .claude:
+            """
+            {
+              "mcpServers": {
+                "vellem": {
+                  "command": "/Applications/Vellem.app/Contents/Resources/vellem-mcp"
+                }
+              }
+            }
+            """
+        case .codex:
+            """
+            [mcp_servers.vellem]
+            command = "/Applications/Vellem.app/Contents/Resources/vellem-mcp"
+            """
+        }
+    }
+}
+
+private extension AppAccentColor {
+    var onboardingGradientTop: NSColor {
+        nsColor.blended(withFraction: 0.42, of: .windowBackgroundColor) ?? nsColor
+    }
+
+    var onboardingGradientBottom: NSColor {
+        nsColor.blended(withFraction: 0.78, of: .white) ?? nsColor
     }
 }

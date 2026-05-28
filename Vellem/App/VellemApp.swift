@@ -32,8 +32,7 @@ struct VellemApp: App {
                     } else if let text = notification.object as? String {
                         store.captureFromServices(text: text)
                     }
-                    NSApp.activate(ignoringOtherApps: true)
-                    NSApp.windows.first?.makeKeyAndOrderFront(nil)
+                    showMainWindow()
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .vellemOpenQuickCapture)) { _ in
                     openQuickCapture()
@@ -66,14 +65,12 @@ struct VellemApp: App {
 
                 Button("Open Today") {
                     store.upsertDailyNote()
-                    NSApp.activate(ignoringOtherApps: true)
-                    NSApp.windows.first?.makeKeyAndOrderFront(nil)
+                    showMainWindow()
                 }
                 .keyboardShortcut("d", modifiers: [.command, .option])
 
                 Button("Show Vellem") {
-                    NSApp.activate(ignoringOtherApps: true)
-                    NSApp.windows.first?.makeKeyAndOrderFront(nil)
+                    showMainWindow()
                 }
                 .keyboardShortcut("n", modifiers: [.command, .shift])
             }
@@ -127,11 +124,17 @@ struct VellemApp: App {
         NSApp.activate(ignoringOtherApps: true)
     }
 
+    private func showMainWindow() {
+        openWindow(id: "main")
+        NSApp.activate(ignoringOtherApps: true)
+        DispatchQueue.main.async {
+            NSApp.showVellemMainWindow()
+        }
+    }
+
     private func hideMainWindowAfterOpeningQuickCapture() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            for window in NSApp.windows where window.title != "Quick Capture" {
-                window.orderOut(nil)
-            }
+            NSApp.hideVellemMainWindow()
         }
     }
 
@@ -165,7 +168,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
         DispatchQueue.main.async {
             NSApp.activate(ignoringOtherApps: true)
-            NSApp.windows.first?.makeKeyAndOrderFront(nil)
+            NSApp.showVellemMainWindow()
         }
     }
 

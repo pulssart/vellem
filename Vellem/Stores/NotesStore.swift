@@ -408,10 +408,14 @@ final class NotesStore: ObservableObject {
     }
 
     private func applyLoadedNotes(_ loaded: [Note]) {
+        let existingCount = notes.count
         notes = loaded
         normalizeSelection()
         updateDockBadge()
         WidgetReloader.reload()
+        if loaded.count < existingCount {
+            pruneEmbeddingCache(keeping: Set(loaded.map(\.id)))
+        }
     }
 
     private func notifyExternalNewNote(_ note: Note, source: String) {
@@ -589,6 +593,7 @@ final class NotesStore: ObservableObject {
         notes.removeAll { $0.id == note.id }
         normalizeSelection()
         save()
+        pruneEmbeddingCache(keeping: Set(notes.map(\.id)))
     }
 
     @discardableResult

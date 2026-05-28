@@ -150,7 +150,7 @@ final class MCPServer {
             ),
             tool(
                 "search_notes_semantic",
-                description: "Search notes by semantic meaning using Apple's on-device NLEmbedding (French & English supported). Returns notes ranked by cosine similarity to the query. Use this when the user asks in their own words rather than with exact keywords. The first call builds the embedding cache (one-shot ~seconds for large collections); subsequent calls are fast.",
+                description: "Search notes by meaning using Apple's on-device NLEmbedding plus a light title/body keyword signal. Returns notes ranked by a hybrid relevance score. Use this when the user asks in their own words rather than with exact keywords. The first call builds the embedding cache (one-shot ~seconds for large collections); subsequent calls are fast.",
                 properties: [
                     "query": ["type": "string", "description": "Natural-language query, e.g. \"how to onboard a new teammate\"."],
                     "limit": ["type": "integer", "description": "Maximum results. Default 10.", "minimum": 1, "maximum": 50],

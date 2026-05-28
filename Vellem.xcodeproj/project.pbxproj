@@ -9,8 +9,10 @@
 /* Begin PBXBuildFile section */
 		02D7C882CCFAAD0226BD6D61 /* WidgetReloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9FBFC33F50F0D1A99BA19B8 /* WidgetReloader.swift */; };
 		09372CECAC2317BFA61B8966 /* EmptyNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA290798A38AD8E245859D60 /* EmptyNotesView.swift */; };
+		0BA79E103F348B4596A4F210 /* EmbeddingCachePruner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91964C5540C43D09600D4069 /* EmbeddingCachePruner.swift */; };
 		0E3D6D0BE9AF4A9B183331DD /* ExternalNoteEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBE185614F479229EF10A601 /* ExternalNoteEvent.swift */; };
 		159F7C4CE7573927C8C0E747 /* Folder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06BFC875C442588F75CDB14F /* Folder.swift */; };
+		1B97B02443DBB48931CFC3F0 /* MainWindowResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF8E2319E5B18700B47E1EAC /* MainWindowResolver.swift */; };
 		1DD64FA45B0CB617F1AD3573 /* FolderNotesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8F99F51703D71B546E6A40F /* FolderNotesListView.swift */; };
 		23B75E5BA4E1D67E06AE504A /* GlobalHotKeyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C55CFE4DA2FAE52B9A01F7B /* GlobalHotKeyService.swift */; };
 		24D2B5D83EE9639CA953FAE1 /* MarkdownTableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10A90F67EE3D6AEA8BAD71D /* MarkdownTableView.swift */; };
@@ -40,15 +42,19 @@
 		A10521FE98F14E281828A713 /* SplitViewAutosave.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AA2CC87B4754004C3968D88 /* SplitViewAutosave.swift */; };
 		A7D9892DF8EC810BB4B30D99 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A21C416FE49D8BACA6D8E9A2 /* SettingsView.swift */; };
 		A8CD39ED4AE7AA148B71A201 /* VellemWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF48CECE3EAB55C21C890A37 /* VellemWidget.swift */; };
+		AC3DA0AE4C1D6BE2CFDB3E7B /* NoteContextMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63EC54F9079EA0063EFAF777 /* NoteContextMenu.swift */; };
+		B3A28E21638AD79D46620408 /* VellemDisplayText.swift in Sources */ = {isa = PBXBuildFile; fileRef = A58252D8886B2C8031D975ED /* VellemDisplayText.swift */; };
 		B8C4116198FB6B75DA86E333 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = E2E99B783493520DDA1312EA /* Sparkle */; };
 		BA5B2B1DD9BD085050522E42 /* CaptureSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = B06165260A0578E62B687404 /* CaptureSource.swift */; };
 		C89A47B53674806E28BA31A7 /* NoteViewerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 356838C1CD7E49ADB6021F9D /* NoteViewerView.swift */; };
 		CB1EBB6D81F5091510CBD9A1 /* VellemWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BA2DB4030DCE7E4AC7CC9249 /* VellemWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CB9AEB33C1AE9A1E5F1132C5 /* NotesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F794DBD059DAB5C6B04AC1D /* NotesStore.swift */; };
 		CE35CCA9346942A425296E88 /* UpdateController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB18914F966B32428D515231 /* UpdateController.swift */; };
+		DDE3C560F26213B6CB04B258 /* VellemDisplayText.swift in Sources */ = {isa = PBXBuildFile; fileRef = A58252D8886B2C8031D975ED /* VellemDisplayText.swift */; };
 		DEFB9BEE7FC2EB8E9CECAACF /* QuickCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD71622FB3E692BE3A04703F /* QuickCaptureView.swift */; };
 		DF0D66950ECDF79763930042 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E40D411CB18F137ED64EC417 /* Assets.xcassets */; };
 		E05E41F66101C66B1D0CA02A /* CaptureContextProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96920392987CD241F12576E0 /* CaptureContextProvider.swift */; };
+		E27778E90430280D3B7ECF2F /* VellemDisplayText.swift in Sources */ = {isa = PBXBuildFile; fileRef = A58252D8886B2C8031D975ED /* VellemDisplayText.swift */; };
 		E33BF2E64AACB83F5F4EE3C1 /* NoteEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACA8C9B235D9FB2554B024F0 /* NoteEditorView.swift */; };
 		E797706A6007BFD3E21E36C0 /* ShortcutFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4691F7E3E47E6CF811638C9 /* ShortcutFormatter.swift */; };
 		E8AB2128DC24BEC54F10F907 /* CaptureSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = B06165260A0578E62B687404 /* CaptureSource.swift */; };
@@ -106,16 +112,19 @@
 		5334D67E5540F6D3D13CAF7E /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		5BABA9B4516AB8444AA7B00F /* AppAccentColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAccentColor.swift; sourceTree = "<group>"; };
 		5BCB06CB1FECF1A8F5BC6E6D /* ScrambleTextEffect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrambleTextEffect.swift; sourceTree = "<group>"; };
+		63EC54F9079EA0063EFAF777 /* NoteContextMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteContextMenu.swift; sourceTree = "<group>"; };
 		7403455CDB6C6BDA172CC259 /* VellemWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VellemWidget.entitlements; sourceTree = "<group>"; };
 		80643F8C5478A89576230AD2 /* MenuBarComposerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarComposerView.swift; sourceTree = "<group>"; };
 		8B2CDF4595B418B17F37DADB /* MarkdownRenderedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownRenderedView.swift; sourceTree = "<group>"; };
 		8F794DBD059DAB5C6B04AC1D /* NotesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesStore.swift; sourceTree = "<group>"; };
+		91964C5540C43D09600D4069 /* EmbeddingCachePruner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbeddingCachePruner.swift; sourceTree = "<group>"; };
 		96920392987CD241F12576E0 /* CaptureContextProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureContextProvider.swift; sourceTree = "<group>"; };
 		9D31FD034B4CD8D85C052A6A /* QuickCaptureWindowConfigurator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickCaptureWindowConfigurator.swift; sourceTree = "<group>"; };
 		A2083C8673639AE82BE4560F /* KnownTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnownTool.swift; sourceTree = "<group>"; };
 		A21C416FE49D8BACA6D8E9A2 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A2DBFCAF9442A9D7F1C75762 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		A2FAA89E775B8E613C683386 /* SlashCommandProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlashCommandProcessor.swift; sourceTree = "<group>"; };
+		A58252D8886B2C8031D975ED /* VellemDisplayText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VellemDisplayText.swift; sourceTree = "<group>"; };
 		AB9D350726789738B4EC27EB /* AppGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroup.swift; sourceTree = "<group>"; };
 		ACA8C9B235D9FB2554B024F0 /* NoteEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteEditorView.swift; sourceTree = "<group>"; };
 		ACB9D1E2FE88D0AB3CDAA5CE /* ShortcutRecorderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutRecorderView.swift; sourceTree = "<group>"; };
@@ -139,6 +148,7 @@
 		F4691F7E3E47E6CF811638C9 /* ShortcutFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutFormatter.swift; sourceTree = "<group>"; };
 		F9FBFC33F50F0D1A99BA19B8 /* WidgetReloader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetReloader.swift; sourceTree = "<group>"; };
 		FBA0F236EA37E12018852354 /* VellemMCP */ = {isa = PBXFileReference; includeInIndex = 0; path = VellemMCP; sourceTree = BUILT_PRODUCTS_DIR; };
+		FF8E2319E5B18700B47E1EAC /* MainWindowResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowResolver.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -185,6 +195,7 @@
 		65C12362375107539DC91F25 /* Stores */ = {
 			isa = PBXGroup;
 			children = (
+				91964C5540C43D09600D4069 /* EmbeddingCachePruner.swift */,
 				8F794DBD059DAB5C6B04AC1D /* NotesStore.swift */,
 			);
 			path = Stores;
@@ -195,6 +206,7 @@
 			children = (
 				9672832ED4547732CCD713DF /* Vellem */,
 				E0C6BE20B3EFD03F63900CF1 /* VellemMCP */,
+				BF892BB319A6A134CCD8430F /* VellemShared */,
 				4A272094950B020F428FE234 /* VellemWidget */,
 				EC9DDDD29D685E6E8A45BEFC /* Products */,
 			);
@@ -228,6 +240,14 @@
 			path = Vellem;
 			sourceTree = "<group>";
 		};
+		BF892BB319A6A134CCD8430F /* VellemShared */ = {
+			isa = PBXGroup;
+			children = (
+				A58252D8886B2C8031D975ED /* VellemDisplayText.swift */,
+			);
+			path = VellemShared;
+			sourceTree = "<group>";
+		};
 		E0C6BE20B3EFD03F63900CF1 /* VellemMCP */ = {
 			isa = PBXGroup;
 			children = (
@@ -247,6 +267,7 @@
 				1C69FD53E41A13CCC596052D /* AppPreferences.swift */,
 				0C55CFE4DA2FAE52B9A01F7B /* GlobalHotKeyService.swift */,
 				A2083C8673639AE82BE4560F /* KnownTool.swift */,
+				FF8E2319E5B18700B47E1EAC /* MainWindowResolver.swift */,
 				BC017F0B5E3C20165F74A1F8 /* NoteNotifications.swift */,
 				9D31FD034B4CD8D85C052A6A /* QuickCaptureWindowConfigurator.swift */,
 				5BCB06CB1FECF1A8F5BC6E6D /* ScrambleTextEffect.swift */,
@@ -266,6 +287,7 @@
 				8B2CDF4595B418B17F37DADB /* MarkdownRenderedView.swift */,
 				F10A90F67EE3D6AEA8BAD71D /* MarkdownTableView.swift */,
 				80643F8C5478A89576230AD2 /* MenuBarComposerView.swift */,
+				63EC54F9079EA0063EFAF777 /* NoteContextMenu.swift */,
 				ACA8C9B235D9FB2554B024F0 /* NoteEditorView.swift */,
 				356838C1CD7E49ADB6021F9D /* NoteViewerView.swift */,
 				A2DBFCAF9442A9D7F1C75762 /* OnboardingView.swift */,
@@ -434,6 +456,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B3A28E21638AD79D46620408 /* VellemDisplayText.swift in Sources */,
 				A8CD39ED4AE7AA148B71A201 /* VellemWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -449,6 +472,7 @@
 				85144DC533CB2E009D744CFE /* Note.swift in Sources */,
 				FE3CF6FC4076808D22813584 /* NotesFileStore.swift in Sources */,
 				79E9329659229BB0C753F6C0 /* SemanticIndex.swift in Sources */,
+				DDE3C560F26213B6CB04B258 /* VellemDisplayText.swift in Sources */,
 				FBDF83D5EF29D67A5234A546 /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -464,6 +488,7 @@
 				E05E41F66101C66B1D0CA02A /* CaptureContextProvider.swift in Sources */,
 				E8AB2128DC24BEC54F10F907 /* CaptureSource.swift in Sources */,
 				70C6B44386B992D079C562D4 /* ContentView.swift in Sources */,
+				0BA79E103F348B4596A4F210 /* EmbeddingCachePruner.swift in Sources */,
 				09372CECAC2317BFA61B8966 /* EmptyNotesView.swift in Sources */,
 				31B6EF6F0ABBC638178F8E65 /* ExternalNoteEvent.swift in Sources */,
 				159F7C4CE7573927C8C0E747 /* Folder.swift in Sources */,
@@ -471,10 +496,12 @@
 				3CC319DEF2250062736D7234 /* FoundationNoteEditor.swift in Sources */,
 				23B75E5BA4E1D67E06AE504A /* GlobalHotKeyService.swift in Sources */,
 				9407F4DF7F08247A7A8DE2A1 /* KnownTool.swift in Sources */,
+				1B97B02443DBB48931CFC3F0 /* MainWindowResolver.swift in Sources */,
 				58831C737EBD42FE4454A836 /* MarkdownRenderedView.swift in Sources */,
 				24D2B5D83EE9639CA953FAE1 /* MarkdownTableView.swift in Sources */,
 				54690B4AA0C9E9E226529359 /* MenuBarComposerView.swift in Sources */,
 				4905548C2FBB99FC64230ABF /* Note.swift in Sources */,
+				AC3DA0AE4C1D6BE2CFDB3E7B /* NoteContextMenu.swift in Sources */,
 				E33BF2E64AACB83F5F4EE3C1 /* NoteEditorView.swift in Sources */,
 				9AE5D39B5FB80AEF1C4478DE /* NoteNotifications.swift in Sources */,
 				C89A47B53674806E28BA31A7 /* NoteViewerView.swift in Sources */,
@@ -492,6 +519,7 @@
 				A10521FE98F14E281828A713 /* SplitViewAutosave.swift in Sources */,
 				CE35CCA9346942A425296E88 /* UpdateController.swift in Sources */,
 				9A57A0453CCBD40B8265E252 /* VellemApp.swift in Sources */,
+				E27778E90430280D3B7ECF2F /* VellemDisplayText.swift in Sources */,
 				02D7C882CCFAAD0226BD6D61 /* WidgetReloader.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

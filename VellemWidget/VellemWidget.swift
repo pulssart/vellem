@@ -23,6 +23,22 @@ private var widgetHeaderColor: Color {
     Color(nsColor: widgetAccentNSColor()).opacity(0.30)
 }
 
+private extension URL {
+    static let vellemNewNote = vellemDeepLink(host: "new")
+
+    static func vellemNote(_ id: UUID) -> URL {
+        vellemDeepLink(host: "note", path: "/\(id.uuidString)")
+    }
+
+    private static func vellemDeepLink(host: String, path: String = "") -> URL {
+        var components = URLComponents()
+        components.scheme = "vellem"
+        components.host = host
+        components.path = path
+        return components.url ?? URL(fileURLWithPath: "/")
+    }
+}
+
 struct WidgetNote: Identifiable, Codable {
     var id: UUID
     var text: String
@@ -49,27 +65,6 @@ struct WidgetNote: Identifiable, Codable {
 
     var preview: String {
         text.vellemDisplayText
-    }
-}
-
-private extension String {
-    var vellemDisplayText: String {
-        var cleaned = self
-            .replacing(/\!\[([^\]]*)\]\([^)]+\)/, with: "$1")
-            .replacing(/\[([^\]]+)\]\([^)]+\)/, with: "$1")
-            .replacing(/(?m)^\s{0,3}#{1,6}\s*/, with: "")
-            .replacing(/(?m)^\s{0,3}>\s*/, with: "")
-            .replacing(/(?m)^\s*[-*+]\s+/, with: "")
-            .replacing(/(?m)^\s*\d+[.)]\s+/, with: "")
-            .replacingOccurrences(of: "\n", with: " ")
-
-        for marker in ["**", "__", "~~", "`", "*", "_", "#"] {
-            cleaned = cleaned.replacingOccurrences(of: marker, with: "")
-        }
-
-        return cleaned
-            .replacing(/\s+/, with: " ")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 
@@ -178,7 +173,7 @@ struct VellemWidgetView: View {
             Text("Vellem")
                 .font(.headline)
             Spacer()
-            Link(destination: URL(string: "vellem://new")!) {
+            Link(destination: .vellemNewNote) {
                 Image(systemName: "plus")
                     .font(.system(size: 14, weight: .medium))
             }
@@ -234,7 +229,7 @@ private struct WidgetNoteRow: View {
     let previewLineLimit: Int
 
     var body: some View {
-        Link(destination: URL(string: "vellem://note/\(note.id.uuidString)")!) {
+        Link(destination: .vellemNote(note.id)) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(note.title)
                     .font(.callout)

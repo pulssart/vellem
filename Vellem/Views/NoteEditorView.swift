@@ -30,16 +30,10 @@ struct NoteEditorView: View {
                 .background(Color(nsColor: .windowBackgroundColor))
 
             if let sourceDescription {
-                HStack(spacing: 6) {
-                    Image(systemName: "arrow.down.doc")
-                    Text("From \(sourceDescription)")
-                        .lineLimit(1)
-                }
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 14)
-                .padding(.bottom, 6)
+                sourceBadge(sourceDescription)
+                    .padding(.horizontal, noteHorizontalPadding + 12)
+                    .padding(.top, 8)
+                    .padding(.bottom, 14)
             }
 
             ZStack {
@@ -144,8 +138,12 @@ struct NoteEditorView: View {
             Button {
                 isPreviewMode.toggle()
             } label: {
-                Image(systemName: isPreviewMode ? "pencil" : "eye")
-                    .frame(width: 24, height: 22)
+                Label(isPreviewMode ? "Edit" : "Preview", systemImage: isPreviewMode ? "pencil" : "eye")
+                    .labelStyle(.titleAndIcon)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .frame(height: 24)
                     .contentShape(Rectangle())
             }
             .help(isPreviewMode ? "Edit mode (⌘⇧P)" : "Preview mode (⌘⇧P)")
@@ -154,8 +152,8 @@ struct NoteEditorView: View {
             toolbarDivider
 
             Text(statusText)
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.secondary)
                 .padding(.trailing, 4)
 
             // AI menu (Edit + Translate combined)
@@ -218,6 +216,35 @@ struct NoteEditorView: View {
         .labelStyle(.iconOnly)
         .foregroundStyle(.secondary)
         .tint(.secondary)
+    }
+
+    private func sourceBadge(_ description: String) -> some View {
+        HStack(spacing: 7) {
+            Image(systemName: note.sourceURL == nil ? "app.badge" : "link")
+                .font(.system(size: 12, weight: .semibold))
+
+            Text("From")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.primary.opacity(0.78))
+
+            Text(description)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .truncationMode(.middle)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            Capsule(style: .continuous)
+                .fill(accent.color.opacity(0.14))
+        )
+        .overlay {
+            Capsule(style: .continuous)
+                .stroke(accent.color.opacity(0.34), lineWidth: 1)
+        }
+        .foregroundStyle(accent.color.mix(with: .black, by: 0.16))
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder

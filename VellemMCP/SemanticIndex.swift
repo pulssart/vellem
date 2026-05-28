@@ -74,7 +74,8 @@ final class SemanticIndex {
         guard let queryEmbedding = embed(query) else { return [] }
         let scored: [(Note, Double)] = notes.compactMap { note in
             guard let entry = cache[note.id.uuidString] else { return nil }
-            return (note, cosine(queryEmbedding.vector, entry.vector))
+            let semanticScore = cosine(queryEmbedding.vector, entry.vector)
+            return (note, hybridScore(semanticScore: semanticScore, query: query, note: note))
         }
         return Array(scored.sorted { $0.1 > $1.1 }.prefix(max(1, limit)))
     }
@@ -222,6 +223,60 @@ final class SemanticIndex {
         let recognizer = NLLanguageRecognizer()
         recognizer.processString(text)
         return recognizer.dominantLanguage ?? .english
+    }
+
+    private func hybridScore(semanticScore: Double, query: String, note: Note) -> Double {
+        let lexicalScore = lexicalScore(query: query, note: note)
+        if lexicalScore >= 0.5 {
+            return (semanticScore * 0.45) + (lexicalScore * 0.55)
+        }
+        return (semanticScore * 0.65) + (lexicalScore * 0.35)
+    }
+
+    private func lexicalScore(query: String, note: Note) -> Double {
+        let comparableQuery = comparableText(query)
+        guard comparableQuery.count >= 2 else { return 0 }
+
+        let title = comparableText(note.title)
+        let document = comparableText(noteText(note))
+        if document.contains(comparableQuery) {
+            return title.contains(comparableQuery) ? 1 : 0.9
+        }
+
+        let queryTokens = comparableTokens(query)
+        guard !queryTokens.isEmpty else { return 0 }
+
+        let documentTokens = Set(comparableTokens(noteText(note)))
+        let titleTokens = Set(comparableTokens(note.title))
+        guard !documentTokens.isEmpty else { return 0 }
+
+        let documentMatches = queryTokens.filter { documentTokens.contains($0) }.count
+        let titleMatches = queryTokens.filter { titleTokens.contains($0) }.count
+        let documentRecall = Double(documentMatches) / Double(queryTokens.count)
+        let titleRecall = Double(titleMatches) / Double(queryTokens.count)
+        let titleBoostedRecall = min(1, titleRecall * 1.2)
+
+        return max(documentRecall, titleBoostedRecall)
+    }
+
+    private func comparableText(_ text: String) -> String {
+        canonicalize(text)
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current)
+    }
+
+    private func comparableTokens(_ text: String) -> [String] {
+        comparableText(text)
+            .unicodeScalars
+            .split(whereSeparator: { !CharacterSet.alphanumerics.contains($0) })
+            .map { comparableToken(String($0)) }
+            .filter { $0.count >= 2 }
+    }
+
+    private func comparableToken(_ token: String) -> String {
+        if token.count > 3, token.hasSuffix("s") {
+            return String(token.dropLast())
+        }
+        return token
     }
 
     // MARK: - Vector math

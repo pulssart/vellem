@@ -254,31 +254,11 @@ struct FolderNotesListView: View {
 
     @ViewBuilder
     private func noteContextMenu(_ note: Note) -> some View {
-        Button("Open in floating window") {
-            openInFloatingViewer(note)
-        }
-        Menu("Move to") {
-            Button("No folder") {
-                store.moveNote(note.id, toFolder: nil)
-            }
-            if !store.folders.isEmpty {
-                Divider()
-                ForEach(store.folders) { targetFolder in
-                    Button(targetFolder.name) {
-                        store.moveNote(note.id, toFolder: targetFolder.id)
-                    }
-                }
-            }
-        }
-        Button("Copy") {
-            copy(note.text)
-        }
-        Button(note.isRead ? "Mark as unread" : "Mark as read") {
-            note.isRead ? store.markUnread(note.id) : store.markRead(note.id)
-        }
-        Button("Delete", role: .destructive) {
-            store.delete(note)
-        }
+        NoteContextMenu(
+            note: note,
+            store: store,
+            openInFloatingViewer: openInFloatingViewer
+        )
     }
 
     private func select(_ note: Note) {
@@ -936,36 +916,11 @@ struct TodayNotesListView: View {
 
     @ViewBuilder
     private func noteContextMenu(_ note: Note) -> some View {
-        Button("Open in floating window") {
-            openInFloatingViewer(note)
-        }
-        Menu("Move to") {
-            Button("No folder") {
-                store.moveNote(note.id, toFolder: nil)
-            }
-            if !store.folders.isEmpty {
-                Divider()
-                ForEach(store.folders) { targetFolder in
-                    Button(targetFolder.name) {
-                        store.moveNote(note.id, toFolder: targetFolder.id)
-                    }
-                }
-            }
-        }
-        Button("Copy") {
-            copy(note.text)
-        }
-        Button(note.isRead ? "Mark as unread" : "Mark as read") {
-            note.isRead ? store.markUnread(note.id) : store.markRead(note.id)
-        }
-        Button("Delete", role: .destructive) {
-            store.delete(note)
-        }
-    }
-
-    private func copy(_ value: String) {
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(value, forType: .string)
+        NoteContextMenu(
+            note: note,
+            store: store,
+            openInFloatingViewer: openInFloatingViewer
+        )
     }
 
     private func openInFloatingViewer(_ note: Note) {

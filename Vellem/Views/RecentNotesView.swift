@@ -36,7 +36,9 @@ extension FolderColor {
 struct RecentNotesView: View {
     @ObservedObject var store: NotesStore
     @Environment(\.openWindow) private var openWindow
+    @FocusState private var isSearchFocused: Bool
     @State private var query = ""
+    @State private var didClearInitialSearchFocus = false
     @State private var renamingFolderID: UUID?
     @State private var renameDraft: String = ""
     @State private var hoveredFolderID: UUID?
@@ -70,6 +72,10 @@ struct RecentNotesView: View {
         .accentColor(accent.color)
         .navigationTitle("Vellem")
         .searchable(text: $query, placement: .sidebar, prompt: "Search notes")
+        .searchFocused($isSearchFocused)
+        .onAppear {
+            clearInitialSearchFocus()
+        }
         .toolbar {
             ToolbarItem(placement: .automatic) {
                 Button {
@@ -322,39 +328,12 @@ struct RecentNotesView: View {
                 .cornerRadius(8)
         }
         .contextMenu {
-            Button("Open in floating window") {
-                openInFloatingViewer(note)
-            }
-            Menu("Move to") {
-                Button("No folder") {
-                    store.moveNote(note.id, toFolder: nil)
-                }
-                if !store.folders.isEmpty {
-                    Divider()
-                    ForEach(store.folders) { folder in
-                        Button(folder.name) {
-                            store.moveNote(note.id, toFolder: folder.id)
-                        }
-                    }
-                }
-                Divider()
-                Button("New folder…") {
-                    let folder = store.createFolder(name: "New folder")
-                    store.moveNote(note.id, toFolder: folder.id)
-                    selectFolder(folder.id)
-                    renameDraft = folder.name
-                    renamingFolderID = folder.id
-                }
-            }
-            Button("Copy") {
-                copy(note.text)
-            }
-            Button(note.isRead ? "Mark as unread" : "Mark as read") {
-                note.isRead ? store.markUnread(note.id) : store.markRead(note.id)
-            }
-            Button("Delete", role: .destructive) {
-                store.delete(note)
-            }
+            NoteContextMenu(
+                note: note,
+                store: store,
+                openInFloatingViewer: openInFloatingViewer,
+                createFolderForNote: createFolderForNote
+            )
         }
         .padding(.leading, 8)
         .padding(.trailing, 8)
@@ -405,6 +384,15 @@ struct RecentNotesView: View {
         renamingFolderID = folder.id
     }
 
+    private func clearInitialSearchFocus() {
+        guard !didClearInitialSearchFocus else { return }
+        didClearInitialSearchFocus = true
+        DispatchQueue.main.async {
+            isSearchFocused = false
+            NSApp.keyWindow?.makeFirstResponder(nil)
+        }
+    }
+
     private func handleDrop(items: [String], intoFolder folderID: UUID?) -> Bool {
         var moved = false
         for item in items {
@@ -415,15 +403,18 @@ struct RecentNotesView: View {
         return moved
     }
 
-    private func copy(_ value: String) {
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(value, forType: .string)
-    }
-
     private func openInFloatingViewer(_ note: Note) {
         store.viewerNoteID = note.id
         openWindow(id: "note-viewer")
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func createFolderForNote(_ note: Note) {
+        let folder = store.createFolder(name: "New folder")
+        store.moveNote(note.id, toFolder: folder.id)
+        selectFolder(folder.id)
+        renameDraft = folder.name
+        renamingFolderID = folder.id
     }
 }
 
