@@ -31,7 +31,7 @@ struct Folder: Identifiable, Codable, Hashable {
     var systemImage: String {
         switch kind {
         case .smartServices:
-            "tray.full.fill"
+            "bolt.fill"
         case .smartClaude:
             "terminal.fill"
         case .smartCodex:
@@ -46,7 +46,7 @@ struct Folder: Identifiable, Codable, Hashable {
     var outlineSystemImage: String {
         switch kind {
         case .smartServices:
-            "tray.fill"
+            "bolt"
         case .smartClaude:
             "terminal"
         case .smartCodex:

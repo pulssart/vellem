@@ -35,16 +35,13 @@ extension FolderColor {
 
 struct RecentNotesView: View {
     @ObservedObject var store: NotesStore
-    @Environment(\.openWindow) private var openWindow
-    @FocusState private var isSearchFocused: Bool
-    @State private var query = ""
-    @State private var didClearInitialSearchFocus = false
     @State private var renamingFolderID: UUID?
     @State private var renameDraft: String = ""
     @State private var hoveredFolderID: UUID?
+    @State private var isHoveringInbox = false
     @State private var isHoveringToday = false
-    @State private var isRootDropTargeted = false
-    @State private var isAllNotesCollapsed = false
+    @State private var isHoveringFoldersHeader = false
+    @AppStorage(AppPreferences.colorSidebarKey) private var colorSidebar = true
     @AppAccent private var accent
     private let sidebarIconSize: CGFloat = 18
     private let sidebarIconFrameWidth: CGFloat = 22
@@ -56,42 +53,80 @@ struct RecentNotesView: View {
     }))
 
     var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 2) {
-                todayRow
+        ZStack {
+            accent.color
+                .opacity(colorSidebar ? 0.12 : 0)
+                .ignoresSafeArea()
 
-                systemFoldersSection
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 2) {
+                    inboxRow
 
-                foldersSection
+                    todayRow
 
-                rootNotesSection
+                    if hasItemsBelowTopSection {
+                        sectionGap
+                    }
+
+                    systemFoldersSection
+
+                    if !systemFolders.isEmpty && !regularFolders.isEmpty {
+                        sectionGap
+                    }
+
+                    foldersSection
+                }
+                .padding(.vertical, 8)
             }
-            .padding(.vertical, 8)
         }
         .tint(accent.color)
         .accentColor(accent.color)
         .navigationTitle("Vellem")
-        .searchable(text: $query, placement: .sidebar, prompt: "Search notes")
-        .searchFocused($isSearchFocused)
-        .onAppear {
-            clearInitialSearchFocus()
-        }
-        .toolbar {
-            ToolbarItem(placement: .automatic) {
-                Button {
-                    addFolder()
-                } label: {
-                    Label("New folder", systemImage: "folder.badge.plus")
-                }
-                .help("New folder")
-            }
-        }
     }
 
     // MARK: - Sections
 
+    private var inboxRow: some View {
+        let count = store.inboxUnreadCount
+
+        return HStack(spacing: 8) {
+            Image(systemName: "tray.full")
+                .font(.system(size: sidebarIconSize, weight: .semibold))
+                .foregroundStyle(Self.smartFolderInk)
+                .frame(width: sidebarIconFrameWidth, alignment: .leading)
+
+            Text("Inbox")
+                .font(.system(size: 15))
+                .lineLimit(1)
+
+            Spacer()
+
+            if count > 0 {
+                Text("\(count)")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(.leading, 8)
+        .padding(.trailing, 10)
+        .padding(.vertical, 7)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(store.isInboxSelected ? accent.color.opacity(0.34) : (isHoveringInbox ? accent.color.opacity(0.18) : Color.clear))
+        )
+        .padding(.leading, 8)
+        .padding(.trailing, 8)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            store.selectInbox()
+        }
+        .onHover { hovering in
+            isHoveringInbox = hovering
+        }
+    }
+
     private var todayRow: some View {
-        let count = todayNotes.count
+        let count = store.todayUnreadCount
 
         return HStack(spacing: 8) {
             Image(systemName: "calendar")
@@ -130,15 +165,13 @@ struct RecentNotesView: View {
     }
 
     private var foldersSection: some View {
-        Group {
-            if !regularFolders.isEmpty {
-                sectionHeader("Folders")
+        VStack(alignment: .leading, spacing: 2) {
+            folderSectionHeader
 
+            if !regularFolders.isEmpty {
                 ForEach(regularFolders) { folder in
                     folderRow(folder)
                 }
-
-                Spacer().frame(height: 8)
             }
         }
     }
@@ -146,53 +179,52 @@ struct RecentNotesView: View {
     private var systemFoldersSection: some View {
         Group {
             if !systemFolders.isEmpty {
+                sectionHeader("Smart folders")
+
                 ForEach(systemFolders) { folder in
                     folderRow(folder)
                 }
-
-                Spacer().frame(height: 8)
             }
         }
     }
 
-    private var rootNotesSection: some View {
-        Group {
-            collapsibleSectionHeader(
-                store.folders.isEmpty ? "Notes" : "All notes",
-                isCollapsed: isAllNotesCollapsed
-            ) {
-                isAllNotesCollapsed.toggle()
-            }
+    private var sectionGap: some View {
+        Color.clear
+            .frame(height: 12)
+    }
 
-            if !isAllNotesCollapsed {
-                VStack(alignment: .leading, spacing: 2) {
-                    ForEach(allNotes) { note in
-                        row(for: note)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .stroke(
-                            isRootDropTargeted ? accent.color : Color.clear,
-                            lineWidth: 1.5
-                        )
-                        .padding(.horizontal, 4)
-                )
-                .dropDestination(for: String.self) { items, _ in
-                    handleDrop(items: items, intoFolder: nil)
-                } isTargeted: { hovering in
-                    isRootDropTargeted = hovering
-                }
+    private var folderSectionHeader: some View {
+        HStack(spacing: 6) {
+            Text("Folders")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+
+            Button {
+                addFolder()
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 10, weight: .semibold))
+                    .frame(width: 15, height: 15)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
+            .opacity(isHoveringFoldersHeader ? 1 : 0)
+            .allowsHitTesting(isHoveringFoldersHeader)
+            .help("New folder")
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 6)
+        .contentShape(Rectangle())
+        .onHover { hovering in
+            isHoveringFoldersHeader = hovering
         }
     }
 
     private func folderRow(_ folder: Folder) -> some View {
         let isHovering = hoveredFolderID == folder.id
-        let isSelected = !store.isTodaySelected && store.selectedFolderID == folder.id
-        let count = store.noteCountForDisplay(in: folder)
+        let isSelected = !store.isInboxSelected && !store.isTodaySelected && store.selectedFolderID == folder.id
+        let count = store.unreadNoteCountForDisplay(in: folder)
 
         return HStack(spacing: 8) {
             Image(systemName: folderIconName(for: folder, selected: isSelected))
@@ -290,85 +322,16 @@ struct RecentNotesView: View {
             .padding(.top, 6)
     }
 
-    private func collapsibleSectionHeader(_ title: String, isCollapsed: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: isCollapsed ? "chevron.right" : "chevron.down")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                Text(title)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                Spacer()
-            }
-            .padding(.horizontal, 12)
-            .padding(.top, 6)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-
-    @ViewBuilder
-    private func row(for note: Note) -> some View {
-        NoteRow(
-            note: note,
-            isSelected: !store.isTodaySelected && store.selectedNoteID == note.id
-        ) {
-            openInFloatingViewer(note)
-        }
-        .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .onTapGesture {
-            store.selectNote(note.id)
-        }
-        .draggable(note.id.uuidString) {
-            NoteRow(note: note, isSelected: false)
-                .frame(width: 240)
-                .padding(6)
-                .background(Color(nsColor: .windowBackgroundColor))
-                .cornerRadius(8)
-        }
-        .contextMenu {
-            NoteContextMenu(
-                note: note,
-                store: store,
-                openInFloatingViewer: openInFloatingViewer,
-                createFolderForNote: createFolderForNote
-            )
-        }
-        .padding(.leading, 8)
-        .padding(.trailing, 8)
-    }
-
-    // MARK: - Filtering
-
-    private var filteredNotes: [Note] {
-        let cleanedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cleanedQuery.isEmpty else { return store.notes }
-
-        return store.notes.filter { note in
-            note.title.localizedCaseInsensitiveContains(cleanedQuery) ||
-            note.text.localizedCaseInsensitiveContains(cleanedQuery)
-        }
-    }
-
-    private var todayNotes: [Note] {
-        filteredNotes.filter { Calendar.current.isDateInToday($0.createdAt) }
-    }
-
-    private var filteredRegularNotes: [Note] {
-        filteredNotes.filter { !$0.isDailyNote }
-    }
-
     private var systemFolders: [Folder] {
-        store.folders.filter { $0.isSmart }
+        store.folders.filter { $0.isSmart && $0.kind != .smartPromptLibrary }
     }
 
     private var regularFolders: [Folder] {
         store.folders.filter { !$0.isSmart }
     }
 
-    private var allNotes: [Note] {
-        filteredNotes
+    private var hasItemsBelowTopSection: Bool {
+        !systemFolders.isEmpty || !regularFolders.isEmpty
     }
 
     // MARK: - Actions
@@ -384,15 +347,6 @@ struct RecentNotesView: View {
         renamingFolderID = folder.id
     }
 
-    private func clearInitialSearchFocus() {
-        guard !didClearInitialSearchFocus else { return }
-        didClearInitialSearchFocus = true
-        DispatchQueue.main.async {
-            isSearchFocused = false
-            NSApp.keyWindow?.makeFirstResponder(nil)
-        }
-    }
-
     private func handleDrop(items: [String], intoFolder folderID: UUID?) -> Bool {
         var moved = false
         for item in items {
@@ -403,85 +357,4 @@ struct RecentNotesView: View {
         return moved
     }
 
-    private func openInFloatingViewer(_ note: Note) {
-        store.viewerNoteID = note.id
-        openWindow(id: "note-viewer")
-        NSApp.activate(ignoringOtherApps: true)
-    }
-
-    private func createFolderForNote(_ note: Note) {
-        let folder = store.createFolder(name: "New folder")
-        store.moveNote(note.id, toFolder: folder.id)
-        selectFolder(folder.id)
-        renameDraft = folder.name
-        renamingFolderID = folder.id
-    }
-}
-
-private struct NoteRow: View {
-    let note: Note
-    let isSelected: Bool
-    var onOpenViewer: (() -> Void)? = nil
-    @State private var isHovering = false
-    @AppAccent private var accent
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
-                if note.isDailyNote {
-                    Image(systemName: "calendar")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.secondary)
-                }
-
-                HStack(spacing: 6) {
-                    if !note.isRead {
-                        Circle()
-                            .fill(accent.color)
-                            .frame(width: 7, height: 7)
-                            .accessibilityLabel("Unread")
-                    }
-
-                    Text(note.title)
-                        .lineLimit(1)
-                        .fontWeight((isSelected || !note.isRead) ? .semibold : .regular)
-                }
-
-                Spacer()
-
-                if let onOpenViewer, isHovering {
-                    Button {
-                        onOpenViewer()
-                    } label: {
-                        Image(systemName: "rectangle.on.rectangle")
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .buttonStyle(.borderless)
-                    .help("Open in floating window")
-                }
-            }
-
-            Text(note.preview)
-                .font(.caption)
-                .foregroundStyle(isSelected ? .primary : .secondary)
-                .lineLimit(1)
-
-            HStack(spacing: 6) {
-                Text(note.updatedAt, style: .relative)
-                Text("\(note.wordCount) words")
-            }
-            .font(.caption2)
-            .foregroundStyle(isSelected ? .secondary : .tertiary)
-            .lineLimit(1)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 8)
-        .background {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(isSelected ? accent.color.opacity(0.45) : Color.clear)
-        }
-        .onHover { hovering in
-            isHovering = hovering
-        }
-    }
 }

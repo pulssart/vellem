@@ -95,6 +95,14 @@ struct MenuBarComposerView: View {
                 .disabled(cleanedText.isEmpty)
 
                 Menu {
+                    Button {
+                        run(.format)
+                    } label: {
+                        Label(EditAction.format.label, systemImage: EditAction.format.systemImage)
+                    }
+
+                    Divider()
+
                     ForEach(EditAction.manualActions) { action in
                         Button {
                             run(action)
@@ -203,7 +211,7 @@ struct MenuBarComposerView: View {
             return
         }
 
-        guard let note = store.create(text: text) else { return }
+        guard let note = store.createQuickCapture(text: text) else { return }
         editingNoteID = note.id
         text = ""
         editingNoteID = nil

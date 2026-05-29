@@ -5,6 +5,8 @@ struct SettingsView: View {
     @AppStorage(AppPreferences.quickCaptureModifiersKey) private var modifiers = Int(AppPreferences.defaultQuickCaptureModifiers)
     @AppStorage(AppPreferences.showMenuBarExtraKey) private var showMenuBarExtra = true
     @AppStorage(AppPreferences.showDockIconKey) private var showDockIcon = true
+    @AppStorage(AppPreferences.colorSidebarKey) private var colorSidebar = true
+    @AppStorage(AppPreferences.colorTopBarKey) private var colorTopBar = true
     @AppStorage(AppAccentColor.storageKey) private var accentRaw = AppAccentColor.defaultValue.rawValue
     @AppStorage("SUEnableAutomaticChecks") private var autoCheckUpdates = true
     @AppStorage("SUAutomaticallyUpdate") private var autoDownloadUpdates = false
@@ -78,6 +80,12 @@ struct SettingsView: View {
                             }
                         }
                     }
+
+                    Divider()
+
+                    Toggle("Color sidebar", isOn: $colorSidebar)
+
+                    Toggle("Color top bar", isOn: $colorTopBar)
                 }
             }
         }

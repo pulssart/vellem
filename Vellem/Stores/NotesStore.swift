@@ -9,6 +9,7 @@ final class NotesStore: ObservableObject {
     @Published var selectedNoteID: Note.ID?
     @Published var viewerNoteID: Note.ID?
     @Published var selectedFolderID: Folder.ID?
+    @Published var isInboxSelected = false
     @Published var isTodaySelected = false
 
     var viewerNote: Note? {
@@ -79,7 +80,7 @@ final class NotesStore: ObservableObject {
         changed = ensureSystemFolder(name: "Claude", color: FolderColor.red.rawValue, kind: .smartClaude) || changed
         changed = ensureSystemFolder(name: "Codex", color: FolderColor.blue.rawValue, kind: .smartCodex) || changed
         changed = ensureSystemFolder(name: "Prompt Library", color: FolderColor.purple.rawValue, kind: .smartPromptLibrary) || changed
-        changed = ensureSystemFolder(name: "Services", color: FolderColor.green.rawValue, kind: .smartServices) || changed
+        changed = ensureSystemFolder(name: "Quick captures", color: FolderColor.green.rawValue, kind: .smartServices) || changed
 
         if changed {
             sortFolders()
@@ -121,6 +122,15 @@ final class NotesStore: ObservableObject {
         let deliveredNote = notes.first { $0.id == note.id } ?? note
         NoteNotifications.notifyNewNote(deliveredNote, source: source?.appName ?? "Services")
         return deliveredNote
+    }
+
+    @discardableResult
+    func createQuickCapture(text: String) -> Note? {
+        guard let note = create(text: text) else { return nil }
+        if let folderID = servicesFolderID {
+            moveNote(note.id, toFolder: folderID)
+        }
+        return notes.first { $0.id == note.id } ?? note
     }
 
     @discardableResult
@@ -199,6 +209,7 @@ final class NotesStore: ObservableObject {
             )
             let data = try encoder.encode(folders)
             try data.write(to: foldersURL, options: [.atomic])
+            try? CloudMirrorStore.publish(foldersData: data)
         } catch {
             assertionFailure("Could not save folders: \(error)")
         }
@@ -457,6 +468,52 @@ final class NotesStore: ObservableObject {
         notes.reduce(0) { $0 + (noteMatchesDisplay($1, in: folder) ? 1 : 0) }
     }
 
+    func unreadNoteCountForDisplay(in folder: Folder) -> Int {
+        notes.reduce(0) { $0 + (noteMatchesDisplay($1, in: folder) && !$1.isRead ? 1 : 0) }
+    }
+
+    var inboxNotes: [Note] {
+        notes.filter { !$0.isDailyNote }
+    }
+
+    var inboxUnreadCount: Int {
+        inboxNotes.reduce(0) { $0 + ($1.isRead ? 0 : 1) }
+    }
+
+    var todayUnreadCount: Int {
+        notes.reduce(0) { total, note in
+            total + (Calendar.current.isDateInToday(note.createdAt) && !note.isRead ? 1 : 0)
+        }
+    }
+
+    var rootUnreadCount: Int {
+        notes.reduce(0) { total, note in
+            total + (note.folderID == nil && !note.isDailyNote && !note.isRead ? 1 : 0)
+        }
+    }
+
+    func provenanceLabel(for note: Note) -> String {
+        if let folderID = note.folderID,
+           let folder = folders.first(where: { $0.id == folderID }) {
+            return folder.name
+        }
+
+        if note.isFromCodex {
+            return "Codex"
+        }
+
+        if note.isFromClaude {
+            return "Claude"
+        }
+
+        if let sourceApp = note.sourceApp,
+           !sourceApp.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return sourceApp
+        }
+
+        return "Sans dossier"
+    }
+
     func noteMatchesDisplay(_ note: Note, in folder: Folder) -> Bool {
         guard !note.isDailyNote else { return false }
 
@@ -473,6 +530,7 @@ final class NotesStore: ObservableObject {
     }
 
     func selectToday() {
+        isInboxSelected = false
         isTodaySelected = true
         selectedFolderID = nil
         selectedNoteID = firstTodayNoteID()
@@ -481,15 +539,27 @@ final class NotesStore: ObservableObject {
         }
     }
 
+    func selectInbox() {
+        isInboxSelected = true
+        isTodaySelected = false
+        selectedFolderID = nil
+        selectedNoteID = firstInboxNoteID()
+        if let selectedNoteID {
+            markRead(selectedNoteID)
+        }
+    }
+
     func selectNote(_ noteID: Note.ID, inToday: Bool = false, inFolder folderID: Folder.ID? = nil) {
         selectedNoteID = noteID
         selectedFolderID = folderID
+        isInboxSelected = folderID == nil && !inToday && isInboxSelected
         isTodaySelected = inToday
         markRead(noteID)
     }
 
     func selectFolder(_ folderID: Folder.ID) {
         selectedFolderID = folderID
+        isInboxSelected = false
         isTodaySelected = false
         selectedNoteID = firstNoteID(inFolderID: folderID)
         if let selectedNoteID {
@@ -520,11 +590,9 @@ final class NotesStore: ObservableObject {
         let note = Note(text: cleaned, sourceApp: source?.appName, sourceURL: source?.url, isRead: source == nil)
         notes.insert(note, at: 0)
         selectedNoteID = note.id
+        isInboxSelected = false
         isTodaySelected = false
         save()
-        Task {
-            await formatNoteByDefault(noteID: note.id, originalText: cleaned, preservesTitle: false)
-        }
         return note
     }
 
@@ -533,6 +601,7 @@ final class NotesStore: ObservableObject {
         let note = Note(text: "", isRead: true)
         notes.insert(note, at: 0)
         selectedNoteID = note.id
+        isInboxSelected = false
         isTodaySelected = false
         save()
         return note
@@ -583,12 +652,6 @@ final class NotesStore: ObservableObject {
         save()
     }
 
-    func formatAfterEditing(noteID: Note.ID, originalText: String) {
-        Task {
-            await formatNoteByDefault(noteID: noteID, originalText: originalText, preservesTitle: false)
-        }
-    }
-
     func delete(_ note: Note) {
         notes.removeAll { $0.id == note.id }
         normalizeSelection()
@@ -618,14 +681,9 @@ final class NotesStore: ObservableObject {
             let movedNote = notes.remove(at: index)
             notes.insert(movedNote, at: 0)
             selectedNoteID = movedNote.id
+            isInboxSelected = false
             isTodaySelected = false
             save()
-            let updatedNote = notes.first { $0.id == selectedNoteID } ?? notes[0]
-            if text != nil {
-                Task {
-                    await formatNoteByDefault(noteID: updatedNote.id, originalText: updatedNote.text, preservesTitle: true)
-                }
-            }
             return notes.first { $0.id == selectedNoteID } ?? notes[0]
         }
 
@@ -641,38 +699,10 @@ final class NotesStore: ObservableObject {
         )
         notes.insert(note, at: 0)
         selectedNoteID = note.id
+        isInboxSelected = false
         isTodaySelected = false
         save()
-        if text != nil {
-            Task {
-                await formatNoteByDefault(noteID: note.id, originalText: note.text, preservesTitle: true)
-            }
-        }
         return note
-    }
-
-    private func formatNoteByDefault(noteID: Note.ID, originalText: String, preservesTitle: Bool) async {
-        do {
-            let formattedText = try await editor.edit(originalText, action: .format)
-            guard let index = notes.firstIndex(where: { $0.id == noteID }),
-                  notes[index].text == originalText else {
-                return
-            }
-
-            var reformatted = notes.remove(at: index)
-            reformatted.text = formattedText
-            reformatted.updatedAt = .now
-            if !preservesTitle {
-                let title = try? await editor.title(for: formattedText)
-                reformatted.generatedTitle = title.map(cleanTitle)
-            }
-            notes.insert(reformatted, at: 0)
-            save()
-        } catch {
-            if !preservesTitle {
-                await generateTitle(for: noteID, text: originalText)
-            }
-        }
     }
 
     private func generateTitles() async {
@@ -701,6 +731,10 @@ final class NotesStore: ObservableObject {
     }
 
     private func noteMatchesCurrentSelection(_ note: Note) -> Bool {
+        if isInboxSelected {
+            return !note.isDailyNote
+        }
+
         if isTodaySelected {
             return Calendar.current.isDateInToday(note.createdAt)
         }
@@ -714,6 +748,10 @@ final class NotesStore: ObservableObject {
     }
 
     private func firstNoteIDForCurrentSelection() -> Note.ID? {
+        if isInboxSelected {
+            return firstInboxNoteID()
+        }
+
         if isTodaySelected {
             return firstTodayNoteID()
         }
@@ -727,6 +765,10 @@ final class NotesStore: ObservableObject {
 
     private func firstTodayNoteID() -> Note.ID? {
         notes.first { Calendar.current.isDateInToday($0.createdAt) }?.id
+    }
+
+    private func firstInboxNoteID() -> Note.ID? {
+        notes.first { !$0.isDailyNote }?.id
     }
 
     private func firstNoteID(inFolderID folderID: Folder.ID) -> Note.ID? {
@@ -789,6 +831,8 @@ final class NotesStore: ObservableObject {
             )
             let data = try encoder.encode(notes)
             try data.write(to: fileURL, options: [.atomic])
+            let foldersData = try? encoder.encode(folders)
+            try? CloudMirrorStore.publish(notesData: data, foldersData: foldersData)
             updateDockBadge()
             WidgetReloader.reload()
         } catch {

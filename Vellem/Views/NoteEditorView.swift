@@ -15,7 +15,6 @@ struct NoteEditorView: View {
     @State private var scrambleFrame: ScrambleFrame?
     @State private var message: String?
     @State private var saveTask: Task<Void, Never>?
-    @State private var formatTask: Task<Void, Never>?
     @StateObject private var richController = RichMarkdownController()
     @AppAccent private var accent
 
@@ -28,13 +27,6 @@ struct NoteEditorView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
                 .background(Color(nsColor: .windowBackgroundColor))
-
-            if let sourceDescription {
-                sourceBadge(sourceDescription)
-                    .padding(.horizontal, noteHorizontalPadding + 12)
-                    .padding(.top, 8)
-                    .padding(.bottom, 14)
-            }
 
             ZStack {
                 if isPreviewMode {
@@ -55,7 +47,6 @@ struct NoteEditorView: View {
                         onScheduleSave: { newValue in
                             guard !isApplyingStoreUpdate else { return }
                             scheduleSave(newValue)
-                            scheduleAutoFormat(newValue)
                         },
                         onRunAction: { action in
                             run(action)
@@ -99,7 +90,6 @@ struct NoteEditorView: View {
         }
         .onChange(of: note.id) {
             saveTask?.cancel()
-            formatTask?.cancel()
             isApplyingStoreUpdate = true
             text = note.text
             isPreviewMode = true
@@ -120,7 +110,6 @@ struct NoteEditorView: View {
         }
         .onDisappear {
             saveTask?.cancel()
-            formatTask?.cancel()
             flushSave()
         }
     }
@@ -131,6 +120,11 @@ struct NoteEditorView: View {
         HStack(spacing: 4) {
             if !isPreviewMode {
                 formattingToolbar
+            }
+
+            if let sourceBadgeInfo {
+                sourceBadge(sourceBadgeInfo)
+                    .padding(.leading, !isPreviewMode ? 6 : 0)
             }
 
             Spacer()
@@ -158,6 +152,13 @@ struct NoteEditorView: View {
 
             // AI menu (Edit + Translate combined)
             Menu {
+                Section("Format") {
+                    Button {
+                        run(.format)
+                    } label: {
+                        Label(EditAction.format.label, systemImage: EditAction.format.systemImage)
+                    }
+                }
                 Section("Edit") {
                     ForEach(EditAction.manualActions) { action in
                         Button {
@@ -218,16 +219,24 @@ struct NoteEditorView: View {
         .tint(.secondary)
     }
 
-    private func sourceBadge(_ description: String) -> some View {
+    private func sourceBadge(_ info: SourceBadgeInfo) -> some View {
         HStack(spacing: 7) {
-            Image(systemName: note.sourceURL == nil ? "app.badge" : "link")
-                .font(.system(size: 12, weight: .semibold))
+            if let assetName = info.assetName {
+                Image(assetName)
+                    .renderingMode(.original)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 16, height: 16)
+            } else {
+                Image(systemName: info.systemImage)
+                    .font(.system(size: 12, weight: .semibold))
+            }
 
             Text("From")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.primary.opacity(0.78))
 
-            Text(description)
+            Text(info.label)
                 .font(.caption.weight(.medium))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
@@ -244,7 +253,8 @@ struct NoteEditorView: View {
                 .stroke(accent.color.opacity(0.34), lineWidth: 1)
         }
         .foregroundStyle(accent.color.mix(with: .black, by: 0.16))
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: 220, alignment: .leading)
+        .accessibilityLabel("From \(info.label)")
     }
 
     @ViewBuilder
@@ -308,6 +318,22 @@ struct NoteEditorView: View {
 
     private var cleanedText: String {
         text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var sourceBadgeInfo: SourceBadgeInfo? {
+        if note.isFromCodex {
+            return SourceBadgeInfo(label: "Codex", assetName: "CodexSourceIcon")
+        }
+
+        if note.isFromClaude {
+            return SourceBadgeInfo(label: "Claude", assetName: "ClaudeSourceIcon")
+        }
+
+        guard let sourceDescription else { return nil }
+        return SourceBadgeInfo(
+            label: sourceDescription,
+            systemImage: note.sourceURL == nil ? "app.badge" : "link"
+        )
     }
 
     private var sourceDescription: String? {
@@ -423,24 +449,6 @@ struct NoteEditorView: View {
         }
     }
 
-    private func scheduleAutoFormat(_ newValue: String) {
-        let cleaned = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cleaned.isEmpty else {
-            formatTask?.cancel()
-            return
-        }
-
-        formatTask?.cancel()
-        formatTask = Task {
-            try? await Task.sleep(for: .seconds(2))
-            guard !Task.isCancelled else { return }
-            await MainActor.run {
-                guard text == newValue else { return }
-                store.formatAfterEditing(noteID: note.id, originalText: newValue)
-            }
-        }
-    }
-
     private func flushSave() {
         saveTask?.cancel()
         guard text != note.text else { return }
@@ -504,7 +512,18 @@ struct NoteEditorView: View {
         text = updatedText
         message = "Image added."
         store.update(noteID: note.id, text: updatedText)
-        scheduleAutoFormat(updatedText)
+    }
+}
+
+private struct SourceBadgeInfo {
+    var label: String
+    var assetName: String?
+    var systemImage: String
+
+    init(label: String, assetName: String? = nil, systemImage: String = "app.badge") {
+        self.label = label
+        self.assetName = assetName
+        self.systemImage = systemImage
     }
 }
 

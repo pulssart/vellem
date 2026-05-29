@@ -63,10 +63,10 @@ xcodebuild \
   -configuration Release \
   -destination 'platform=macOS' \
   -derivedDataPath "${DERIVED_DIR}" \
+  -allowProvisioningUpdates \
   SYMROOT="${PWD}/${DERIVED_DIR}/Build/Products" \
   OBJROOT="${PWD}/${DERIVED_DIR}/Build/Intermediates.noindex" \
-  CODE_SIGN_STYLE=Manual \
-  CODE_SIGN_IDENTITY="${SIGN_IDENTITY}" \
+  CODE_SIGN_STYLE=Automatic \
   DEVELOPMENT_TEAM="${TEAM_ID}" \
   OTHER_CODE_SIGN_FLAGS="--timestamp --options=runtime" \
   build 2>&1 | tail -10

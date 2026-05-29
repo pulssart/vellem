@@ -913,7 +913,7 @@ hook it into Claude as a real context layer for design.`;
               <VellemIcon size={32} />
               <span style={{ fontSize: 16, fontWeight: 700, color: INK }}>Vellem</span>
             </div>
-            <div>MIT · made in France · v1.0.11</div>
+            <div>MIT · made in France · v1.0.12</div>
             <div style={{ marginTop: 4, color: "#A89248" }}>
               Made by{" "}
               <a

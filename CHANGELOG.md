@@ -1,3 +1,28 @@
+# Vellem 1.0.12
+
+This release focuses on Inbox, cleaner list controls, mobile iCloud groundwork, richer widgets, and the new promo video package.
+
+## What changed
+
+. Inbox is now a first-class smart view, with unread counts and note provenance kept visible.
+. Folder and Inbox lists now support unread filtering, preview toggles, provenance toggles, and newest or oldest sorting.
+. The sidebar and top toolbar color treatment can now be controlled from Settings.
+. Quick Capture opens from the main toolbar and keeps new captures visible in Inbox.
+. Widgets now use safer shared display text and show richer note context.
+. The iPhone target has been added with an iCloud-backed mobile note store and markdown rendering.
+. The promo video package is now in the repo for future release assets.
+
+## Fixes
+
+. Folder navigation keeps the selected note aligned with active filters.
+. Notes file I/O now creates parent directories before writes.
+. Sidebar sections were simplified around Inbox, Today, smart folders, and user folders.
+
+## Validation
+
+. Built and launched locally with `bash script/build_and_run.sh run`.
+. Release artifact is signed, notarized, stapled, and ready for Sparkle updates.
+
 # Vellem 1.0.11
 
 This release focuses on the agent notebook workflow, safer widget links, cleaner note actions, and a calmer first-run onboarding.

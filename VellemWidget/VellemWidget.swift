@@ -43,8 +43,12 @@ struct WidgetNote: Identifiable, Codable {
     var id: UUID
     var text: String
     var generatedTitle: String? = nil
+    var kind: WidgetNoteKind? = .regular
+    var sourceApp: String? = nil
     var createdAt: Date
     var updatedAt: Date
+    var folderID: UUID? = nil
+    var provenance: String? = nil
 
     var title: String {
         if let generatedTitle,
@@ -66,6 +70,30 @@ struct WidgetNote: Identifiable, Codable {
     var preview: String {
         text.vellemDisplayText
     }
+
+    var isDailyNote: Bool {
+        kind == .daily
+    }
+
+    var isFromCodex: Bool {
+        guard let sourceApp else { return false }
+        return sourceApp.localizedCaseInsensitiveContains("codex")
+    }
+
+    var isFromClaude: Bool {
+        guard let sourceApp else { return false }
+        return sourceApp.localizedCaseInsensitiveContains("claude")
+    }
+}
+
+enum WidgetNoteKind: String, Codable {
+    case regular
+    case daily
+}
+
+struct WidgetFolder: Identifiable, Codable {
+    var id: UUID
+    var name: String
 }
 
 struct VellemEntry: TimelineEntry {
@@ -92,27 +120,23 @@ struct VellemProvider: TimelineProvider {
     }
 
     private func entry() -> VellemEntry {
-        let url: URL
+        let notesURL: URL
+        let foldersURL: URL
         if let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "MKAFV9VL9V.com.adriendonot.Vellem") {
-            url = container.appending(path: "notes.json")
+            notesURL = container.appending(path: "notes.json")
+            foldersURL = container.appending(path: "folders.json")
         } else {
-            url = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-                .appending(path: "Vellem/notes.json")
+            let supportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+                .appending(path: "Vellem")
+            notesURL = supportURL.appending(path: "notes.json")
+            foldersURL = supportURL.appending(path: "folders.json")
         }
 
-        guard FileManager.default.fileExists(atPath: url.path) else {
+        guard FileManager.default.fileExists(atPath: notesURL.path) else {
             return VellemEntry(date: .now, notes: [], status: "Missing notes file")
         }
 
-        // Use NSFileCoordinator for safe concurrent access with the main app.
-        var data: Data?
-        var coordinationError: NSError?
-        let coordinator = NSFileCoordinator(filePresenter: nil)
-        coordinator.coordinate(readingItemAt: url, options: [], error: &coordinationError) { coordURL in
-            data = try? Data(contentsOf: coordURL)
-        }
-
-        guard let data else {
+        guard let data = coordinatedData(at: notesURL) else {
             return VellemEntry(date: .now, notes: [], status: "Can't read notes")
         }
 
@@ -120,11 +144,51 @@ struct VellemProvider: TimelineProvider {
             return VellemEntry(date: .now, notes: [], status: "Can't decode notes")
         }
 
+        let folders = loadFolders(at: foldersURL)
         let visibleNotes = Array(notes
-            .filter { !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            .filter { !$0.isDailyNote && !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
             .sorted { $0.updatedAt > $1.updatedAt }
             .prefix(8))
-        return VellemEntry(date: .now, notes: visibleNotes, status: visibleNotes.isEmpty ? "No notes yet." : nil)
+            .map { note in
+                var note = note
+                note.provenance = provenanceLabel(for: note, folders: folders)
+                return note
+            }
+        return VellemEntry(date: .now, notes: visibleNotes, status: visibleNotes.isEmpty ? "No inbox notes yet." : nil)
+    }
+
+    private func coordinatedData(at url: URL) -> Data? {
+        var data: Data?
+        var coordinationError: NSError?
+        let coordinator = NSFileCoordinator(filePresenter: nil)
+        coordinator.coordinate(readingItemAt: url, options: [], error: &coordinationError) { coordURL in
+            data = try? Data(contentsOf: coordURL)
+        }
+        return data
+    }
+
+    private func loadFolders(at url: URL) -> [WidgetFolder] {
+        guard FileManager.default.fileExists(atPath: url.path),
+              let data = coordinatedData(at: url),
+              let folders = try? JSONDecoder().decode([WidgetFolder].self, from: data) else {
+            return []
+        }
+        return folders
+    }
+
+    private func provenanceLabel(for note: WidgetNote, folders: [WidgetFolder]) -> String? {
+        if let folderID = note.folderID,
+           let folder = folders.first(where: { $0.id == folderID }) {
+            return folder.name
+        }
+        if note.isFromCodex {
+            return "Codex"
+        }
+        if note.isFromClaude {
+            return "Claude"
+        }
+        let sourceApp = note.sourceApp?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return sourceApp?.isEmpty == false ? sourceApp : "Sans dossier"
     }
 }
 
@@ -170,7 +234,7 @@ struct VellemWidgetView: View {
 
     private var header: some View {
         HStack {
-            Text("Vellem")
+            Text("Inbox")
                 .font(.headline)
             Spacer()
             Link(destination: .vellemNewNote) {
@@ -231,10 +295,22 @@ private struct WidgetNoteRow: View {
     var body: some View {
         Link(destination: .vellemNote(note.id)) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(note.title)
-                    .font(.callout)
-                    .fontWeight(.medium)
-                    .lineLimit(1)
+                HStack(spacing: 6) {
+                    Text(note.title)
+                        .font(.callout)
+                        .fontWeight(.medium)
+                        .lineLimit(1)
+                    if let provenance = note.provenance,
+                       !provenance.isEmpty {
+                        Text(provenance)
+                            .font(.caption2.weight(.medium))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(.secondary.opacity(0.12), in: Capsule())
+                    }
+                }
                 Text(note.preview)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -254,7 +330,7 @@ struct VellemWidget: Widget {
             VellemWidgetView(entry: entry)
         }
         .configurationDisplayName("Vellem")
-        .description("Recent notes and one-tap capture.")
+        .description("Inbox notes and one-tap capture.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .systemExtraLarge])
         .contentMarginsDisabled()
     }

@@ -341,6 +341,7 @@ final class NotesFileStore {
             do {
                 let data = try encoder.encode(folders)
                 try data.write(to: url, options: [.atomic])
+                try? CloudMirrorStore.publish(foldersData: data)
             } catch {
                 ioError = error
             }
@@ -391,6 +392,8 @@ final class NotesFileStore {
             do {
                 let data = try encoder.encode(notes)
                 try data.write(to: url, options: [.atomic])
+                let foldersData = try? Data(contentsOf: foldersURL)
+                try? CloudMirrorStore.publish(notesData: data, foldersData: foldersData)
             } catch {
                 ioError = error
             }

@@ -6,7 +6,6 @@ struct QuickCaptureView: View {
     @Environment(\.dismissWindow) private var dismissWindow
     @AppAccent private var accent
 
-    @AppStorage("quickCaptureAppendsToDailyNoteByChoice") private var appendsToDailyNote = false
     @AppStorage("quickCaptureFloatsAboveOtherWindows") private var floatsAboveOtherWindows = true
 
     @State private var text = ""
@@ -71,18 +70,12 @@ struct QuickCaptureView: View {
                     .font(.headline)
                     .foregroundStyle(inkColor)
 
-                Text(appendsToDailyNote ? "Adds to today's note" : "Creates a new note")
+                Text("Appears in Quick captures and Inbox")
                     .font(.caption)
                     .foregroundStyle(secondaryInkColor)
             }
 
             Spacer()
-
-            Toggle(isOn: $appendsToDailyNote) {
-                Image(systemName: "calendar")
-            }
-            .toggleStyle(.button)
-            .help("Append to today's note")
 
             Toggle(isOn: $floatsAboveOtherWindows) {
                 Image(systemName: "pin")
@@ -139,14 +132,10 @@ struct QuickCaptureView: View {
     private func save() {
         guard !cleanedText.isEmpty else { return }
 
-        if appendsToDailyNote {
-            store.upsertDailyNote(appending: cleanedText)
-        } else {
-            store.create(text: cleanedText)
-        }
+        store.createQuickCapture(text: cleanedText)
 
         clear()
-        message = appendsToDailyNote ? "Added to today." : "Saved."
+        message = "Saved."
         dismissWindow(id: "quick-capture")
     }
 

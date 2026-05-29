@@ -3,6 +3,7 @@ options:
   bundleIdPrefix: com.adriendonot
   deploymentTarget:
     macOS: "26.0"
+    iOS: "17.0"
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -32,6 +33,10 @@ targets:
         com.apple.security.app-sandbox: true
         com.apple.security.application-groups:
           - MKAFV9VL9V.com.adriendonot.Vellem
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.com.adriendonot.Vellem
+        com.apple.developer.icloud-services:
+          - CloudDocuments
         com.apple.security.automation.apple-events: true
         com.apple.security.network.client: true
     dependencies:
@@ -82,3 +87,24 @@ targets:
         com.apple.security.app-sandbox: true
         com.apple.security.application-groups:
           - MKAFV9VL9V.com.adriendonot.Vellem
+  VellemMobile:
+    type: application
+    platform: iOS
+    sources:
+      - path: VellemMobile
+      - path: Vellem/Models/Note.swift
+      - path: Vellem/Models/Folder.swift
+      - path: VellemShared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.adriendonot.Vellem.Mobile
+        INFOPLIST_FILE: VellemMobile/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1"
+    entitlements:
+      path: VellemMobile/VellemMobile.entitlements
+      properties:
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.com.adriendonot.Vellem
+        com.apple.developer.icloud-services:
+          - CloudDocuments

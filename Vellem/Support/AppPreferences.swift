@@ -7,6 +7,8 @@ enum AppPreferences {
     static let showMenuBarExtraKey = "showMenuBarExtra"
     static let showDockIconKey = "showDockIcon"
     static let hasCompletedOnboardingKey = "hasCompletedOnboarding"
+    static let colorSidebarKey = "colorSidebar"
+    static let colorTopBarKey = "colorTopBar"
 
     static let defaultQuickCaptureKeyCode = UInt32(kVK_ANSI_N)
     static let defaultQuickCaptureModifiers = UInt32(controlKey | optionKey)
@@ -18,6 +20,8 @@ enum AppPreferences {
             showMenuBarExtraKey: true,
             showDockIconKey: true,
             hasCompletedOnboardingKey: false,
+            colorSidebarKey: true,
+            colorTopBarKey: true,
             AppAccentColor.storageKey: AppAccentColor.defaultValue.rawValue
         ])
 

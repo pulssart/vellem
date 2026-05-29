@@ -8,6 +8,10 @@ struct FolderNotesListView: View {
     @State private var isDropping = false
     @State private var copiedIntegrationSetup = false
     @State private var copiedWorkflowID: AgentWorkflow.ID?
+    @Binding private var showsUnreadOnly: Bool
+    @Binding private var showsPreview: Bool
+    @Binding private var showsProvenance: Bool
+    @Binding private var sortsNewestFirst: Bool
     @AppAccent private var accent
     private let headerIconSize: CGFloat = 20
     private let emptyStateIconSize: CGFloat = 28
@@ -18,8 +22,36 @@ struct FolderNotesListView: View {
             : NSColor(calibratedWhite: 0.22, alpha: 1)
     }))
 
+    init(
+        store: NotesStore,
+        folder: Folder,
+        showsUnreadOnly: Binding<Bool> = .constant(false),
+        showsPreview: Binding<Bool> = .constant(true),
+        showsProvenance: Binding<Bool> = .constant(true),
+        sortsNewestFirst: Binding<Bool> = .constant(true)
+    ) {
+        self.store = store
+        self.folder = folder
+        self._showsUnreadOnly = showsUnreadOnly
+        self._showsPreview = showsPreview
+        self._showsProvenance = showsProvenance
+        self._sortsNewestFirst = sortsNewestFirst
+    }
+
     private var notes: [Note] {
         store.notesForDisplay(in: folder)
+    }
+
+    private var visibleNotes: [Note] {
+        notes
+            .filter { showsUnreadOnly ? !$0.isRead : true }
+            .sorted { lhs, rhs in
+                sortsNewestFirst ? lhs.updatedAt > rhs.updatedAt : lhs.updatedAt < rhs.updatedAt
+            }
+    }
+
+    private var unreadCount: Int {
+        notes.reduce(0) { $0 + ($1.isRead ? 0 : 1) }
     }
 
     private var workflowTargetApp: AgentApp {
@@ -39,26 +71,38 @@ struct FolderNotesListView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            header
-
             if notes.isEmpty {
                 emptyState
+            } else if visibleNotes.isEmpty {
+                filteredEmptyState
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 12) {
                         workflowCards
 
-                        ForEach(notes) { note in
-                            FolderNoteListRow(note: note, isSelected: store.selectedNoteID == note.id, onOpenViewer: {
-                                openInFloatingViewer(note)
-                            }) {
+                        ForEach(visibleNotes) { note in
+                            FolderNoteListRow(
+                                note: note,
+                                isSelected: store.selectedNoteID == note.id,
+                                provenance: store.provenanceLabel(for: note),
+                                showsPreview: showsPreview,
+                                showsProvenance: showsProvenance,
+                                onOpenViewer: {
+                                    openInFloatingViewer(note)
+                                }
+                            ) {
                                 select(note)
                             }
                             .contextMenu {
                                 noteContextMenu(note)
                             }
                             .draggable(note.id.uuidString) {
-                                FolderNoteListRow(note: note) {}
+                                FolderNoteListRow(
+                                    note: note,
+                                    provenance: store.provenanceLabel(for: note),
+                                    showsPreview: showsPreview,
+                                    showsProvenance: showsProvenance
+                                ) {}
                                     .frame(width: 280)
                                     .padding(6)
                                     .background(Color(nsColor: .windowBackgroundColor))
@@ -71,6 +115,7 @@ struct FolderNotesListView: View {
             }
         }
         .navigationTitle(folder.name)
+        .navigationSubtitle("\(notes.count) note\(notes.count > 1 ? "s" : ""), \(unreadCount) unread")
         .background(Color(nsColor: .textBackgroundColor))
         .overlay {
             if isDropping {
@@ -137,41 +182,12 @@ struct FolderNotesListView: View {
         }
     }
 
-    private var header: some View {
-        HStack(spacing: 10) {
-            Image(systemName: folder.systemImage)
-                .font(.system(size: headerIconSize, weight: .semibold))
-                .foregroundStyle(folder.isSmart ? Self.smartFolderInk : (FolderColor.named(folder.color)?.swiftUIColor ?? accent.color))
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(folder.name)
-                    .font(.title3.weight(.semibold))
-                    .lineLimit(1)
-
-                Text("\(notes.count) note\(notes.count > 1 ? "s" : "")")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            Button {
-                createNoteInFolder()
-            } label: {
-                Image(systemName: "square.and.pencil")
-            }
-            .buttonStyle(.borderless)
-            .help("New note in folder")
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 14)
-        .background(Color(nsColor: .windowBackgroundColor))
-    }
-
     private var emptyState: some View {
         Group {
             if let guide = IntegrationGuide(folder: folder) {
                 integrationEmptyState(guide)
+            } else if folder.kind == .smartServices {
+                quickCaptureEmptyState
             } else if folder.kind == .smartPromptLibrary {
                 ScrollView {
                     VStack(spacing: 16) {
@@ -193,6 +209,46 @@ struct FolderNotesListView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(32)
+    }
+
+    private var quickCaptureEmptyState: some View {
+        VStack(spacing: 12) {
+            Image(systemName: folder.outlineSystemImage)
+                .font(.system(size: emptyStateIconSize, weight: .regular))
+                .foregroundStyle(Self.smartFolderInk)
+
+            VStack(spacing: 5) {
+                Text("No quick captures yet")
+                    .font(.headline)
+
+                Text("Use the Vellem menu bar item or File > Quick Capture to save a thought quickly.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+
+                Text("New quick captures appear here and in Inbox.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+        }
+    }
+
+    private var filteredEmptyState: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "line.3.horizontal.decrease")
+                .font(.system(size: emptyStateIconSize, weight: .regular))
+                .foregroundStyle(.tertiary)
+
+            Text("No unread notes")
+                .font(.headline)
+
+            Text("Turn off the unread filter to see every note in this folder.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(32)
@@ -1017,10 +1073,6 @@ private struct TodayTimelineRow: View {
                         .help("Open in floating window")
                     }
 
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(isSelected ? accent : (isHovering ? Color.secondary : Color.secondary.opacity(0.55)))
-                        .padding(.top, 4)
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 14)
@@ -1047,9 +1099,159 @@ struct TodayNoteEditorContainer: View {
     }
 }
 
+struct InboxNotesListView: View {
+    @ObservedObject var store: NotesStore
+    @Environment(\.openWindow) private var openWindow
+    @Binding private var showsUnreadOnly: Bool
+    @Binding private var showsPreview: Bool
+    @Binding private var showsProvenance: Bool
+    @Binding private var sortsNewestFirst: Bool
+    @AppAccent private var accent
+    private static let smartFolderInk = Color(nsColor: NSColor(name: nil, dynamicProvider: { appearance in
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(calibratedWhite: 0.85, alpha: 1)
+            : NSColor(calibratedWhite: 0.22, alpha: 1)
+    }))
+
+    init(
+        store: NotesStore,
+        showsUnreadOnly: Binding<Bool> = .constant(false),
+        showsPreview: Binding<Bool> = .constant(true),
+        showsProvenance: Binding<Bool> = .constant(true),
+        sortsNewestFirst: Binding<Bool> = .constant(true)
+    ) {
+        self.store = store
+        self._showsUnreadOnly = showsUnreadOnly
+        self._showsPreview = showsPreview
+        self._showsProvenance = showsProvenance
+        self._sortsNewestFirst = sortsNewestFirst
+    }
+
+    private var notes: [Note] {
+        store.inboxNotes
+    }
+
+    private var visibleNotes: [Note] {
+        notes
+            .filter { showsUnreadOnly ? !$0.isRead : true }
+            .sorted { lhs, rhs in
+                sortsNewestFirst ? lhs.updatedAt > rhs.updatedAt : lhs.updatedAt < rhs.updatedAt
+            }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            if notes.isEmpty {
+                emptyState
+            } else if visibleNotes.isEmpty {
+                filteredEmptyState
+            } else {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 12) {
+                        ForEach(visibleNotes) { note in
+                            FolderNoteListRow(
+                                note: note,
+                                isSelected: store.selectedNoteID == note.id,
+                                provenance: store.provenanceLabel(for: note),
+                                showsPreview: showsPreview,
+                                showsProvenance: showsProvenance,
+                                onOpenViewer: {
+                                    openInFloatingViewer(note)
+                                }
+                            ) {
+                                store.selectNote(note.id)
+                            }
+                            .contextMenu {
+                                noteContextMenu(note)
+                            }
+                            .draggable(note.id.uuidString) {
+                                FolderNoteListRow(
+                                    note: note,
+                                    provenance: store.provenanceLabel(for: note),
+                                    showsPreview: showsPreview,
+                                    showsProvenance: showsProvenance
+                                ) {}
+                                    .frame(width: 280)
+                                    .padding(6)
+                                    .background(Color(nsColor: .windowBackgroundColor))
+                                    .cornerRadius(8)
+                            }
+                        }
+                    }
+                    .padding(20)
+                }
+            }
+        }
+        .navigationTitle("Inbox")
+        .navigationSubtitle("\(notes.count) note\(notes.count > 1 ? "s" : ""), \(store.inboxUnreadCount) unread")
+        .background(Color(nsColor: .textBackgroundColor))
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "tray")
+                .font(.system(size: 28, weight: .regular))
+                .foregroundStyle(.tertiary)
+
+            Text("Inbox is empty")
+                .font(.headline)
+
+            Text("Notes from every folder will appear here.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(32)
+    }
+
+    private var filteredEmptyState: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "line.3.horizontal.decrease")
+                .font(.system(size: 28, weight: .regular))
+                .foregroundStyle(.tertiary)
+
+            Text("No unread notes")
+                .font(.headline)
+
+            Text("Turn off the unread filter to see all inbox notes.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(32)
+    }
+
+    @ViewBuilder
+    private func noteContextMenu(_ note: Note) -> some View {
+        NoteContextMenu(
+            note: note,
+            store: store,
+            openInFloatingViewer: openInFloatingViewer
+        )
+    }
+
+    private func openInFloatingViewer(_ note: Note) {
+        store.viewerNoteID = note.id
+        openWindow(id: "note-viewer")
+        NSApp.activate(ignoringOtherApps: true)
+    }
+}
+
+struct InboxNoteEditorContainer: View {
+    @ObservedObject var store: NotesStore
+    let note: Note
+
+    var body: some View {
+        NoteEditorView(store: store, note: note)
+    }
+}
+
 private struct FolderNoteListRow: View {
     let note: Note
     var isSelected: Bool = false
+    var provenance: String? = nil
+    var showsPreview: Bool = true
+    var showsProvenance: Bool = true
     var onOpenViewer: (() -> Void)? = nil
     let onSelect: () -> Void
     @State private var isHovering = false
@@ -1072,12 +1274,26 @@ private struct FolderNoteListRow: View {
                             .lineLimit(1)
                     }
 
-                    Text(note.preview)
-                        .font(.callout)
-                        .foregroundStyle(isSelected ? Color.primary.opacity(0.8) : Color.secondary)
-                        .lineLimit(2)
+                    if showsPreview {
+                        Text(note.preview)
+                            .font(.callout)
+                            .foregroundStyle(isSelected ? Color.primary.opacity(0.8) : Color.secondary)
+                            .lineLimit(2)
+                    }
 
                     HStack(spacing: 8) {
+                        if showsProvenance, let provenance {
+                            Text(provenance)
+                                .font(.caption2.weight(.medium))
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(
+                                    Capsule(style: .continuous)
+                                        .fill(Color.secondary.opacity(0.12))
+                                )
+                        }
+
                         Text(note.updatedAt, style: .relative)
                         Text("\(note.wordCount) words")
                     }
@@ -1097,10 +1313,6 @@ private struct FolderNoteListRow: View {
                     .help("Open in floating window")
                 }
 
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(isSelected ? accent.color : (isHovering ? Color.secondary : Color.secondary.opacity(0.55)))
-                    .padding(.top, 3)
             }
             .contentShape(Rectangle())
             .padding(.horizontal, 12)
