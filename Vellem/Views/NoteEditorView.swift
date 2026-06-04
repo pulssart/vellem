@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 struct NoteEditorView: View {
     @ObservedObject var store: NotesStore
     let note: Note
+    @Binding var showsDecisionInspector: Bool
 
     @State private var text: String = ""
     @State private var isEditing = false
@@ -22,6 +23,53 @@ struct NoteEditorView: View {
     private let noteHorizontalPadding: CGFloat = 36
 
     var body: some View {
+        HSplitView {
+            editorContent
+                .frame(minWidth: 380, idealWidth: 620)
+
+            if showsDecisionInspector {
+                DecisionContextInspectorView(
+                    store: store,
+                    note: note,
+                    close: {
+                        showsDecisionInspector = false
+                    }
+                )
+                .frame(minWidth: 280, idealWidth: 320, maxWidth: 420)
+            }
+        }
+        .navigationTitle(note.title)
+        .onAppear {
+            text = note.text
+            store.markRead(note.id)
+        }
+        .onChange(of: note.id) {
+            saveTask?.cancel()
+            isApplyingStoreUpdate = true
+            text = note.text
+            isPreviewMode = true
+            scrambleFrame = nil
+            message = nil
+            DispatchQueue.main.async {
+                isApplyingStoreUpdate = false
+            }
+        }
+        .onChange(of: note.text) {
+            guard text != note.text else { return }
+            isApplyingStoreUpdate = true
+            text = note.text
+            scrambleFrame = nil
+            DispatchQueue.main.async {
+                isApplyingStoreUpdate = false
+            }
+        }
+        .onDisappear {
+            saveTask?.cancel()
+            flushSave()
+        }
+    }
+
+    private var editorContent: some View {
         VStack(spacing: 0) {
             toolbar
                 .padding(.horizontal, 12)
@@ -83,35 +131,6 @@ struct NoteEditorView: View {
             isTargeted: $isDroppingImage,
             perform: handleDrop(providers:)
         )
-        .navigationTitle(note.title)
-        .onAppear {
-            text = note.text
-            store.markRead(note.id)
-        }
-        .onChange(of: note.id) {
-            saveTask?.cancel()
-            isApplyingStoreUpdate = true
-            text = note.text
-            isPreviewMode = true
-            scrambleFrame = nil
-            message = nil
-            DispatchQueue.main.async {
-                isApplyingStoreUpdate = false
-            }
-        }
-        .onChange(of: note.text) {
-            guard text != note.text else { return }
-            isApplyingStoreUpdate = true
-            text = note.text
-            scrambleFrame = nil
-            DispatchQueue.main.async {
-                isApplyingStoreUpdate = false
-            }
-        }
-        .onDisappear {
-            saveTask?.cancel()
-            flushSave()
-        }
     }
 
     // MARK: - Toolbar
@@ -149,6 +168,19 @@ struct NoteEditorView: View {
                 .font(.caption.weight(.medium))
                 .foregroundStyle(.secondary)
                 .padding(.trailing, 4)
+
+            Button {
+                copyNoteReference()
+            } label: {
+                Label("Copy Note", systemImage: "doc.on.doc")
+                    .labelStyle(.titleAndIcon)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .frame(height: 24)
+                    .contentShape(Rectangle())
+            }
+            .help("Copy note reference for Claude or Codex")
 
             // AI menu (Edit + Translate combined)
             Menu {
@@ -353,6 +385,17 @@ struct NoteEditorView: View {
         text
             .split { $0.isWhitespace || $0.isNewline }
             .count
+    }
+
+    private func copyNoteReference() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(store.noteReference(for: note), forType: .string)
+        message = "Note reference copied."
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            if message == "Note reference copied." {
+                message = nil
+            }
+        }
     }
 
     private func run(_ action: EditAction) {

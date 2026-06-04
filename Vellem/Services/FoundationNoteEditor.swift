@@ -142,6 +142,24 @@ struct FoundationNoteEditor {
         return try await respond(to: prompt, text: text)
     }
 
+    func analyzeDecisionContext(_ fields: String) async throws -> String {
+        let prompt = """
+        Analyze these decision context fields for a human reader.
+        Write in plain English.
+        Be short and direct.
+        Write one natural paragraph, 1 or 2 sentences maximum.
+        Do not use Markdown.
+        Do not use bullets, headings, labels, bold text, asterisks, colons, or numbered lists.
+        Explain what the context means and, only if needed, what should be checked next.
+        Do not invent facts.
+        Mention only the most important missing or weak field.
+        Return only the paragraph.
+
+        \(fields)
+        """
+        return try await respond(to: prompt, text: fields)
+    }
+
     private func respond(to prompt: String, text: String) async throws -> String {
         let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleaned.isEmpty else { throw NoteEditError.empty }

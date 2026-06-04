@@ -11,12 +11,14 @@ struct ContentView: View {
     @State private var showsProvenance = true
     @State private var sortsNewestFirst = true
     @State private var showsListDisplayOptions = false
+    @SceneStorage("VellemDecisionInspectorVisible") private var showsDecisionInspector = false
     @AppStorage(AppPreferences.colorTopBarKey) private var colorTopBar = true
     @AppAccent private var accent
 
     var body: some View {
         NavigationSplitView {
             RecentNotesView(store: store)
+                .background(SplitViewAutosave(name: "VellemSidebarSplit"))
                 .navigationSplitViewColumnWidth(
                     min: sidebarColumnMinWidth,
                     ideal: sidebarColumnIdealWidth,
@@ -30,13 +32,14 @@ struct ContentView: View {
         .background(MainWindowToolbarTint(isEnabled: colorTopBar, accent: accent))
         .toolbar {
             if showsColumnToolbarControls {
-                ToolbarItemGroup(placement: .primaryAction) {
+                ToolbarItemGroup {
                     Button {
                         showsUnreadOnly.toggle()
                     } label: {
                         Label("Unread only", systemImage: "line.3.horizontal.decrease")
                     }
                     .labelStyle(.iconOnly)
+                    .foregroundStyle(showsUnreadOnly ? accent.color : Color.primary)
                     .help("Unread only")
                     .accessibilityIdentifier("column-list-filter-button")
 
@@ -64,10 +67,21 @@ struct ContentView: View {
                     }
                 }
 
-                ToolbarSpacer(.fixed, placement: .primaryAction)
+                ToolbarSpacer(.flexible)
             }
 
-            ToolbarItemGroup(placement: .primaryAction) {
+            ToolbarItemGroup {
+                Button {
+                    showsDecisionInspector.toggle()
+                } label: {
+                    Label(decisionToolbarLabel, systemImage: decisionToolbarSystemImage)
+                }
+                .labelStyle(.iconOnly)
+                .foregroundStyle(showsDecisionInspector ? accent.color : Color.primary)
+                .disabled(decisionToolbarNote == nil)
+                .help("Decision context")
+                .keyboardShortcut("d", modifiers: [.command, .option])
+
                 Button {
                     openWindow(id: "quick-capture")
                     NSApp.activate(ignoringOtherApps: true)
@@ -159,34 +173,17 @@ struct ContentView: View {
             HSplitView {
                 scopedNotesList
                     .frame(minWidth: 220, idealWidth: 380, maxWidth: 560)
-                    .background(columnToolbarControlsBridge)
+                    .background(SplitViewAutosave(name: "VellemListDetailSplit"))
 
                 scopedDetailView
                     .frame(minWidth: 380, idealWidth: 380)
             }
-            .background(SplitViewAutosave(name: "VellemNoteListSplit"))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if let note = store.selectedNote {
-            NoteEditorView(store: store, note: note)
+            NoteEditorView(store: store, note: note, showsDecisionInspector: $showsDecisionInspector)
         } else {
             EmptyNotesView(store: store)
         }
-    }
-
-    private var columnToolbarControlsBridge: some View {
-        ColumnToolbarControlsBridge(
-            showsUnreadOnly: $showsUnreadOnly,
-            showsPreview: $showsPreview,
-            showsProvenance: $showsProvenance,
-            sortsNewestFirst: $sortsNewestFirst,
-            isVisible: showsColumnToolbarControls,
-            canCreateNote: canCreateNoteFromColumnToolbar,
-            createNote: {
-                if let selectedFolder, selectedFolder.kind != .smartPromptLibrary {
-                    createNote(in: selectedFolder)
-                }
-            }
-        )
     }
 
     @ViewBuilder
@@ -218,14 +215,42 @@ struct ContentView: View {
     @ViewBuilder
     private var scopedDetailView: some View {
         if store.isInboxSelected, let note = selectedInboxNote {
-            InboxNoteEditorContainer(store: store, note: note)
+            InboxNoteEditorContainer(store: store, note: note, showsDecisionInspector: $showsDecisionInspector)
         } else if store.isTodaySelected, let note = selectedTodayNote {
-            TodayNoteEditorContainer(store: store, note: note)
+            TodayNoteEditorContainer(store: store, note: note, showsDecisionInspector: $showsDecisionInspector)
         } else if let folder = selectedFolder, let note = selectedFolderNote(for: folder) {
-            FolderNoteEditorContainer(store: store, folder: folder, note: note)
+            FolderNoteEditorContainer(store: store, folder: folder, note: note, showsDecisionInspector: $showsDecisionInspector)
         } else {
             EmptyDetailSelectionView()
         }
+    }
+
+    private var decisionToolbarNote: Note? {
+        if store.isInboxSelected {
+            return selectedInboxNote
+        }
+
+        if store.isTodaySelected {
+            return selectedTodayNote
+        }
+
+        if let folder = selectedFolder {
+            return selectedFolderNote(for: folder)
+        }
+
+        return store.selectedNote
+    }
+
+    private var decisionToolbarLabel: String {
+        guard let context = decisionToolbarNote?.decisionContext else {
+            return "Decision"
+        }
+
+        return context.status().label
+    }
+
+    private var decisionToolbarSystemImage: String {
+        decisionToolbarNote?.decisionContext?.status().systemImage ?? "scope"
     }
 
     private var sidebarColumnMinWidth: CGFloat { 220 }
@@ -296,7 +321,7 @@ private struct EmptyDetailSelectionView: View {
     }
 }
 
-private struct ColumnListDisplayOptionsPopover: View {
+struct ColumnListDisplayOptionsPopover: View {
     @Binding var showsUnreadOnly: Bool
     @Binding var showsPreview: Bool
     @Binding var showsProvenance: Bool

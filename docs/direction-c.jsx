@@ -175,7 +175,7 @@
             <span style={{ fontSize: 18, fontWeight: 700, color: INK }}>Vellem</span>
           </div>
           <nav style={{ display: "flex", gap: 26, fontSize: 13, color: INK_SOFT }}>
-            <span>Meet the agents</span><span>14 tools</span><span>Native bits</span><span>Setup</span>
+            <span>Meet the agents</span><span>23 tools</span><span>Native bits</span><span>Setup</span>
           </nav>
           <Pill>v1.0.8 · for macOS</Pill>
         </div>
@@ -349,7 +349,7 @@
             <div style={{
               fontSize: 11, fontWeight: 700, letterSpacing: "0.22em",
               color: "#9A7B12", textTransform: "uppercase", marginBottom: 18,
-            }}>14 tools, no plumbing</div>
+            }}>23 tools, no plumbing</div>
             <h2 style={{
               margin: 0,
               fontFamily: "'Instrument Serif', serif",

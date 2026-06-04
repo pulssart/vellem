@@ -2,6 +2,7 @@
 
 const MCP_TOOLS = [
   { name: "add_note",              verb: "create",  desc: "Drop a new Markdown note into Vellem." },
+  { name: "add_decision_note",     verb: "create",  desc: "Create a note with required decision context." },
   { name: "append_to_daily",       verb: "append",  desc: "Tack a snippet onto today's daily note." },
   { name: "get_daily_log",         verb: "read",    desc: "Fetch today's daily note in one call." },
   { name: "create_todo_list",      verb: "create",  desc: "Spin up a checklist with interactive todos." },
@@ -12,6 +13,10 @@ const MCP_TOOLS = [
   { name: "search_notes_semantic", verb: "read",    desc: "Search by meaning — on-device NLEmbedding." },
   { name: "get_note",              verb: "read",    desc: "Pull a note's full content by id." },
   { name: "get_related_notes",     verb: "read",    desc: "Find notes semantically close to a given one." },
+  { name: "capture_decision_context", verb: "write", desc: "Patch source, decision, effect, and expiry later." },
+  { name: "list_expiring_contexts", verb: "read",    desc: "Find decision contexts due for review." },
+  { name: "get_decision_trail",     verb: "read",    desc: "Show notes tied to the same decision." },
+  { name: "mark_context_resolved",  verb: "write",   desc: "Close the context once the decision is settled." },
   { name: "update_note",           verb: "write",   desc: "Replace, append, or prepend a note's body." },
   { name: "delete_note",           verb: "destroy", desc: "Remove a note for good." },
   { name: "list_folders",          verb: "read",    desc: "Enumerate every folder + note count." },

@@ -310,7 +310,7 @@
             display: "flex", gap: 28, fontSize: 13, color: TXT_SOFT,
             fontFeatureSettings: "'ss01' on",
           }}>
-            <span>Tour</span><span>14 tools</span><span>Setup</span><span>Changelog</span>
+            <span>Tour</span><span>23 tools</span><span>Setup</span><span>Changelog</span>
           </nav>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: 8,
@@ -320,7 +320,7 @@
             fontSize: 12, color: ACCENT,
           }}>
             <span style={{ width: 6, height: 6, borderRadius: 999, background: "#37C95E", animation: "vlm-pulse-dot 1.6s ease-in-out infinite" }} />
-            mcp · 14 tools live
+            mcp · 23 tools live
           </div>
         </div>
 
@@ -444,7 +444,7 @@
               <div style={{
                 fontSize: 11, fontWeight: 700, letterSpacing: "0.22em",
                 color: ACCENT, textTransform: "uppercase", marginBottom: 18,
-              }}>vellem-mcp · 14 tools</div>
+              }}>vellem-mcp · 23 tools</div>
               <h2 style={{
                 margin: 0, fontSize: 76, lineHeight: 0.95, letterSpacing: "-0.035em",
                 fontWeight: 700,
@@ -458,7 +458,7 @@
               textAlign: "right", maxWidth: 280, lineHeight: 1.7,
             }}>
               <span style={{ color: TXT_SOFT }}>$ claude mcp list</span><br />
-              vellem ➝ 14 tools<br />
+              vellem ➝ 23 tools<br />
               <span style={{ color: "#37C95E" }}>✓ ready</span>
             </div>
           </div>

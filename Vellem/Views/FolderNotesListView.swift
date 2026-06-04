@@ -89,6 +89,9 @@ struct FolderNotesListView: View {
                                 showsProvenance: showsProvenance,
                                 onOpenViewer: {
                                     openInFloatingViewer(note)
+                                },
+                                onCopyReference: {
+                                    copy(store.noteReference(for: note))
                                 }
                             ) {
                                 select(note)
@@ -868,9 +871,10 @@ struct FolderNoteEditorContainer: View {
     @ObservedObject var store: NotesStore
     let folder: Folder
     let note: Note
+    @Binding var showsDecisionInspector: Bool
 
     var body: some View {
-        NoteEditorView(store: store, note: note)
+        NoteEditorView(store: store, note: note, showsDecisionInspector: $showsDecisionInspector)
     }
 }
 
@@ -905,9 +909,17 @@ struct TodayNotesListView: View {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(notes) { note in
-                            TodayTimelineRow(note: note, isSelected: store.selectedNoteID == note.id, accent: accent.color, onOpenViewer: {
-                                openInFloatingViewer(note)
-                            }) {
+                            TodayTimelineRow(
+                                note: note,
+                                isSelected: store.selectedNoteID == note.id,
+                                accent: accent.color,
+                                onOpenViewer: {
+                                    openInFloatingViewer(note)
+                                },
+                                onCopyReference: {
+                                    copy(store.noteReference(for: note))
+                                }
+                            ) {
                                 store.selectNote(note.id, inToday: true)
                             }
                             .contextMenu {
@@ -984,6 +996,11 @@ struct TodayNotesListView: View {
         openWindow(id: "note-viewer")
         NSApp.activate(ignoringOtherApps: true)
     }
+
+    private func copy(_ value: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(value, forType: .string)
+    }
 }
 
 private struct TodayTimelineRow: View {
@@ -991,8 +1008,10 @@ private struct TodayTimelineRow: View {
     let isSelected: Bool
     let accent: Color
     var onOpenViewer: (() -> Void)? = nil
+    var onCopyReference: (() -> Void)? = nil
     let onSelect: () -> Void
     @State private var isHovering = false
+    @State private var didCopyReference = false
 
     private static let timeFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -1063,14 +1082,33 @@ private struct TodayTimelineRow: View {
 
                     Spacer(minLength: 0)
 
-                    if let onOpenViewer, isHovering {
-                        Button {
-                            onOpenViewer()
-                        } label: {
-                            Image(systemName: "rectangle.on.rectangle")
+                    if isHovering {
+                        HStack(spacing: 6) {
+                            if let onCopyReference {
+                                Button {
+                                    onCopyReference()
+                                    didCopyReference = true
+                                    Task { @MainActor in
+                                        try? await Task.sleep(for: .seconds(1.5))
+                                        didCopyReference = false
+                                    }
+                                } label: {
+                                    Image(systemName: didCopyReference ? "checkmark" : "doc.on.doc")
+                                }
+                                .buttonStyle(.borderless)
+                                .help("Copy note reference")
+                            }
+
+                            if let onOpenViewer {
+                                Button {
+                                    onOpenViewer()
+                                } label: {
+                                    Image(systemName: "rectangle.on.rectangle")
+                                }
+                                .buttonStyle(.borderless)
+                                .help("Open in floating window")
+                            }
                         }
-                        .buttonStyle(.borderless)
-                        .help("Open in floating window")
                     }
 
                 }
@@ -1093,9 +1131,10 @@ private struct TodayTimelineRow: View {
 struct TodayNoteEditorContainer: View {
     @ObservedObject var store: NotesStore
     let note: Note
+    @Binding var showsDecisionInspector: Bool
 
     var body: some View {
-        NoteEditorView(store: store, note: note)
+        NoteEditorView(store: store, note: note, showsDecisionInspector: $showsDecisionInspector)
     }
 }
 
@@ -1157,6 +1196,9 @@ struct InboxNotesListView: View {
                                 showsProvenance: showsProvenance,
                                 onOpenViewer: {
                                     openInFloatingViewer(note)
+                                },
+                                onCopyReference: {
+                                    copy(store.noteReference(for: note))
                                 }
                             ) {
                                 store.selectNote(note.id)
@@ -1235,14 +1277,20 @@ struct InboxNotesListView: View {
         openWindow(id: "note-viewer")
         NSApp.activate(ignoringOtherApps: true)
     }
+
+    private func copy(_ value: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(value, forType: .string)
+    }
 }
 
 struct InboxNoteEditorContainer: View {
     @ObservedObject var store: NotesStore
     let note: Note
+    @Binding var showsDecisionInspector: Bool
 
     var body: some View {
-        NoteEditorView(store: store, note: note)
+        NoteEditorView(store: store, note: note, showsDecisionInspector: $showsDecisionInspector)
     }
 }
 
@@ -1253,8 +1301,10 @@ private struct FolderNoteListRow: View {
     var showsPreview: Bool = true
     var showsProvenance: Bool = true
     var onOpenViewer: (() -> Void)? = nil
+    var onCopyReference: (() -> Void)? = nil
     let onSelect: () -> Void
     @State private var isHovering = false
+    @State private var didCopyReference = false
     @AppAccent private var accent
 
     var body: some View {
@@ -1303,14 +1353,33 @@ private struct FolderNoteListRow: View {
 
                 Spacer()
 
-                if let onOpenViewer, isHovering {
-                    Button {
-                        onOpenViewer()
-                    } label: {
-                        Image(systemName: "rectangle.on.rectangle")
+                if isHovering {
+                    HStack(spacing: 6) {
+                        if let onCopyReference {
+                            Button {
+                                onCopyReference()
+                                didCopyReference = true
+                                Task { @MainActor in
+                                    try? await Task.sleep(for: .seconds(1.5))
+                                    didCopyReference = false
+                                }
+                            } label: {
+                                Image(systemName: didCopyReference ? "checkmark" : "doc.on.doc")
+                            }
+                            .buttonStyle(.borderless)
+                            .help("Copy note reference")
+                        }
+
+                        if let onOpenViewer {
+                            Button {
+                                onOpenViewer()
+                            } label: {
+                                Image(systemName: "rectangle.on.rectangle")
+                            }
+                            .buttonStyle(.borderless)
+                            .help("Open in floating window")
+                        }
                     }
-                    .buttonStyle(.borderless)
-                    .help("Open in floating window")
                 }
 
             }

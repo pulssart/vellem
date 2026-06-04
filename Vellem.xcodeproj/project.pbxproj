@@ -72,6 +72,7 @@
 		E33BF2E64AACB83F5F4EE3C1 /* NoteEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACA8C9B235D9FB2554B024F0 /* NoteEditorView.swift */; };
 		E797706A6007BFD3E21E36C0 /* ShortcutFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4691F7E3E47E6CF811638C9 /* ShortcutFormatter.swift */; };
 		E8AB2128DC24BEC54F10F907 /* CaptureSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = B06165260A0578E62B687404 /* CaptureSource.swift */; };
+		ECA801C44CCD4660D29D1FA3 /* DecisionContextInspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86CA35C8E08D4449A12148B5 /* DecisionContextInspectorView.swift */; };
 		F631CE82E30BEAAFD85B5162 /* MobileFolderNotificationScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1C6F4009337C577FC87857 /* MobileFolderNotificationScanner.swift */; };
 		F6B46CAA8CA7A7B39ABAE1F2 /* AppPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C69FD53E41A13CCC596052D /* AppPreferences.swift */; };
 		FBDF83D5EF29D67A5234A546 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5334D67E5540F6D3D13CAF7E /* main.swift */; };
@@ -136,6 +137,7 @@
 		65D0A4CFFE8AFE7378847663 /* VellemMobile.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VellemMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7403455CDB6C6BDA172CC259 /* VellemWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VellemWidget.entitlements; sourceTree = "<group>"; };
 		80643F8C5478A89576230AD2 /* MenuBarComposerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarComposerView.swift; sourceTree = "<group>"; };
+		86CA35C8E08D4449A12148B5 /* DecisionContextInspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DecisionContextInspectorView.swift; sourceTree = "<group>"; };
 		887D5D2D986CD5E65E3971E8 /* VellemMobile.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VellemMobile.entitlements; sourceTree = "<group>"; };
 		8B2CDF4595B418B17F37DADB /* MarkdownRenderedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownRenderedView.swift; sourceTree = "<group>"; };
 		8C49C7A42F3AAF1F6A292C2F /* MobileNotesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileNotesStore.swift; sourceTree = "<group>"; };
@@ -352,6 +354,7 @@
 			isa = PBXGroup;
 			children = (
 				1EDEBE5538AFEF3E24768584 /* ContentView.swift */,
+				86CA35C8E08D4449A12148B5 /* DecisionContextInspectorView.swift */,
 				DA290798A38AD8E245859D60 /* EmptyNotesView.swift */,
 				D8F99F51703D71B546E6A40F /* FolderNotesListView.swift */,
 				8B2CDF4595B418B17F37DADB /* MarkdownRenderedView.swift */,
@@ -610,6 +613,7 @@
 				16E0CA3322EBC3CC5A0D5C33 /* CloudMirrorStore.swift in Sources */,
 				DF4F44635043760093BE70AE /* ColumnToolbarControlsBridge.swift in Sources */,
 				70C6B44386B992D079C562D4 /* ContentView.swift in Sources */,
+				ECA801C44CCD4660D29D1FA3 /* DecisionContextInspectorView.swift in Sources */,
 				0BA79E103F348B4596A4F210 /* EmbeddingCachePruner.swift in Sources */,
 				09372CECAC2317BFA61B8966 /* EmptyNotesView.swift in Sources */,
 				31B6EF6F0ABBC638178F8E65 /* ExternalNoteEvent.swift in Sources */,

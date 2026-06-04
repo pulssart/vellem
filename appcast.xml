@@ -6,6 +6,15 @@
         <description>Vellem updates</description>
         <language>en</language>
         <item>
+            <title>Version 1.0.13</title>
+            <sparkle:version>15</sparkle:version>
+            <sparkle:shortVersionString>1.0.13</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <pubDate>Thu, 04 Jun 2026 10:11:10 +0200</pubDate>
+            <enclosure url="https://github.com/pulssart/vellem/releases/download/v1.0.13/Vellem-1.0.13.dmg" sparkle:edSignature="jLsduI7QdzN1DmmeFNFu3BvhXYfWWIH9+KgOpnWNHGu7RpyQZEdgVwPoh0cLWAlMN3l3ocRPMwwaDVcfeTaCCA==" length="5529624" type="application/octet-stream" />
+        </item>
+
+        <item>
             <title>Version 1.0.12</title>
             <sparkle:version>14</sparkle:version>
             <sparkle:shortVersionString>1.0.12</sparkle:shortVersionString>

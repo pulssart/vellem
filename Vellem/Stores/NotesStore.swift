@@ -309,7 +309,14 @@ final class NotesStore: ObservableObject {
     }
 
     private func handleLatestExternalNoteEvent() {
-        guard let event = ExternalNoteEvent.latestCreated() else { return }
+        guard let event = ExternalNoteEvent.latestCreated() else {
+            Task { @MainActor [weak self] in
+                await self?.reloadFromDisk()
+                self?.loadFolders()
+                WidgetReloader.reload()
+            }
+            return
+        }
         appendNotificationDiagnostic("external event file note=\(event.noteID.uuidString)")
         handleExternalNoteCreated(noteID: event.noteID, source: event.source)
     }
@@ -514,6 +521,46 @@ final class NotesStore: ObservableObject {
         return "Sans dossier"
     }
 
+    func noteReference(for note: Note) -> String {
+        let folder = note.folderID.flatMap { folderID in
+            folders.first { $0.id == folderID }
+        }
+        var lines = [
+            "Vellem note reference",
+            "id: \(note.id.uuidString)",
+            "path: \(notePath(for: note, folder: folder))",
+            "url: vellem://note/\(note.id.uuidString)",
+            "mcp: get_note {\"id\":\"\(note.id.uuidString)\"}"
+        ]
+
+        if let folder {
+            lines.insert("folder_id: \(folder.id.uuidString)", at: 3)
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
+    private func notePath(for note: Note, folder: Folder?) -> String {
+        let location: String
+        if note.isDailyNote {
+            location = "Today"
+        } else if let folder {
+            location = folder.name
+        } else if note.isFromCodex,
+                  let folder = folders.first(where: { $0.kind == .smartCodex }) {
+            location = folder.name
+        } else if note.isFromClaude,
+                  let folder = folders.first(where: { $0.kind == .smartClaude }) {
+            location = folder.name
+        } else {
+            location = "Inbox"
+        }
+
+        return ["Vellem", location, note.title]
+            .map { $0.replacingOccurrences(of: "/", with: "／") }
+            .joined(separator: " / ")
+    }
+
     func noteMatchesDisplay(_ note: Note, in folder: Folder) -> Bool {
         guard !note.isDailyNote else { return false }
 
@@ -633,6 +680,36 @@ final class NotesStore: ObservableObject {
         guard let index = notes.firstIndex(where: { $0.id == noteID }) else { return }
         notes[index].generatedTitle = cleanTitle(title)
         save()
+    }
+
+    func updateDecisionContext(_ context: NoteDecisionContext?, for noteID: Note.ID) {
+        guard let index = notes.firstIndex(where: { $0.id == noteID }) else { return }
+        let normalized = context?.isEmpty == true ? nil : context
+        guard notes[index].decisionContext != normalized else { return }
+
+        var updated = notes.remove(at: index)
+        updated.decisionContext = normalized
+        updated.updatedAt = .now
+        notes.insert(updated, at: 0)
+        selectedNoteID = updated.id
+        save()
+    }
+
+    func decisionTrail(for note: Note) -> [Note] {
+        guard let decisionTitle = note.decisionContext?.decisionTitle.trimmingCharacters(in: .whitespacesAndNewlines),
+              !decisionTitle.isEmpty else {
+            return []
+        }
+
+        return notes.filter { candidate in
+            guard candidate.id != note.id,
+                  let candidateDecision = candidate.decisionContext?.decisionTitle.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !candidateDecision.isEmpty else {
+                return false
+            }
+
+            return candidateDecision.localizedCaseInsensitiveCompare(decisionTitle) == .orderedSame
+        }
     }
 
     func markRead(_ noteID: Note.ID) {

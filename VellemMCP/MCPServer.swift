@@ -87,6 +87,25 @@ final class MCPServer {
                 required: ["text"]
             ),
             tool(
+                "add_decision_note",
+                description: "Create a new note with complete decision context in one call. Use this when the note preserves why an idea mattered, where it came from, what decision it changed, and when it should be checked again. The server rejects missing decision fields.",
+                properties: [
+                    "text": ["type": "string", "description": "Markdown body of the note."],
+                    "title": ["type": "string", "description": "Optional explicit title. If omitted, the first line or first heading is used."],
+                    "folder_id": ["type": "string", "description": "Optional folder UUID to place the note in."],
+                    "folder_name": ["type": "string", "description": "Optional folder name. If it doesn't exist, it will be created."],
+                    "source_detail": ["type": "string", "description": "Required. Where the idea came from. Link, person, file, conversation, or exact passage."],
+                    "decision_title": ["type": "string", "description": "Required. The choice, direction, or question this note influenced."],
+                    "effect": ["type": "string", "description": "Required. How the note affected the decision.", "enum": ["influenced", "confirmed", "blocked", "cancelled", "questioned"]],
+                    "captured_at": ["type": "string", "description": "Required ISO-8601 date for when this context was captured."],
+                    "expires_at": ["type": "string", "description": "Required unless expires_in_days is provided. ISO-8601 date after which the context should be verified again."],
+                    "expires_in_days": ["type": "integer", "description": "Required unless expires_at is provided. Sets expires_at to now plus this many days."],
+                    "validation_rule": ["type": "string", "description": "Required. What would make this context still true, or prove it outdated."],
+                    "resolved_at": ["type": "string", "description": "Optional ISO-8601 date if the related decision is already closed."]
+                ],
+                required: ["text", "source_detail", "decision_title", "effect", "captured_at", "validation_rule"]
+            ),
+            tool(
                 "append_to_daily",
                 description: "Append a snippet to today's daily note, creating it if needed.",
                 properties: [
@@ -182,6 +201,48 @@ final class MCPServer {
                 description: "Return today's daily note (the one written by `append_to_daily`). Returns null content with status `missing` if no daily note exists yet.",
                 properties: [:],
                 required: []
+            ),
+            tool(
+                "capture_decision_context",
+                description: "Attach decision context to a note. Use this to preserve why a note mattered, where it came from, what decision it influenced, and when it should be reviewed.",
+                properties: [
+                    "id": ["type": "string", "description": "Note UUID."],
+                    "source_detail": ["type": "string", "description": "Where the idea came from. Link, person, file, conversation, or exact passage."],
+                    "decision_title": ["type": "string", "description": "The choice, direction, or question this note influenced."],
+                    "effect": ["type": "string", "description": "How the note affected the decision. Default influenced.", "enum": ["influenced", "confirmed", "blocked", "cancelled", "questioned"]],
+                    "captured_at": ["type": "string", "description": "Optional ISO-8601 date. Defaults to the note creation date."],
+                    "expires_at": ["type": "string", "description": "Optional ISO-8601 date after which the context should be verified again."],
+                    "expires_in_days": ["type": "integer", "description": "Optional shortcut. Sets expires_at to now plus this many days."],
+                    "validation_rule": ["type": "string", "description": "What would make this context still true, or prove it outdated."]
+                ],
+                required: ["id"]
+            ),
+            tool(
+                "list_expiring_contexts",
+                description: "List notes whose decision context is expired or will expire soon. Use this to find memory that should not be trusted without revalidation.",
+                properties: [
+                    "days": ["type": "integer", "description": "Lookahead window in days. Default 14.", "minimum": 0, "maximum": 365],
+                    "include_expired": ["type": "boolean", "description": "Include contexts already past their expiration date. Default true."],
+                    "limit": ["type": "integer", "description": "Maximum results. Default 50.", "minimum": 1, "maximum": 200]
+                ],
+                required: []
+            ),
+            tool(
+                "get_decision_trail",
+                description: "Return the source note and other notes linked to the same decision title.",
+                properties: [
+                    "id": ["type": "string", "description": "Source note UUID."]
+                ],
+                required: ["id"]
+            ),
+            tool(
+                "mark_context_resolved",
+                description: "Mark a note's decision context as resolved because the related decision is closed.",
+                properties: [
+                    "id": ["type": "string", "description": "Note UUID."],
+                    "resolved_at": ["type": "string", "description": "Optional ISO-8601 date. Defaults to now."]
+                ],
+                required: ["id"]
             ),
             tool(
                 "get_note",
@@ -303,6 +364,22 @@ final class MCPServer {
             )
             return formatNoteCreated(note)
 
+        case "add_decision_note":
+            guard let text = (args["text"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !text.isEmpty else {
+                throw MCPError.invalidArguments("`text` is required and cannot be empty.")
+            }
+            let title = (args["title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let folderID = try resolveFolderArg(args)
+            let context = try requiredDecisionContext(from: args)
+            let note = try store.addDecisionNote(
+                text: text,
+                generatedTitle: title?.isEmpty == false ? title : nil,
+                folderID: folderID,
+                decisionContext: context
+            )
+            return "Created decision note.\n\n" + formatNoteCreated(note) + "\n\n" + formatDecisionContext(for: note)
+
         case "append_to_daily":
             guard let text = (args["text"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
                   !text.isEmpty else {
@@ -410,6 +487,48 @@ final class MCPServer {
                 return "status: missing\nNo daily note exists for today. Use `append_to_daily` to start one."
             }
             return formatFullNote(note)
+
+        case "capture_decision_context":
+            guard let idString = args["id"] as? String,
+                  let uuid = UUID(uuidString: idString) else {
+                throw MCPError.invalidArguments("`id` must be a valid UUID.")
+            }
+            guard let note = try store.getNote(id: uuid) else {
+                throw MCPError.notFound("Note \(idString) not found.")
+            }
+            let context = try decisionContext(from: args, fallbackNote: note)
+            let updated = try store.updateDecisionContext(id: uuid, context: context)
+            return "Decision context saved.\n\n" + formatDecisionContext(for: updated)
+
+        case "list_expiring_contexts":
+            let days = (args["days"] as? Int) ?? 14
+            let includeExpired = (args["include_expired"] as? Bool) ?? true
+            let limit = (args["limit"] as? Int) ?? 50
+            let notes = try store.notesWithExpiringDecisionContext(days: days, includeExpired: includeExpired, limit: limit)
+            if notes.isEmpty {
+                return "No decision contexts expire within \(days) day\(days == 1 ? "" : "s")."
+            }
+            return notes.map { formatDecisionContext(for: $0) }.joined(separator: "\n\n")
+
+        case "get_decision_trail":
+            guard let idString = args["id"] as? String,
+                  let uuid = UUID(uuidString: idString) else {
+                throw MCPError.invalidArguments("`id` must be a valid UUID.")
+            }
+            let notes = try store.decisionTrail(for: uuid)
+            if notes.isEmpty {
+                return "No decision trail for note \(idString)."
+            }
+            return notes.map { formatDecisionContext(for: $0) }.joined(separator: "\n\n")
+
+        case "mark_context_resolved":
+            guard let idString = args["id"] as? String,
+                  let uuid = UUID(uuidString: idString) else {
+                throw MCPError.invalidArguments("`id` must be a valid UUID.")
+            }
+            let resolvedAt = try parseISODate(args["resolved_at"]) ?? Date()
+            let updated = try store.markDecisionContextResolved(id: uuid, resolvedAt: resolvedAt)
+            return "Decision context resolved.\n\n" + formatDecisionContext(for: updated)
 
         case "get_note":
             guard let idString = args["id"] as? String,
@@ -579,6 +698,112 @@ final class MCPServer {
         return nil
     }
 
+    private func decisionContext(from args: [String: Any], fallbackNote note: Note) throws -> NoteDecisionContext {
+        let existing = note.decisionContext
+        let sourceDetail = stringArg("source_detail", in: args) ?? existing?.sourceDetail ?? sourceDescription(for: note) ?? ""
+        let decisionTitle = stringArg("decision_title", in: args) ?? existing?.decisionTitle ?? ""
+        let validationRule = stringArg("validation_rule", in: args) ?? existing?.validationRule ?? ""
+        let capturedAt = try parseISODate(args["captured_at"]) ?? existing?.capturedAt ?? note.createdAt
+        let effect = try parseDecisionEffect(args["effect"]) ?? existing?.effect ?? .influenced
+        let expiresAt = try parseExpiration(args, existing: existing?.expiresAt)
+
+        return NoteDecisionContext(
+            sourceDetail: sourceDetail,
+            capturedAt: capturedAt,
+            decisionTitle: decisionTitle,
+            effect: effect,
+            expiresAt: expiresAt,
+            validationRule: validationRule,
+            resolvedAt: existing?.resolvedAt,
+            updatedAt: Date()
+        )
+    }
+
+    private func requiredDecisionContext(from args: [String: Any]) throws -> NoteDecisionContext {
+        let sourceDetail = try requiredStringArg("source_detail", in: args)
+        let decisionTitle = try requiredStringArg("decision_title", in: args)
+        let validationRule = try requiredStringArg("validation_rule", in: args)
+
+        guard args.keys.contains("captured_at"),
+              let capturedAt = try parseISODate(args["captured_at"]) else {
+            throw MCPError.invalidArguments("`captured_at` is required and must be an ISO-8601 date.")
+        }
+
+        guard let effect = try parseDecisionEffect(args["effect"]) else {
+            throw MCPError.invalidArguments("`effect` is required and must be one of influenced, confirmed, blocked, cancelled, questioned.")
+        }
+
+        guard args.keys.contains("expires_at") || args.keys.contains("expires_in_days") else {
+            throw MCPError.invalidArguments("Either `expires_at` or `expires_in_days` is required.")
+        }
+
+        guard let expiresAt = try parseExpiration(args, existing: nil) else {
+            throw MCPError.invalidArguments("`expires_at` must be an ISO-8601 date, or provide `expires_in_days`.")
+        }
+
+        let resolvedAt = try parseISODate(args["resolved_at"])
+
+        return NoteDecisionContext(
+            sourceDetail: sourceDetail,
+            capturedAt: capturedAt,
+            decisionTitle: decisionTitle,
+            effect: effect,
+            expiresAt: expiresAt,
+            validationRule: validationRule,
+            resolvedAt: resolvedAt,
+            updatedAt: Date()
+        )
+    }
+
+    private func stringArg(_ key: String, in args: [String: Any]) -> String? {
+        guard let value = args[key] as? String else { return nil }
+        let cleaned = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return cleaned.isEmpty ? nil : cleaned
+    }
+
+    private func requiredStringArg(_ key: String, in args: [String: Any]) throws -> String {
+        guard let value = stringArg(key, in: args) else {
+            throw MCPError.invalidArguments("`\(key)` is required and cannot be empty.")
+        }
+        return value
+    }
+
+    private func parseDecisionEffect(_ raw: Any?) throws -> DecisionEffect? {
+        guard let value = (raw as? String)?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+              !value.isEmpty else {
+            return nil
+        }
+        guard let effect = DecisionEffect(rawValue: value) else {
+            throw MCPError.invalidArguments("`effect` must be one of influenced, confirmed, blocked, cancelled, questioned.")
+        }
+        return effect
+    }
+
+    private func parseExpiration(_ args: [String: Any], existing: Date?) throws -> Date? {
+        if let days = args["expires_in_days"] as? Int {
+            return Calendar.current.date(byAdding: .day, value: days, to: Date()) ?? Date()
+        }
+        if let daysDouble = args["expires_in_days"] as? Double {
+            let seconds = daysDouble * 86_400
+            return Date().addingTimeInterval(seconds)
+        }
+        if args.keys.contains("expires_at") {
+            return try parseISODate(args["expires_at"])
+        }
+        return existing
+    }
+
+    private func parseISODate(_ raw: Any?) throws -> Date? {
+        guard let value = (raw as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !value.isEmpty else {
+            return nil
+        }
+        guard let date = Self.iso8601.date(from: value) else {
+            throw MCPError.invalidArguments("Date values must be ISO-8601 strings, for example 2026-06-04T09:00:00Z.")
+        }
+        return date
+    }
+
     private func formatFullNote(_ note: Note) -> String {
         var meta = "id: \(note.id)\ntitle: \(note.title)\nkind: \(note.isDailyNote ? "daily" : "regular")\nupdatedAt: \(Self.iso8601.string(from: note.updatedAt))\n"
         if let src = note.sourceApp { meta += "sourceApp: \(src)\n" }
@@ -588,6 +813,51 @@ final class MCPServer {
             meta += "folder: \(folderName ?? "<missing>") (\(folderID))\n"
         }
         return meta + "\n---\n\n" + note.text
+    }
+
+    private func formatDecisionContext(for note: Note) -> String {
+        guard let context = note.decisionContext else {
+            return """
+            id: \(note.id)
+            title: \(note.title)
+            status: no_context
+            """
+        }
+
+        var lines = [
+            "id: \(note.id)",
+            "title: \(note.title)",
+            "status: \(context.status().rawValue)",
+            "decision: \(context.decisionTitle.isEmpty ? "<none>" : context.decisionTitle)",
+            "effect: \(context.effect.rawValue)",
+            "source: \(context.sourceDetail.isEmpty ? "<none>" : context.sourceDetail)",
+            "capturedAt: \(Self.iso8601.string(from: context.capturedAt))"
+        ]
+
+        if let expiresAt = context.expiresAt {
+            lines.append("expiresAt: \(Self.iso8601.string(from: expiresAt))")
+        }
+        if !context.validationRule.isEmpty {
+            lines.append("validationRule: \(context.validationRule)")
+        }
+        if let resolvedAt = context.resolvedAt {
+            lines.append("resolvedAt: \(Self.iso8601.string(from: resolvedAt))")
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
+    private func sourceDescription(for note: Note) -> String? {
+        switch (note.sourceApp, note.sourceURL) {
+        case let (sourceApp?, sourceURL?):
+            return "\(sourceApp), \(sourceURL.absoluteString)"
+        case let (sourceApp?, nil):
+            return sourceApp
+        case let (nil, sourceURL?):
+            return sourceURL.absoluteString
+        case (nil, nil):
+            return nil
+        }
     }
 
     private func noteMatchesFolderDisplay(_ note: Note, folder: Folder) -> Bool {

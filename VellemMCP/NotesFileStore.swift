@@ -44,6 +44,31 @@ final class NotesFileStore {
         return note
     }
 
+    func addDecisionNote(
+        text: String,
+        generatedTitle: String? = nil,
+        folderID: UUID? = nil,
+        decisionContext: NoteDecisionContext
+    ) throws -> Note {
+        var notes = try load()
+        let folders = try loadFolders()
+        let resolvedFolderID = try resolveFolderID(folderID, folders: folders)
+        let sourceApp = sourceApp(for: resolvedFolderID, folders: folders)
+        let note = Note(
+            text: text,
+            generatedTitle: generatedTitle,
+            kind: .regular,
+            sourceApp: sourceApp,
+            sourceURL: nil,
+            folderID: resolvedFolderID,
+            decisionContext: decisionContext
+        )
+        notes.insert(note, at: 0)
+        try save(notes)
+        ExternalNoteEvent.postCreated(noteID: note.id, source: sourceApp)
+        return note
+    }
+
     private func resolveFolderID(_ folderID: UUID?, folders: [Folder]? = nil) throws -> UUID? {
         guard let folderID else { return nil }
         let resolved = try folders ?? loadFolders()
@@ -149,6 +174,76 @@ final class NotesFileStore {
         notes.sort { $0.updatedAt > $1.updatedAt }
         try save(notes)
         return updated
+    }
+
+    func updateDecisionContext(id: UUID, context: NoteDecisionContext?) throws -> Note {
+        var notes = try load()
+        guard let index = notes.firstIndex(where: { $0.id == id }) else {
+            throw MCPError.notFound("Note \(id) not found.")
+        }
+        notes[index].decisionContext = context?.isEmpty == true ? nil : context
+        notes[index].updatedAt = Date()
+        let updated = notes[index]
+        notes.sort { $0.updatedAt > $1.updatedAt }
+        try save(notes)
+        return updated
+    }
+
+    func markDecisionContextResolved(id: UUID, resolvedAt: Date = Date()) throws -> Note {
+        var notes = try load()
+        guard let index = notes.firstIndex(where: { $0.id == id }) else {
+            throw MCPError.notFound("Note \(id) not found.")
+        }
+        guard var context = notes[index].decisionContext else {
+            throw MCPError.invalidArguments("Note \(id) has no decision context.")
+        }
+        context.resolvedAt = resolvedAt
+        context.updatedAt = Date()
+        notes[index].decisionContext = context
+        notes[index].updatedAt = Date()
+        let updated = notes[index]
+        notes.sort { $0.updatedAt > $1.updatedAt }
+        try save(notes)
+        return updated
+    }
+
+    func notesWithExpiringDecisionContext(days: Int, includeExpired: Bool, limit: Int) throws -> [Note] {
+        let notes = try load()
+        let now = Date()
+        let endDate = Calendar.current.date(byAdding: .day, value: max(0, days), to: now) ?? now
+
+        return Array(notes.lazy
+            .filter { note in
+                guard let context = note.decisionContext,
+                      context.resolvedAt == nil,
+                      let expiresAt = context.expiresAt else {
+                    return false
+                }
+                if expiresAt < now {
+                    return includeExpired
+                }
+                return expiresAt <= endDate
+            }
+            .prefix(max(1, limit)))
+    }
+
+    func decisionTrail(for id: UUID) throws -> [Note] {
+        let notes = try load()
+        guard let source = notes.first(where: { $0.id == id }) else {
+            throw MCPError.notFound("Note \(id) not found.")
+        }
+        guard let decisionTitle = source.decisionContext?.decisionTitle.trimmingCharacters(in: .whitespacesAndNewlines),
+              !decisionTitle.isEmpty else {
+            return [source]
+        }
+
+        return notes.filter { note in
+            guard let noteDecision = note.decisionContext?.decisionTitle.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !noteDecision.isEmpty else {
+                return false
+            }
+            return note.id == source.id || noteDecision.localizedCaseInsensitiveCompare(decisionTitle) == .orderedSame
+        }
     }
 
     func deleteNote(id: UUID) throws {
@@ -342,6 +437,7 @@ final class NotesFileStore {
                 let data = try encoder.encode(folders)
                 try data.write(to: url, options: [.atomic])
                 try? CloudMirrorStore.publish(foldersData: data)
+                ExternalNoteEvent.postChanged(source: "MCP")
             } catch {
                 ioError = error
             }
@@ -394,6 +490,7 @@ final class NotesFileStore {
                 try data.write(to: url, options: [.atomic])
                 let foldersData = try? Data(contentsOf: foldersURL)
                 try? CloudMirrorStore.publish(notesData: data, foldersData: foldersData)
+                ExternalNoteEvent.postChanged(source: "MCP")
             } catch {
                 ioError = error
             }

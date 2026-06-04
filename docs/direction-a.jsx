@@ -403,7 +403,7 @@ hook it into Claude as a real context layer for design.`;
     );
   }
 
-  // --- 14 tools grid -------------------------------------------------------
+  // --- 23 tools grid -------------------------------------------------------
   function ToolsGrid() {
     return (
       <section style={{
@@ -423,7 +423,7 @@ hook it into Claude as a real context layer for design.`;
                 fontSize: 76, lineHeight: 0.95, letterSpacing: "-0.035em",
                 color: INK, fontWeight: 400,
               }}>
-                Eighteen verbs.
+                Twenty-three verbs.
                 <br /><em style={{ color: "#9A7B12" }}>One notebook.</em>
               </h2>
             </div>
@@ -913,7 +913,7 @@ hook it into Claude as a real context layer for design.`;
               <VellemIcon size={32} />
               <span style={{ fontSize: 16, fontWeight: 700, color: INK }}>Vellem</span>
             </div>
-            <div>MIT · made in France · v1.0.12</div>
+            <div>MIT · made in France · v1.0.13</div>
             <div style={{ marginTop: 4, color: "#A89248" }}>
               Made by{" "}
               <a
