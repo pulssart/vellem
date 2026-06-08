@@ -33,10 +33,6 @@ targets:
         com.apple.security.app-sandbox: true
         com.apple.security.application-groups:
           - MKAFV9VL9V.com.adriendonot.Vellem
-        com.apple.developer.icloud-container-identifiers:
-          - iCloud.com.adriendonot.Vellem
-        com.apple.developer.icloud-services:
-          - CloudDocuments
         com.apple.security.automation.apple-events: true
         com.apple.security.network.client: true
         com.apple.security.files.user-selected.read-write: true

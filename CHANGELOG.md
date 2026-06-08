@@ -1,3 +1,17 @@
+# Vellem 1.0.15
+
+This release fixes the macOS launch failure seen after installing or updating to 1.0.14.
+
+## Fixes
+
+. Removed iCloud entitlements from the Mac app target because the Developer ID build did not ship with a matching profile.
+. Fresh installs and Sparkle updates can now launch the app again after macOS validates the signed bundle.
+
+## Validation
+
+. Reproduced the launch failure locally from the 1.0.14 DMG.
+. Built a signed release and verified the fixed app launches from a copied DMG install.
+
 # Vellem 1.0.14
 
 This release focuses on safer backups, data recovery, richer note rendering, and stricter agent context.

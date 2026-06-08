@@ -192,7 +192,7 @@ function formatReleaseDate(iso) {
 function DownloadCTA({ tone = "dark", caption = "Universal · macOS 26+ · Signed & notarized" }) {
   const dark = tone === "dark";
   const { release, status } = useReleases();
-  const tag = release?.tag_name || "v1.0.14";
+  const tag = release?.tag_name || "v1.0.15";
   const size = release?.dmg
     ? `${(release.dmg.size / (1024 * 1024)).toFixed(1)} MB`
     : "5.9 MB";
