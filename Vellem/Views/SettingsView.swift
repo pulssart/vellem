@@ -1,6 +1,9 @@
+import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
+    @ObservedObject var store: NotesStore
     @AppStorage(AppPreferences.quickCaptureKeyCodeKey) private var keyCode = Int(AppPreferences.defaultQuickCaptureKeyCode)
     @AppStorage(AppPreferences.quickCaptureModifiersKey) private var modifiers = Int(AppPreferences.defaultQuickCaptureModifiers)
     @AppStorage(AppPreferences.showMenuBarExtraKey) private var showMenuBarExtra = true
@@ -11,6 +14,11 @@ struct SettingsView: View {
     @AppStorage("SUEnableAutomaticChecks") private var autoCheckUpdates = true
     @AppStorage("SUAutomaticallyUpdate") private var autoDownloadUpdates = false
     @ObservedObject private var updates = UpdateController.shared
+    @State private var archiveStatus: ArchiveStatus?
+    @State private var isArchiveWorking = false
+    @State private var pendingImportData: Data?
+    @State private var activePanel: NSSavePanel?
+    @State private var showsImportConfirmation = false
 
     private var selectedAccent: AppAccentColor {
         AppAccentColor(rawValue: accentRaw) ?? .yellow
@@ -33,17 +41,32 @@ struct SettingsView: View {
                     Label("Updates", systemImage: "arrow.triangle.2.circlepath")
                 }
 
+            dataSettings
+                .tabItem {
+                    Label("Data", systemImage: "externaldrive")
+                }
+
             appSettings
                 .tabItem {
                     Label("App", systemImage: "macwindow")
                 }
         }
         .padding(22)
-        .frame(minWidth: 560, idealWidth: 560, maxWidth: 560, minHeight: 360)
+        .frame(minWidth: 600, idealWidth: 600, maxWidth: 600, minHeight: 420)
         .onChange(of: showDockIcon) { _, newValue in
             if !newValue {
                 showMenuBarExtra = true
             }
+        }
+        .alert("Replace your Vellem library?", isPresented: $showsImportConfirmation) {
+            Button("Import", role: .destructive) {
+                confirmPendingImport()
+            }
+            Button("Cancel", role: .cancel) {
+                pendingImportData = nil
+            }
+        } message: {
+            Text("This imports notes, folders, attachments, and preferences from the JSON file.")
         }
     }
 
@@ -122,6 +145,64 @@ struct SettingsView: View {
         }
     }
 
+    private var dataSettings: some View {
+        SettingsPane(
+            title: "Data",
+            subtitle: "Back up or restore your Vellem library."
+        ) {
+            SettingsCard {
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack(alignment: .center, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Export")
+                                .font(.headline)
+
+                            Text("\(store.notes.count) notes, \(store.folders.count) folders")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Button("Export JSON...") {
+                            exportArchive()
+                        }
+                        .disabled(isArchiveWorking)
+                    }
+
+                    Divider()
+
+                    HStack(alignment: .center, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Import")
+                                .font(.headline)
+
+                            Text("Replaces notes, folders, attachments, and preferences.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Button("Import JSON...") {
+                            importArchive()
+                        }
+                        .disabled(isArchiveWorking)
+                    }
+
+                    if let archiveStatus {
+                        Divider()
+
+                        Label(archiveStatus.message, systemImage: archiveStatus.systemImage)
+                            .font(.caption)
+                            .foregroundStyle(archiveStatus.isError ? .red : .secondary)
+                            .lineLimit(2)
+                    }
+                }
+            }
+        }
+    }
+
     private var appSettings: some View {
         SettingsPane(
             title: "App",
@@ -151,6 +232,116 @@ struct SettingsView: View {
         }
     }
 
+    private func exportArchive() {
+        isArchiveWorking = true
+
+        do {
+            let archive = try NotesArchiveService.archiveData(
+                notes: store.notes,
+                folders: store.folders
+            )
+            presentExportPanel(data: archive.data, summary: archive.summary)
+        } catch {
+            isArchiveWorking = false
+            archiveStatus = .failure(error.localizedDescription)
+        }
+    }
+
+    private func importArchive() {
+        archiveStatus = nil
+        isArchiveWorking = true
+
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.canChooseFiles = true
+
+        present(panel) { response in
+            defer {
+                isArchiveWorking = false
+                activePanel = nil
+            }
+
+            guard response == .OK,
+                  let url = panel.url else {
+                return
+            }
+
+            let didAccess = url.startAccessingSecurityScopedResource()
+            defer {
+                if didAccess {
+                    url.stopAccessingSecurityScopedResource()
+                }
+            }
+
+            do {
+                pendingImportData = try Data(contentsOf: url)
+                showsImportConfirmation = true
+            } catch {
+                archiveStatus = .failure(error.localizedDescription)
+            }
+        }
+    }
+
+    private func presentExportPanel(data: Data, summary: NotesArchiveSummary) {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.json]
+        panel.canCreateDirectories = true
+        panel.nameFieldStringValue = defaultArchiveFileName
+
+        present(panel) { response in
+            defer {
+                isArchiveWorking = false
+                activePanel = nil
+            }
+
+            guard response == .OK,
+                  let url = panel.url else {
+                return
+            }
+
+            do {
+                try data.write(to: url, options: [.atomic])
+                archiveStatus = .success("Exported \(summary.noteCount) notes, \(summary.folderCount) folders, \(summary.attachmentCount) attachments.")
+            } catch {
+                archiveStatus = .failure(error.localizedDescription)
+            }
+        }
+    }
+
+    private func present(_ panel: NSSavePanel, completion: @escaping (NSApplication.ModalResponse) -> Void) {
+        activePanel = panel
+        panel.level = .modalPanel
+        NSApp.activate(ignoringOtherApps: true)
+        panel.begin(completionHandler: completion)
+    }
+
+    private func confirmPendingImport() {
+        guard let data = pendingImportData else { return }
+        pendingImportData = nil
+        isArchiveWorking = true
+        defer { isArchiveWorking = false }
+
+        do {
+            let imported = try NotesArchiveService.importArchive(from: data)
+            try store.replaceLibrary(notes: imported.notes, folders: imported.folders)
+            AppPreferences.registerDefaults()
+            AppDelegate.applyDockIconPreference(showDockIcon: UserDefaults.standard.bool(forKey: AppPreferences.showDockIconKey))
+            NotificationCenter.default.post(name: UserDefaults.didChangeNotification, object: UserDefaults.standard)
+            WidgetReloader.reload()
+            archiveStatus = .success("Imported \(imported.summary.noteCount) notes, \(imported.summary.folderCount) folders, \(imported.summary.attachmentCount) attachments.")
+        } catch {
+            archiveStatus = .failure(error.localizedDescription)
+        }
+    }
+
+    private var defaultArchiveFileName: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return "Vellem Library \(formatter.string(from: Date())).json"
+    }
+
     private func selectAccent(_ color: AppAccentColor) {
         accentRaw = color.rawValue
         AppAccentColor.sharedDefaults?.set(color.rawValue, forKey: AppAccentColor.storageKey)
@@ -163,6 +354,23 @@ struct SettingsView: View {
         } set: { newValue in
             showMenuBarExtra = showDockIcon ? newValue : true
         }
+    }
+}
+
+private struct ArchiveStatus {
+    let message: String
+    let isError: Bool
+
+    var systemImage: String {
+        isError ? "exclamationmark.triangle" : "checkmark.circle"
+    }
+
+    static func success(_ message: String) -> ArchiveStatus {
+        ArchiveStatus(message: message, isError: false)
+    }
+
+    static func failure(_ message: String) -> ArchiveStatus {
+        ArchiveStatus(message: message, isError: true)
     }
 }
 

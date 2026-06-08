@@ -24,7 +24,12 @@ final class NotesFileStore {
 
     // MARK: - Public API
 
-    func addNote(text: String, generatedTitle: String? = nil, folderID: UUID? = nil) throws -> Note {
+    func addNote(
+        text: String,
+        generatedTitle: String? = nil,
+        folderID: UUID? = nil,
+        decisionContext: NoteDecisionContext? = nil
+    ) throws -> Note {
         var notes = try load()
         // Load folders once and pass through — avoids two separate JSON parses.
         let folders = try loadFolders()
@@ -36,7 +41,8 @@ final class NotesFileStore {
             kind: .regular,
             sourceApp: sourceApp,
             sourceURL: nil,
-            folderID: resolvedFolderID
+            folderID: resolvedFolderID,
+            decisionContext: decisionContext
         )
         notes.insert(note, at: 0)
         try save(notes)
@@ -102,7 +108,7 @@ final class NotesFileStore {
         }
     }
 
-    func appendToDaily(text: String) throws -> Note {
+    func appendToDaily(text: String, decisionContext: NoteDecisionContext? = nil) throws -> Note {
         var notes = try load()
         let now = Date()
         let cal = Calendar.current
@@ -132,7 +138,8 @@ final class NotesFileStore {
             sourceApp: sourceApp,
             sourceURL: nil,
             createdAt: now,
-            updatedAt: now
+            updatedAt: now,
+            decisionContext: decisionContext
         )
         notes.insert(note, at: 0)
         try save(notes)

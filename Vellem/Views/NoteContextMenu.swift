@@ -46,7 +46,11 @@ struct NoteContextMenu: View {
             }
         }
 
-        Button("Copy") {
+        Button("Copy note reference") {
+            copy(store.noteReference(for: note))
+        }
+
+        Button("Copy text") {
             copy(note.text)
         }
 

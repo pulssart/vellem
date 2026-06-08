@@ -6,7 +6,7 @@ enum ExternalNoteEvent {
     static let sourceKey = "source"
 
     static func postCreated(noteID: Note.ID, source: String) {
-        writeLatestCreated(noteID: noteID, source: source)
+        writeLatestChange(noteID: noteID, source: source)
         DistributedNotificationCenter.default().postNotificationName(
             createdName,
             object: nil,
@@ -18,23 +18,36 @@ enum ExternalNoteEvent {
         )
     }
 
+    static func postChanged(noteID: Note.ID? = nil, source: String) {
+        writeLatestChange(noteID: noteID, source: source)
+        DistributedNotificationCenter.default().postNotificationName(
+            createdName,
+            object: nil,
+            userInfo: [
+                sourceKey: source
+            ],
+            deliverImmediately: true
+        )
+    }
+
     static func latestCreated() -> (noteID: Note.ID, source: String?)? {
         guard let data = try? Data(contentsOf: eventURL),
               let payload = try? JSONDecoder().decode(CreatedPayload.self, from: data),
-              let noteID = Note.ID(uuidString: payload.noteID) else {
+              let payloadNoteID = payload.noteID,
+              let noteID = Note.ID(uuidString: payloadNoteID) else {
             return nil
         }
 
         return (noteID, payload.source)
     }
 
-    private static func writeLatestCreated(noteID: Note.ID, source: String) {
+    private static func writeLatestChange(noteID: Note.ID?, source: String) {
         do {
             try FileManager.default.createDirectory(
                 at: eventURL.deletingLastPathComponent(),
                 withIntermediateDirectories: true
             )
-            let payload = CreatedPayload(noteID: noteID.uuidString, source: source, createdAt: Date())
+            let payload = CreatedPayload(noteID: noteID?.uuidString, source: source, createdAt: Date())
             let data = try JSONEncoder().encode(payload)
             try data.write(to: eventURL, options: [.atomic])
         } catch {
@@ -48,7 +61,7 @@ enum ExternalNoteEvent {
     }
 
     private struct CreatedPayload: Codable {
-        var noteID: String
+        var noteID: String?
         var source: String
         var createdAt: Date
     }

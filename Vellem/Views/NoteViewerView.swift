@@ -96,12 +96,12 @@ struct NoteViewerView: View {
             .buttonStyle(.borderless)
 
             Button {
-                copy(note.text)
+                copyNoteReference(note)
             } label: {
                 Image(systemName: "doc.on.doc")
             }
             .buttonStyle(.borderless)
-            .help("Copy note")
+            .help("Copy note reference")
 
             Button {
                 dismissWindow(id: "note-viewer")
@@ -150,10 +150,10 @@ struct NoteViewerView: View {
         }
     }
 
-    private func copy(_ value: String) {
+    private func copyNoteReference(_ note: Note) {
         NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(value, forType: .string)
-        copyFeedback = "Copied."
+        NSPasteboard.general.setString(store.noteReference(for: note), forType: .string)
+        copyFeedback = "Note reference copied."
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             copyFeedback = nil
         }

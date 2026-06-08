@@ -100,7 +100,7 @@ struct VellemApp: App {
         .windowStyle(.hiddenTitleBar)
 
         Settings {
-            SettingsView()
+            SettingsView(store: store)
         }
     }
 

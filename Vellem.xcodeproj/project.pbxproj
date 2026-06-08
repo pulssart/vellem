@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01DA1E8F1C9391FEB094AF5E /* NotesArchiveService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08C77AA15B4245DED43F2866 /* NotesArchiveService.swift */; };
 		02D7C882CCFAAD0226BD6D61 /* WidgetReloader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9FBFC33F50F0D1A99BA19B8 /* WidgetReloader.swift */; };
 		09372CECAC2317BFA61B8966 /* EmptyNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA290798A38AD8E245859D60 /* EmptyNotesView.swift */; };
 		0B694BBB6076CA288E6574DB /* MobileRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5FFE5771E335EE598F6AF02 /* MobileRootView.swift */; };
@@ -66,7 +67,6 @@
 		DDE3C560F26213B6CB04B258 /* VellemDisplayText.swift in Sources */ = {isa = PBXBuildFile; fileRef = A58252D8886B2C8031D975ED /* VellemDisplayText.swift */; };
 		DEFB9BEE7FC2EB8E9CECAACF /* QuickCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD71622FB3E692BE3A04703F /* QuickCaptureView.swift */; };
 		DF0D66950ECDF79763930042 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E40D411CB18F137ED64EC417 /* Assets.xcassets */; };
-		DF4F44635043760093BE70AE /* ColumnToolbarControlsBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E5DBD51801EB2F2BF383C16 /* ColumnToolbarControlsBridge.swift */; };
 		E05E41F66101C66B1D0CA02A /* CaptureContextProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96920392987CD241F12576E0 /* CaptureContextProvider.swift */; };
 		E27778E90430280D3B7ECF2F /* VellemDisplayText.swift in Sources */ = {isa = PBXBuildFile; fileRef = A58252D8886B2C8031D975ED /* VellemDisplayText.swift */; };
 		E33BF2E64AACB83F5F4EE3C1 /* NoteEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACA8C9B235D9FB2554B024F0 /* NoteEditorView.swift */; };
@@ -114,6 +114,7 @@
 /* Begin PBXFileReference section */
 		06BFC875C442588F75CDB14F /* Folder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Folder.swift; sourceTree = "<group>"; };
 		07546495A4639F9FA7727639 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		08C77AA15B4245DED43F2866 /* NotesArchiveService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesArchiveService.swift; sourceTree = "<group>"; };
 		0C55CFE4DA2FAE52B9A01F7B /* GlobalHotKeyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKeyService.swift; sourceTree = "<group>"; };
 		173FC39ED423E0E6F6889FD9 /* MCPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPServer.swift; sourceTree = "<group>"; };
 		1AA2CC87B4754004C3968D88 /* SplitViewAutosave.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplitViewAutosave.swift; sourceTree = "<group>"; };
@@ -121,7 +122,6 @@
 		1EDEBE5538AFEF3E24768584 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		1F14A5FDC17BC595F2EE2DD7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2C4A1A4671C57414972898E1 /* Vellem.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Vellem.entitlements; sourceTree = "<group>"; };
-		2E5DBD51801EB2F2BF383C16 /* ColumnToolbarControlsBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColumnToolbarControlsBridge.swift; sourceTree = "<group>"; };
 		32B561018BF0DCC9B5FC3B74 /* MobileMarkdownRenderedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileMarkdownRenderedView.swift; sourceTree = "<group>"; };
 		356838C1CD7E49ADB6021F9D /* NoteViewerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteViewerView.swift; sourceTree = "<group>"; };
 		4237C4F0B607897B8B1D6069 /* VellemApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VellemApp.swift; sourceTree = "<group>"; };
@@ -265,6 +265,7 @@
 				D68868F1B2DF047B7E1C887B /* AgentLauncher.swift */,
 				96920392987CD241F12576E0 /* CaptureContextProvider.swift */,
 				49B4CA5399EE9B52D315E6CD /* FoundationNoteEditor.swift */,
+				08C77AA15B4245DED43F2866 /* NotesArchiveService.swift */,
 				A2FAA89E775B8E613C683386 /* SlashCommandProcessor.swift */,
 				DB18914F966B32428D515231 /* UpdateController.swift */,
 			);
@@ -335,7 +336,6 @@
 				5BABA9B4516AB8444AA7B00F /* AppAccentColor.swift */,
 				AB9D350726789738B4EC27EB /* AppGroup.swift */,
 				1C69FD53E41A13CCC596052D /* AppPreferences.swift */,
-				2E5DBD51801EB2F2BF383C16 /* ColumnToolbarControlsBridge.swift */,
 				0C55CFE4DA2FAE52B9A01F7B /* GlobalHotKeyService.swift */,
 				A2083C8673639AE82BE4560F /* KnownTool.swift */,
 				FF8E2319E5B18700B47E1EAC /* MainWindowResolver.swift */,
@@ -611,7 +611,6 @@
 				E05E41F66101C66B1D0CA02A /* CaptureContextProvider.swift in Sources */,
 				E8AB2128DC24BEC54F10F907 /* CaptureSource.swift in Sources */,
 				16E0CA3322EBC3CC5A0D5C33 /* CloudMirrorStore.swift in Sources */,
-				DF4F44635043760093BE70AE /* ColumnToolbarControlsBridge.swift in Sources */,
 				70C6B44386B992D079C562D4 /* ContentView.swift in Sources */,
 				ECA801C44CCD4660D29D1FA3 /* DecisionContextInspectorView.swift in Sources */,
 				0BA79E103F348B4596A4F210 /* EmbeddingCachePruner.swift in Sources */,
@@ -632,6 +631,7 @@
 				E33BF2E64AACB83F5F4EE3C1 /* NoteEditorView.swift in Sources */,
 				9AE5D39B5FB80AEF1C4478DE /* NoteNotifications.swift in Sources */,
 				C89A47B53674806E28BA31A7 /* NoteViewerView.swift in Sources */,
+				01DA1E8F1C9391FEB094AF5E /* NotesArchiveService.swift in Sources */,
 				CB9AEB33C1AE9A1E5F1132C5 /* NotesStore.swift in Sources */,
 				42720883CE171B0D4DCAEAFE /* OnboardingView.swift in Sources */,
 				DEFB9BEE7FC2EB8E9CECAACF /* QuickCaptureView.swift in Sources */,

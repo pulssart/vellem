@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 /// Injects an autosave name into the closest enclosing NSSplitView.
-/// Add it as a background/overlay on an HSplitView to persist divider position across launches.
+/// Add it as a background or overlay on a split column to persist divider positions across launches.
 struct SplitViewAutosave: NSViewRepresentable {
     let name: String
 
@@ -10,12 +10,16 @@ struct SplitViewAutosave: NSViewRepresentable {
         AutosaveProbe(name: name)
     }
 
-    func updateNSView(_ nsView: AutosaveProbe, context: Context) {}
+    func updateNSView(_ nsView: AutosaveProbe, context: Context) {
+        nsView.name = name
+        nsView.inject()
+    }
 
     // MARK: -
 
     final class AutosaveProbe: NSView {
-        let name: String
+        var name: String
+        private var pendingRetryCount = 0
 
         init(name: String) {
             self.name = name
@@ -35,14 +39,28 @@ struct SplitViewAutosave: NSViewRepresentable {
             inject()
         }
 
-        private func inject() {
+        func inject() {
             var v: NSView? = superview
             while let cur = v {
-                if let sv = cur as? NSSplitView, sv.autosaveName != name {
-                    sv.autosaveName = name
+                if let sv = cur as? NSSplitView {
+                    if sv.autosaveName != name {
+                        sv.autosaveName = name
+                    }
+                    pendingRetryCount = 0
                     return
                 }
                 v = cur.superview
+            }
+
+            retryIfNeeded()
+        }
+
+        private func retryIfNeeded() {
+            guard window != nil, pendingRetryCount < 3 else { return }
+
+            pendingRetryCount += 1
+            DispatchQueue.main.async { [weak self] in
+                self?.inject()
             }
         }
     }

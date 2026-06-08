@@ -21,11 +21,13 @@ struct NoteEditorView: View {
 
     private let editor = FoundationNoteEditor()
     private let noteHorizontalPadding: CGFloat = 36
+    private let decisionInspectorWidth: CGFloat = 340
 
     var body: some View {
-        HSplitView {
+        ZStack(alignment: .trailing) {
             editorContent
                 .frame(minWidth: 380, idealWidth: 620)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             if showsDecisionInspector {
                 DecisionContextInspectorView(
@@ -35,9 +37,22 @@ struct NoteEditorView: View {
                         showsDecisionInspector = false
                     }
                 )
-                .frame(minWidth: 280, idealWidth: 320, maxWidth: 420)
+                .frame(width: decisionInspectorWidth)
+                .frame(maxHeight: .infinity)
+                .background(.regularMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Color(nsColor: .separatorColor).opacity(0.65), lineWidth: 1)
+                }
+                .shadow(color: .black.opacity(0.18), radius: 24, x: -8, y: 0)
+                .padding(.vertical, 10)
+                .padding(.trailing, 10)
+                .transition(.move(edge: .trailing).combined(with: .opacity))
+                .zIndex(1)
             }
         }
+        .animation(.snappy(duration: 0.22), value: showsDecisionInspector)
         .navigationTitle(note.title)
         .onAppear {
             text = note.text

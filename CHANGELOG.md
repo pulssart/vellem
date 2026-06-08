@@ -1,3 +1,27 @@
+# Vellem 1.0.14
+
+This release focuses on safer backups, data recovery, richer note rendering, and stricter agent context.
+
+## What changed
+
+. Settings now has a Data tab to export the full Vellem library as JSON.
+. JSON exports include notes, folders, attachments, and user preferences.
+. JSON imports can restore the same archive after confirmation, replacing the current local library.
+. Markdown tables now use a native macOS table renderer with column resizing and cleaner overflow.
+. Note copy actions now prefer stable note references where that helps agent workflows.
+. MCP note creation now requires explicit decision context so new agent notes keep their source, effect, expiry, and validation rule.
+
+## Fixes
+
+. Import and export now use native AppKit file panels with user-selected file access enabled in the sandbox.
+. Widget reloads now target the Vellem widget kind directly and retry shortly after note changes.
+. Split view autosave now retries when SwiftUI attaches the underlying native split view late.
+
+## Validation
+
+. Built and launched locally with `bash script/build_and_run.sh run`.
+. Release artifact is signed, notarized, stapled, and ready for Sparkle updates.
+
 # Vellem 1.0.12
 
 This release focuses on Inbox, cleaner list controls, mobile iCloud groundwork, richer widgets, and the new promo video package.

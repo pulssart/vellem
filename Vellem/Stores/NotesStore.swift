@@ -629,6 +629,40 @@ final class NotesStore: ObservableObject {
         }
     }
 
+    func replaceLibrary(notes importedNotes: [Note], folders importedFolders: [Folder]) throws {
+        let sortedNotes = importedNotes.sorted { $0.updatedAt > $1.updatedAt }
+
+        folders = importedFolders
+        sortFolders()
+        ensureSmartFolders()
+
+        selectedFolderID = nil
+        isInboxSelected = false
+        isTodaySelected = false
+        selectedNoteID = sortedNotes.first?.id
+
+        try FileManager.default.createDirectory(
+            at: fileURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try FileManager.default.createDirectory(
+            at: foldersURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+
+        let notesData = try encoder.encode(sortedNotes)
+        let foldersData = try encoder.encode(folders)
+        try notesData.write(to: fileURL, options: [.atomic])
+        try foldersData.write(to: foldersURL, options: [.atomic])
+        try? CloudMirrorStore.publish(notesData: notesData, foldersData: foldersData)
+
+        notes = sortedNotes
+        normalizeSelection()
+        updateDockBadge()
+        WidgetReloader.reload()
+        pruneEmbeddingCache(keeping: Set(sortedNotes.map(\.id)))
+    }
+
     @discardableResult
     func create(text: String, source: CaptureSource? = nil) -> Note? {
         let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)

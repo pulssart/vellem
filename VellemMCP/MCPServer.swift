@@ -77,14 +77,22 @@ final class MCPServer {
         let tools: [[String: Any]] = [
             tool(
                 "add_note",
-                description: "Create a new note in Vellem. Use Markdown for formatting (headings with #, todos with `- [ ] item`, bullets with `- `, etc.). Optionally place it in a folder by UUID or by name (auto-created if unknown).",
+                description: "Create a new note in Vellem with complete decision context. The server rejects missing source, capture, decision, effect, expiration, or validation fields.",
                 properties: [
                     "text": ["type": "string", "description": "Markdown body of the note."],
                     "title": ["type": "string", "description": "Optional explicit title. If omitted, the first line or first heading is used."],
                     "folder_id": ["type": "string", "description": "Optional folder UUID to place the note in."],
-                    "folder_name": ["type": "string", "description": "Optional folder name. If it doesn't exist, it will be created."]
+                    "folder_name": ["type": "string", "description": "Optional folder name. If it doesn't exist, it will be created."],
+                    "source_detail": ["type": "string", "description": "Required. Where the idea came from. Link, person, file, conversation, or exact passage."],
+                    "decision_title": ["type": "string", "description": "Required. The choice, direction, or question this note influenced."],
+                    "effect": ["type": "string", "description": "Required. How the note affected the decision.", "enum": ["influenced", "confirmed", "blocked", "cancelled", "questioned"]],
+                    "captured_at": ["type": "string", "description": "Required ISO-8601 date for when this context was captured."],
+                    "expires_at": ["type": "string", "description": "Optional ISO-8601 date after which the context should be verified again. Use this instead of expires_in_days for an exact date."],
+                    "expires_in_days": ["type": "integer", "description": "Required unless expires_at is provided. Sets expires_at to now plus this many days."],
+                    "validation_rule": ["type": "string", "description": "Required. What would make this context still true, or prove it outdated."],
+                    "resolved_at": ["type": "string", "description": "Optional ISO-8601 date if the related decision is already closed."]
                 ],
-                required: ["text"]
+                required: ["text", "source_detail", "decision_title", "effect", "captured_at", "expires_in_days", "validation_rule"]
             ),
             tool(
                 "add_decision_note",
@@ -103,19 +111,27 @@ final class MCPServer {
                     "validation_rule": ["type": "string", "description": "Required. What would make this context still true, or prove it outdated."],
                     "resolved_at": ["type": "string", "description": "Optional ISO-8601 date if the related decision is already closed."]
                 ],
-                required: ["text", "source_detail", "decision_title", "effect", "captured_at", "validation_rule"]
+                required: ["text", "source_detail", "decision_title", "effect", "captured_at", "expires_in_days", "validation_rule"]
             ),
             tool(
                 "append_to_daily",
-                description: "Append a snippet to today's daily note, creating it if needed.",
+                description: "Append a snippet to today's daily note. If no daily note exists yet, complete decision context is required and stored on the new daily note.",
                 properties: [
-                    "text": ["type": "string", "description": "Markdown text to append."]
+                    "text": ["type": "string", "description": "Markdown text to append."],
+                    "source_detail": ["type": "string", "description": "Required only when creating the daily note. Where the captured context came from."],
+                    "decision_title": ["type": "string", "description": "Required only when creating the daily note. The choice, direction, or workflow this daily note supports."],
+                    "effect": ["type": "string", "description": "Required only when creating the daily note. How the captured context affected the decision.", "enum": ["influenced", "confirmed", "blocked", "cancelled", "questioned"]],
+                    "captured_at": ["type": "string", "description": "Required only when creating the daily note. ISO-8601 date for when this context was captured."],
+                    "expires_at": ["type": "string", "description": "Optional ISO-8601 date after which the context should be verified again. Use this instead of expires_in_days for an exact date."],
+                    "expires_in_days": ["type": "integer", "description": "Required only when creating the daily note unless expires_at is provided."],
+                    "validation_rule": ["type": "string", "description": "Required only when creating the daily note. What would make this context still true, or prove it outdated."],
+                    "resolved_at": ["type": "string", "description": "Optional ISO-8601 date if the related decision is already closed."]
                 ],
                 required: ["text"]
             ),
             tool(
                 "create_todo_list",
-                description: "Create a Vellem note formatted as a to-do list. Tasks are written as Markdown checkboxes that Vellem renders as interactive todos.",
+                description: "Create a Vellem note formatted as a to-do list with complete decision context. Tasks are written as Markdown checkboxes that Vellem renders as interactive todos.",
                 properties: [
                     "title": ["type": "string", "description": "Todo list title."],
                     "tasks": [
@@ -136,9 +152,17 @@ final class MCPServer {
                         ]
                     ],
                     "folder_id": ["type": "string", "description": "Optional folder UUID to place the note in."],
-                    "folder_name": ["type": "string", "description": "Optional folder name. If it doesn't exist, it will be created."]
+                    "folder_name": ["type": "string", "description": "Optional folder name. If it doesn't exist, it will be created."],
+                    "source_detail": ["type": "string", "description": "Required. Where the to-do list came from. Link, person, file, conversation, or exact passage."],
+                    "decision_title": ["type": "string", "description": "Required. The choice, direction, or workflow this to-do list supports."],
+                    "effect": ["type": "string", "description": "Required. How the to-do list affected the decision.", "enum": ["influenced", "confirmed", "blocked", "cancelled", "questioned"]],
+                    "captured_at": ["type": "string", "description": "Required ISO-8601 date for when this context was captured."],
+                    "expires_at": ["type": "string", "description": "Optional ISO-8601 date after which the context should be verified again. Use this instead of expires_in_days for an exact date."],
+                    "expires_in_days": ["type": "integer", "description": "Required unless expires_at is provided. Sets expires_at to now plus this many days."],
+                    "validation_rule": ["type": "string", "description": "Required. What would make this to-do list still relevant, or prove it outdated."],
+                    "resolved_at": ["type": "string", "description": "Optional ISO-8601 date if the related decision is already closed."]
                 ],
-                required: ["title", "tasks"]
+                required: ["title", "tasks", "source_detail", "decision_title", "effect", "captured_at", "expires_in_days", "validation_rule"]
             ),
             tool(
                 "add_todo",
@@ -357,12 +381,14 @@ final class MCPServer {
             }
             let title = (args["title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
             let folderID = try resolveFolderArg(args)
+            let context = try requiredDecisionContext(from: args)
             let note = try store.addNote(
                 text: text,
                 generatedTitle: title?.isEmpty == false ? title : nil,
-                folderID: folderID
+                folderID: folderID,
+                decisionContext: context
             )
-            return formatNoteCreated(note)
+            return "Created note with decision context.\n\n" + formatNoteCreated(note) + "\n\n" + formatDecisionContext(for: note)
 
         case "add_decision_note":
             guard let text = (args["text"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -385,7 +411,9 @@ final class MCPServer {
                   !text.isEmpty else {
                 throw MCPError.invalidArguments("`text` is required.")
             }
-            let note = try store.appendToDaily(text: text)
+            let existingDailyNote = try store.dailyNote(for: Date())
+            let context = existingDailyNote == nil ? try requiredDecisionContext(from: args) : nil
+            let note = try store.appendToDaily(text: text, decisionContext: context)
             return "Added to today's note (\(note.id)). New length: \(note.text.count) chars."
 
         case "create_todo_list":
@@ -399,12 +427,14 @@ final class MCPServer {
             }
             let folderID = try resolveFolderArg(args)
             let text = todoListMarkdown(title: title, tasks: tasks)
+            let context = try requiredDecisionContext(from: args)
             let note = try store.addNote(
                 text: text,
                 generatedTitle: title,
-                folderID: folderID
+                folderID: folderID,
+                decisionContext: context
             )
-            return formatNoteCreated(note)
+            return "Created to-do list with decision context.\n\n" + formatNoteCreated(note) + "\n\n" + formatDecisionContext(for: note)
 
         case "add_todo":
             guard let idString = args["id"] as? String,
