@@ -182,6 +182,7 @@ private struct PreferencesArchive: Codable {
         AppPreferences.hasCompletedOnboardingKey,
         AppPreferences.colorSidebarKey,
         AppPreferences.colorTopBarKey,
+        AppPreferences.trueTransparentSidebarKey,
         AppAccentColor.storageKey,
         "SUEnableAutomaticChecks",
         "SUAutomaticallyUpdate",

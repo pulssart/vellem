@@ -1,3 +1,18 @@
+# Vellem 1.0.16
+
+This release adds the experimental true transparent sidebar setting for macOS 27.
+
+## What changed
+
+. Settings now has a True transparent sidebar toggle in Appearance.
+. When enabled, the sidebar uses a behind-window AppKit material so desktop content can show through more directly.
+. Archive export and import now preserve the transparent sidebar preference.
+
+## Validation
+
+. Built and launched locally with `bash script/build_and_run.sh run`.
+. Release artifact is signed, notarized, stapled, and ready for Sparkle updates.
+
 # Vellem 1.0.15
 
 This release fixes the macOS launch failure seen after installing or updating to 1.0.14.

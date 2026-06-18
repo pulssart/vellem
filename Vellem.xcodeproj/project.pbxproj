@@ -50,6 +50,7 @@
 		99182D879E75191E6D9B830A /* MobileMarkdownRenderedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32B561018BF0DCC9B5FC3B74 /* MobileMarkdownRenderedView.swift */; };
 		9A57A0453CCBD40B8265E252 /* VellemApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4237C4F0B607897B8B1D6069 /* VellemApp.swift */; };
 		9AE5D39B5FB80AEF1C4478DE /* NoteNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC017F0B5E3C20165F74A1F8 /* NoteNotifications.swift */; };
+		9C017C0A09486E7D35007B51 /* SidebarBehindWindowMaterial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03B14A9CBD48DF0E98D9F7E6 /* SidebarBehindWindowMaterial.swift */; };
 		9C4A831739041762B6D82E68 /* VellemMobileApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C73CBE79643466902E3D6D /* VellemMobileApp.swift */; };
 		A10521FE98F14E281828A713 /* SplitViewAutosave.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AA2CC87B4754004C3968D88 /* SplitViewAutosave.swift */; };
 		A7D9892DF8EC810BB4B30D99 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A21C416FE49D8BACA6D8E9A2 /* SettingsView.swift */; };
@@ -112,6 +113,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		03B14A9CBD48DF0E98D9F7E6 /* SidebarBehindWindowMaterial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarBehindWindowMaterial.swift; sourceTree = "<group>"; };
 		06BFC875C442588F75CDB14F /* Folder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Folder.swift; sourceTree = "<group>"; };
 		07546495A4639F9FA7727639 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		08C77AA15B4245DED43F2866 /* NotesArchiveService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesArchiveService.swift; sourceTree = "<group>"; };
@@ -344,6 +346,7 @@
 				9D31FD034B4CD8D85C052A6A /* QuickCaptureWindowConfigurator.swift */,
 				5BCB06CB1FECF1A8F5BC6E6D /* ScrambleTextEffect.swift */,
 				F4691F7E3E47E6CF811638C9 /* ShortcutFormatter.swift */,
+				03B14A9CBD48DF0E98D9F7E6 /* SidebarBehindWindowMaterial.swift */,
 				1AA2CC87B4754004C3968D88 /* SplitViewAutosave.swift */,
 				F9FBFC33F50F0D1A99BA19B8 /* WidgetReloader.swift */,
 			);
@@ -642,6 +645,7 @@
 				A7D9892DF8EC810BB4B30D99 /* SettingsView.swift in Sources */,
 				E797706A6007BFD3E21E36C0 /* ShortcutFormatter.swift in Sources */,
 				2898251A6A595DE42B505DE5 /* ShortcutRecorderView.swift in Sources */,
+				9C017C0A09486E7D35007B51 /* SidebarBehindWindowMaterial.swift in Sources */,
 				8AEF03B8D881872153AE07BA /* SlashCommandProcessor.swift in Sources */,
 				A10521FE98F14E281828A713 /* SplitViewAutosave.swift in Sources */,
 				CE35CCA9346942A425296E88 /* UpdateController.swift in Sources */,

@@ -42,6 +42,7 @@ struct RecentNotesView: View {
     @State private var isHoveringToday = false
     @State private var isHoveringFoldersHeader = false
     @AppStorage(AppPreferences.colorSidebarKey) private var colorSidebar = true
+    @AppStorage(AppPreferences.trueTransparentSidebarKey) private var trueTransparentSidebar = false
     @AppAccent private var accent
     private let sidebarIconSize: CGFloat = 18
     private let sidebarIconFrameWidth: CGFloat = 22
@@ -54,9 +55,7 @@ struct RecentNotesView: View {
 
     var body: some View {
         ZStack {
-            accent.color
-                .opacity(colorSidebar ? 0.12 : 0)
-                .ignoresSafeArea()
+            sidebarBackground
 
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 2) {
@@ -82,6 +81,18 @@ struct RecentNotesView: View {
         .tint(accent.color)
         .accentColor(accent.color)
         .navigationTitle("Vellem")
+    }
+
+    @ViewBuilder
+    private var sidebarBackground: some View {
+        if trueTransparentSidebar {
+            SidebarBehindWindowMaterial()
+                .ignoresSafeArea()
+        } else {
+            accent.color
+                .opacity(colorSidebar ? 0.12 : 0)
+                .ignoresSafeArea()
+        }
     }
 
     // MARK: - Sections
