@@ -6,6 +6,20 @@
         <description>Vellem updates</description>
         <language>en</language>
         <item>
+            <title>Version 1.1.0</title>
+            <sparkle:version>21</sparkle:version>
+            <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/pulssart/vellem/releases/download/v1.1.0/Vellem-1.1.0.dmg</link>
+            <sparkle:informationalUpdate>
+                <sparkle:belowVersion>21</sparkle:belowVersion>
+            </sparkle:informationalUpdate>
+            <description><![CDATA[<p>Versions antérieures à 1.1.0 : ouvrez le téléchargement puis glissez Vellem dans Applications. Les mises à jour suivantes peuvent être installées automatiquement.</p><p>Upgrading from a version before 1.1.0? Open the download and drag Vellem into Applications. Subsequent updates support automatic installation.</p>]]></description>
+            <pubDate>Wed, 25 Nov 2026 16:35:15 +0100</pubDate>
+            <enclosure url="https://github.com/pulssart/vellem/releases/download/v1.1.0/Vellem-1.1.0.dmg" sparkle:edSignature="s4pDLjEM4nYe/dnEZPOdpx+15FMJ/I1lW6TxOX4x1yBGuv71v5pazKXnAwTEuX7auXcu4s9WezoFoOWbk4pSCQ==" length="6858636" type="application/octet-stream" />
+        </item>
+
+        <item>
             <title>Version 1.0.16</title>
             <sparkle:version>18</sparkle:version>
             <sparkle:shortVersionString>1.0.16</sparkle:shortVersionString>

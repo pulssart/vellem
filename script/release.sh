@@ -223,6 +223,10 @@ if [ -n "${SPARKLE_BIN}" ] && [ -f "${APPCAST}" ]; then
             <sparkle:version>${BUILD_NUMBER}</sparkle:version>
             <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <link>${DMG_URL}</link>
+            <sparkle:informationalUpdate>
+                <sparkle:belowVersion>21</sparkle:belowVersion>
+            </sparkle:informationalUpdate>
             <pubDate>${PUB_DATE}</pubDate>
             <enclosure url="${DMG_URL}" ${SIG_LINE} type="application/octet-stream" />
         </item>
