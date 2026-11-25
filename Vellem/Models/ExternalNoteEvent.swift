@@ -7,6 +7,7 @@ enum ExternalNoteEvent {
 
     static func postCreated(noteID: Note.ID, source: String) {
         writeLatestChange(noteID: noteID, source: source)
+        guard VellemStorageEnvironment.isolatedDirectory == nil else { return }
         DistributedNotificationCenter.default().postNotificationName(
             createdName,
             object: nil,
@@ -20,6 +21,7 @@ enum ExternalNoteEvent {
 
     static func postChanged(noteID: Note.ID? = nil, source: String) {
         writeLatestChange(noteID: noteID, source: source)
+        guard VellemStorageEnvironment.isolatedDirectory == nil else { return }
         DistributedNotificationCenter.default().postNotificationName(
             createdName,
             object: nil,
@@ -56,7 +58,10 @@ enum ExternalNoteEvent {
     }
 
     static var eventURL: URL {
-        FileManager.default.homeDirectoryForCurrentUser
+        if let directory = VellemStorageEnvironment.isolatedDirectory {
+            return directory.appending(path: "external-note-event.json")
+        }
+        return FileManager.default.homeDirectoryForCurrentUser
             .appending(path: "Library/Group Containers/MKAFV9VL9V.com.adriendonot.Vellem/external-note-event.json")
     }
 

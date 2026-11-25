@@ -2,29 +2,8 @@ import AppKit
 import SwiftUI
 import WidgetKit
 
-private let widgetAppGroupID = "MKAFV9VL9V.com.adriendonot.Vellem"
-private let widgetAccentStorageKey = "appAccentColor"
-
-private func widgetAccentNSColor() -> NSColor {
-    let raw = UserDefaults(suiteName: widgetAppGroupID)?.string(forKey: widgetAccentStorageKey)
-        ?? UserDefaults.standard.string(forKey: widgetAccentStorageKey)
-    switch raw {
-    case "orange": return .systemOrange
-    case "red":    return .systemRed
-    case "pink":   return .systemPink
-    case "purple": return .systemPurple
-    case "blue":   return .systemBlue
-    case "green":  return .systemGreen
-    default:       return .systemYellow
-    }
-}
-
-private var widgetHeaderColor: Color {
-    Color(nsColor: widgetAccentNSColor()).opacity(0.30)
-}
-
 private extension URL {
-    static let vellemNewNote = vellemDeepLink(host: "new")
+    static let vellemInbox = vellemDeepLink(host: "inbox")
 
     static func vellemNote(_ id: UUID) -> URL {
         vellemDeepLink(host: "note", path: "/\(id.uuidString)")
@@ -49,26 +28,14 @@ struct WidgetNote: Identifiable, Codable {
     var updatedAt: Date
     var folderID: UUID? = nil
     var provenance: String? = nil
+    var outputFormat: String? = nil
 
     var title: String {
-        if let generatedTitle,
-           !generatedTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            let cleanedTitle = generatedTitle.vellemDisplayText
-            return cleanedTitle.isEmpty ? "Untitled" : cleanedTitle
-        }
-
-        let line = text
-            .split(whereSeparator: \.isNewline)
-            .first
-            .map(String.init)?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-
-        let cleanedTitle = line.vellemDisplayText
-        return cleanedTitle.isEmpty ? "Untitled" : cleanedTitle
+        text.vellemTitle(explicit: generatedTitle, format: outputFormat)
     }
 
     var preview: String {
-        text.vellemDisplayText
+        text.vellemPreview(removingTitle: title, format: outputFormat)
     }
 
     var isDailyNote: Bool {
@@ -105,7 +72,7 @@ struct VellemEntry: TimelineEntry {
 struct VellemProvider: TimelineProvider {
     func placeholder(in context: Context) -> VellemEntry {
         VellemEntry(date: .now, notes: [
-            WidgetNote(id: UUID(), text: "Capture the thought before it evaporates.", createdAt: .now, updatedAt: .now)
+            WidgetNote(id: UUID(), text: VellemLanguage.text("Project review\nThe prototype is ready for testing."), createdAt: .now, updatedAt: .now)
         ], status: nil)
     }
 
@@ -188,7 +155,7 @@ struct VellemProvider: TimelineProvider {
             return "Claude"
         }
         let sourceApp = note.sourceApp?.trimmingCharacters(in: .whitespacesAndNewlines)
-        return sourceApp?.isEmpty == false ? sourceApp : "Sans dossier"
+        return sourceApp?.isEmpty == false ? sourceApp : VellemLanguage.text("No folder")
     }
 }
 
@@ -206,13 +173,14 @@ struct VellemWidgetView: View {
                 .padding(.bottom, 18)
         }
         .containerBackground(.background, for: .widget)
+        .tint(.primary)
     }
 
     @ViewBuilder
     private var content: some View {
         VStack(alignment: .leading, spacing: contentSpacing) {
             if entry.notes.isEmpty {
-                Text(entry.status ?? "No notes yet.")
+                Text(LocalizedStringKey(entry.status ?? "No notes yet."))
                     .font(.callout)
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -237,14 +205,16 @@ struct VellemWidgetView: View {
             Text("Inbox")
                 .font(.headline)
             Spacer()
-            Link(destination: .vellemNewNote) {
-                Image(systemName: "plus")
+            Link(destination: .vellemInbox) {
+                Image(systemName: "arrow.up.forward.app")
+                    .foregroundStyle(.primary)
+                    .accessibilityLabel("Open inbox")
                     .font(.system(size: 14, weight: .medium))
             }
         }
         .padding(.horizontal, horizontalPadding)
         .frame(height: headerHeight)
-        .background(widgetHeaderColor)
+        .background(.primary.opacity(0.055))
     }
 
     private var horizontalPadding: CGFloat {
@@ -327,10 +297,10 @@ struct VellemWidget: Widget {
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: VellemProvider()) { entry in
-            VellemWidgetView(entry: entry)
+            VellemWidgetView(entry: entry).environment(\.locale, VellemLanguage.current.locale)
         }
         .configurationDisplayName("Vellem")
-        .description("Inbox notes and one-tap capture.")
+        .description("Read the latest messages in your inbox.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .systemExtraLarge])
         .contentMarginsDisabled()
     }

@@ -1,447 +1,217 @@
 import SwiftUI
+import UniformTypeIdentifiers
+import WebKit
 
-/// Read-only-feeling rendered markdown view. Edits go back through the binding when
-/// the user toggles a todo checkbox.
 struct MarkdownRenderedView: View {
-    @Binding var text: String
-    var textSizeStep: Int = 0
-    var contentPadding: EdgeInsets = EdgeInsets(top: 18, leading: 20, bottom: 18, trailing: 20)
-    @AppAccent private var accent
+    let note: Note
+    var textSizeStep = 0
+    var showsEnvelope = false
+    var agent: InboxAgent?
+    var folderName: String?
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.locale) private var locale
+    @State private var unavailable = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 6) {
-                ForEach(Array(parsedBlocks.enumerated()), id: \.offset) { _, block in
-                    blockView(block)
+        if unavailable {
+            ScrollView {
+                VStack(alignment: .leading) {
+                    if showsEnvelope { InboxEnvelope(note: note, agent: agent, folder: folderName) }
+                    Text(verbatim: note.text)
+                        .font(.system(size: CGFloat(16 + 2 * textSizeStep)))
                         .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-            .padding(.top, contentPadding.top)
-            .padding(.bottom, contentPadding.bottom)
-            .padding(.leading, contentPadding.leading)
-            .padding(.trailing, contentPadding.trailing)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .textSelection(.enabled)
-        .background(Color(nsColor: .textBackgroundColor))
-    }
-
-    // MARK: - Parsing
-
-    private var parsedBlocks: [RenderedBlock] {
-        var blocks: [RenderedBlock] = []
-        let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
-        var index = 0
-        while index < lines.count {
-            let rawLine = lines[index]
-            let cleaned = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
-            if cleaned.isEmpty {
-                blocks.append(.space)
-                index += 1
-                continue
-            }
-
-            if let fence = codeFenceMarker(in: cleaned) {
-                let language = cleaned.dropFirst(fence.count).trimmingCharacters(in: .whitespaces)
-                var codeLines: [String] = []
-                var cursor = index + 1
-                while cursor < lines.count {
-                    let next = lines[cursor]
-                    if next.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix(fence) {
-                        cursor += 1
-                        break
+                    ForEach(note.replies ?? []) { reply in
+                        Divider()
+                        Text(verbatim: reply.question).font(.headline)
+                        Text(verbatim: reply.delivery == nil ? reply.answer : VellemLanguage.serviceMessage(reply.answer, locale: locale))
                     }
-                    codeLines.append(next)
-                    cursor += 1
                 }
-                blocks.append(.code(codeLines.joined(separator: "\n"), language: language.isEmpty ? nil : language))
-                index = cursor
-                continue
+                .padding(24)
             }
+            .textSelection(.enabled)
+        } else {
+            MessageDocumentView(
+                content: ReaderContent(note: note, envelope: showsEnvelope, agent: agent, folder: folderName, locale: locale),
+                size: 16 + 2 * textSizeStep, dark: colorScheme == .dark,
+                onFailure: { unavailable = true }
+            )
+        }
+    }
+}
 
-            if isTableRow(cleaned),
-               index + 1 < lines.count,
-               let alignments = parseTableSeparator(lines[index + 1].trimmingCharacters(in: .whitespacesAndNewlines)) {
-                let headers = parseTableCells(cleaned)
-                var rows: [[String]] = []
-                var cursor = index + 2
-                while cursor < lines.count {
-                    let next = lines[cursor].trimmingCharacters(in: .whitespacesAndNewlines)
-                    if !isTableRow(next) { break }
-                    rows.append(parseTableCells(next))
-                    cursor += 1
-                }
-                let columnCount = max(headers.count, alignments.count)
-                let normalized = padAlignments(alignments, to: columnCount)
-                blocks.append(.table(headers: headers, rows: rows, alignments: normalized))
-                index = cursor
-                continue
+private struct ReaderContent: Equatable {
+    let id: UUID
+    let text: String
+    let title: String
+    let format: String
+    let envelope: Bool
+    let agent: InboxAgent?
+    let sender: String
+    let folder: String
+    let locale: Locale
+    let date: String
+    let replies: [NoteReply]
+
+    init(note: Note, envelope: Bool, agent: InboxAgent?, folder: String?, locale: Locale) {
+        self.locale = locale
+        id = note.id
+        replies = note.replies ?? []
+        text = note.text
+        title = note.title
+        format = note.outputFormat?.rawValue ?? "markdown"
+        self.envelope = envelope
+        self.agent = agent
+        sender = agent?.rawValue ?? note.inboxSender
+        self.folder = folder ?? note.sourceURL?.host ?? ""
+        date = note.updatedAt.formatted(.dateTime.month(.abbreviated).day().hour().minute().locale(locale))
+    }
+}
+
+private struct MessageDocumentView: NSViewRepresentable {
+    let content: ReaderContent
+    let size: Int
+    let dark: Bool
+    let onFailure: () -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeNSView(context: Context) -> WKWebView {
+        let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = .nonPersistent()
+        configuration.setURLSchemeHandler(ReaderImageHandler(), forURLScheme: "vellem-image")
+        configuration.userContentController.add(context.coordinator, name: "copyCode")
+        let view = WKWebView(frame: .zero, configuration: configuration)
+        view.navigationDelegate = context.coordinator
+        context.coordinator.update(self, in: view)
+        if let page = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "ReaderResources") {
+            context.coordinator.page = page
+            view.loadFileURL(page, allowingReadAccessTo: page.deletingLastPathComponent())
+        } else {
+            DispatchQueue.main.async { onFailure() }
+        }
+        return view
+    }
+
+    func updateNSView(_ view: WKWebView, context: Context) { context.coordinator.update(self, in: view) }
+
+    static func dismantleNSView(_ view: WKWebView, coordinator: Coordinator) {
+        view.navigationDelegate = nil
+        view.configuration.userContentController.removeScriptMessageHandler(forName: "copyCode")
+        view.stopLoading()
+    }
+
+    @MainActor
+    final class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
+        var page: URL?
+        private var pending: MessageDocumentView?
+        private var displayed: ReaderContent?
+        private var currentSize: Int?
+        private var currentDark: Bool?
+        private var ready = false
+        private var retried = false
+        private static var icons = [String: String]()
+
+        func update(_ reader: MessageDocumentView, in webView: WKWebView) {
+            pending = reader
+            guard ready else { return }
+            let appearanceChanged = currentDark != reader.dark || currentSize != reader.size
+            let reload = displayed != reader.content || currentDark != reader.dark
+            guard appearanceChanged || reload else { return }
+            let item = reader.content
+            var args: [String: Any] = ["size": reader.size, "dark": reader.dark]
+            var script = "readerAppearance(size, dark);"
+            if reload {
+                args["item"] = [
+                    "id": item.id.uuidString, "you": VellemLanguage.text("You", locale: item.locale),
+                    "language": item.locale.language.languageCode?.identifier ?? "en", "labels": VellemLanguage.readerLabels(locale: item.locale),
+                    "replies": item.replies.map { ["id": $0.id.uuidString, "question": $0.question, "answer": $0.delivery == nil ? $0.answer : VellemLanguage.serviceMessage($0.answer, locale: item.locale), "delivery": $0.delivery?.rawValue ?? "completed"] },
+                    "text": item.text, "title": item.title, "format": item.format,
+                    "envelope": item.envelope, "sender": item.sender, "folder": item.folder, "date": item.date,
+                    "icon": item.envelope ? Self.icon(for: item.agent, dark: reader.dark) : ""
+                ] as [String: Any]
+                script += "renderMessage(item);"
             }
+            currentSize = reader.size
+            currentDark = reader.dark
+            displayed = item
+            webView.callAsyncJavaScript(script, arguments: args, in: nil, in: .page) { [weak self] result in
+                if case .failure = result, self?.displayed?.id == item.id { self?.pending?.onFailure() }
+            }
+        }
 
-            if let image = MarkdownImage.parse(cleaned) {
-                blocks.append(.image(image))
-            } else if let heading = parseHeading(cleaned) {
-                blocks.append(.heading(heading.text, level: heading.level))
-            } else if let todo = parseTodo(cleaned, lineIndex: index) {
-                blocks.append(todo)
-            } else if cleaned == "---" || cleaned == "***" || cleaned == "___" {
-                blocks.append(.divider)
-            } else if isQuoteLine(cleaned) {
-                var quoteLines: [String] = []
-                var cursor = index
-                while cursor < lines.count {
-                    let next = lines[cursor].trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard isQuoteLine(next) else { break }
-                    quoteLines.append(stripQuoteMarker(from: next))
-                    cursor += 1
-                }
-                blocks.append(.quote(quoteLines.joined(separator: "\n")))
-                index = cursor
-                continue
-            } else if cleaned.hasPrefix("- ") || cleaned.hasPrefix("* ") {
-                blocks.append(.bullet(String(cleaned.dropFirst(2))))
-            } else if let ordered = parseOrderedList(cleaned) {
-                blocks.append(.ordered(marker: ordered.marker, text: ordered.text))
+        private static func icon(for agent: InboxAgent?, dark: Bool) -> String {
+            let key = (agent?.rawValue ?? "") + (dark ? ".dark" : ".light")
+            if let cached = icons[key] { return cached }
+            let renderer = ImageRenderer(content: AgentMark(agent: agent, size: 34)
+                .environment(\.colorScheme, dark ? .dark : .light))
+            renderer.scale = 2
+            guard let image = renderer.cgImage,
+                  let png = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else { return "" }
+            let uri = "data:image/png;base64," + png.base64EncodedString()
+            icons[key] = uri
+            return uri
+        }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            ready = true
+            if let pending { update(pending, in: webView) }
+        }
+
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            if (error as NSError).code != NSURLErrorCancelled { pending?.onFailure() }
+        }
+
+        func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+            guard let page, !retried else { pending?.onFailure(); return }
+            retried = true
+            ready = false
+            displayed = nil
+            currentSize = nil
+            webView.loadFileURL(page, allowingReadAccessTo: page.deletingLastPathComponent())
+        }
+
+        func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+            guard message.frameInfo.isMainFrame, message.name == "copyCode", let text = message.body as? String else { return }
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(text, forType: .string)
+        }
+
+        func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
+                     decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void) {
+            guard let url = action.request.url else { decisionHandler(.cancel); return }
+            if url.isFileURL, url.path == page?.path, action.targetFrame?.isMainFrame == true {
+                decisionHandler(.allow)
             } else {
-                blocks.append(.paragraph(cleaned))
-            }
-            index += 1
-        }
-        return blocks
-    }
-
-    private func parseTodo(_ line: String, lineIndex: Int) -> RenderedBlock? {
-        guard let todo = MarkdownTodo.parse(line) else { return nil }
-        return .todo(text: todo.text, checked: todo.checked, lineIndex: lineIndex)
-    }
-
-    private func codeFenceMarker(in line: String) -> String? {
-        if line.hasPrefix("```") { return "```" }
-        if line.hasPrefix("~~~") { return "~~~" }
-        return nil
-    }
-
-    private func parseHeading(_ line: String) -> (level: Int, text: String)? {
-        var level = 0
-        for character in line {
-            guard character == "#" else { break }
-            level += 1
-        }
-        guard (1...6).contains(level),
-              line.count > level,
-              line[line.index(line.startIndex, offsetBy: level)] == " " else {
-            return nil
-        }
-        return (level, String(line.dropFirst(level + 1)))
-    }
-
-    private func isQuoteLine(_ line: String) -> Bool {
-        line == ">" || line.hasPrefix("> ")
-    }
-
-    private func stripQuoteMarker(from line: String) -> String {
-        line == ">" ? "" : String(line.dropFirst(2))
-    }
-
-    private func parseOrderedList(_ line: String) -> (marker: String, text: String)? {
-        guard let marker = orderedListMarker(in: line) else { return nil }
-        return (marker.trimmingCharacters(in: .whitespaces), String(line.dropFirst(marker.count)))
-    }
-
-    private func orderedListMarker(in line: String) -> String? {
-        var cursor = line.startIndex
-        var hasDigit = false
-        while cursor < line.endIndex, line[cursor].isNumber {
-            hasDigit = true
-            cursor = line.index(after: cursor)
-        }
-        guard hasDigit, cursor < line.endIndex else { return nil }
-        guard line[cursor] == "." || line[cursor] == ")" else { return nil }
-        let afterDelimiter = line.index(after: cursor)
-        guard afterDelimiter < line.endIndex, line[afterDelimiter] == " " else { return nil }
-        return String(line[...afterDelimiter])
-    }
-
-    private func isTableRow(_ line: String) -> Bool {
-        line.hasPrefix("|") && line.hasSuffix("|") && line.count >= 2
-    }
-
-    private func parseTableCells(_ line: String) -> [String] {
-        line.trimmingCharacters(in: CharacterSet(charactersIn: "|"))
-            .split(separator: "|", omittingEmptySubsequences: false)
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-    }
-
-    private func parseTableSeparator(_ line: String) -> [TableAlignment]? {
-        guard isTableRow(line) else { return nil }
-        let cells = parseTableCells(line)
-        guard !cells.isEmpty else { return nil }
-        var alignments: [TableAlignment] = []
-        for cell in cells {
-            let stripped = cell.trimmingCharacters(in: .whitespaces)
-            let dashChars = stripped.filter { $0 == "-" || $0 == ":" }
-            guard dashChars.count == stripped.count, stripped.contains("-") else { return nil }
-            switch (stripped.hasPrefix(":"), stripped.hasSuffix(":")) {
-            case (true, true): alignments.append(.center)
-            case (false, true): alignments.append(.trailing)
-            default: alignments.append(.leading)
-            }
-        }
-        return alignments
-    }
-
-    private func padAlignments(_ alignments: [TableAlignment], to count: Int) -> [TableAlignment] {
-        alignments.count >= count
-            ? alignments
-            : alignments + Array(repeating: .leading, count: count - alignments.count)
-    }
-
-    // MARK: - Rendering
-
-    @ViewBuilder
-    private func blockView(_ block: RenderedBlock) -> some View {
-        switch block {
-        case .heading(let value, let level):
-            Text(inlineMarkdown(value))
-                .font(headingFont(for: level))
-                .fontWeight(.semibold)
-                .lineSpacing(2 + textSizeOffset * 0.35)
-                .padding(.top, level == 1 ? 2 : 8)
-        case .paragraph(let value):
-            Text(inlineMarkdown(value))
-                .font(.system(size: bodyTextSize))
-                .lineSpacing(bodyLineSpacing)
-        case .bullet(let value):
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text("•")
-                    .font(.system(size: bodyTextSize))
-                    .foregroundStyle(.secondary)
-                Text(inlineMarkdown(value))
-                    .font(.system(size: bodyTextSize))
-                    .lineSpacing(bodyLineSpacing)
-            }
-            .padding(.bottom, bulletBottomPadding)
-        case .ordered(let marker, let value):
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(marker)
-                    .font(.system(size: bodyTextSize))
-                    .foregroundStyle(.secondary)
-                    .frame(minWidth: 24, alignment: .trailing)
-                Text(inlineMarkdown(value))
-                    .font(.system(size: bodyTextSize))
-                    .lineSpacing(bodyLineSpacing)
-            }
-            .padding(.bottom, bulletBottomPadding)
-        case .todo(let value, let checked, let lineIndex):
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Button {
-                    toggleTodo(at: lineIndex)
-                } label: {
-                    Image(systemName: checked ? "checkmark.square.fill" : "square")
-                        .font(.system(size: bodyTextSize + 2))
-                        .foregroundStyle(checked ? accent.color : Color.secondary)
-                        .contentTransition(.symbolEffect(.replace))
-                }
-                .buttonStyle(.plain)
-                .help(checked ? "Mark as not done" : "Mark as done")
-
-                Text(inlineMarkdown(value))
-                    .font(.system(size: bodyTextSize))
-                    .strikethrough(checked, color: .secondary)
-                    .foregroundStyle(checked ? .secondary : .primary)
-                    .lineSpacing(bodyLineSpacing)
-            }
-            .padding(.bottom, bulletBottomPadding)
-        case .quote(let value):
-            HStack(spacing: 10) {
-                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(accent.color.opacity(0.6))
-                    .frame(width: 3)
-                Text(inlineMarkdown(value))
-                    .font(.system(size: bodyTextSize).italic())
-                    .foregroundStyle(.secondary)
-                    .lineSpacing(bodyLineSpacing)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        case .divider:
-            Divider().padding(.vertical, 6)
-        case .code(let value, let language):
-            VStack(alignment: .leading, spacing: 8) {
-                if let language {
-                    Text(language.uppercased())
-                        .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                }
-                ScrollView(.horizontal, showsIndicators: false) {
-                    Text(value.isEmpty ? " " : value)
-                        .font(.system(size: max(13, bodyTextSize - 1), design: .monospaced))
-                        .foregroundStyle(.primary)
-                        .textSelection(.enabled)
-                        .padding(12)
+                decisionHandler(.cancel)
+                if action.navigationType == .linkActivated, ["https", "http", "mailto"].contains(url.scheme?.lowercased()) {
+                    NSWorkspace.shared.open(url)
                 }
             }
-            .background(Color(nsColor: .controlBackgroundColor).opacity(0.75))
-            .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(Color(nsColor: .separatorColor).opacity(0.7), lineWidth: 1)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-            .padding(.vertical, 5)
-        case .table(let headers, let rows, let alignments):
-            MarkdownTableView(
-                headers: headers,
-                rows: rows,
-                alignments: alignments,
-                fontSize: bodyTextSize
-            )
-        case .image(let image):
-            NoteImageView(image: image)
-        case .space:
-            Spacer().frame(height: 2)
         }
-    }
-
-    // MARK: - Mutation
-
-    private func toggleTodo(at lineIndex: Int) {
-        var lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
-        guard lineIndex >= 0, lineIndex < lines.count else { return }
-        let original = lines[lineIndex]
-        let leading = original.prefix { $0 == " " || $0 == "\t" }
-        let trimmed = String(original.dropFirst(leading.count))
-
-        guard let updated = MarkdownTodo.toggledBody(trimmed) else { return }
-
-        lines[lineIndex] = String(leading) + updated
-        text = lines.joined(separator: "\n")
-    }
-
-    // MARK: - Helpers
-
-    private var textSizeOffset: CGFloat { CGFloat(textSizeStep) * 2 }
-    private var bodyTextSize: CGFloat { 16 + textSizeOffset }
-    private var bodyLineSpacing: CGFloat { 5 + textSizeOffset * 0.45 }
-    private var bulletBottomPadding: CGFloat { 6 + textSizeOffset * 0.25 }
-
-    private func headingFont(for level: Int) -> Font {
-        switch level {
-        case 1: .system(size: 28 + textSizeOffset)
-        case 2: .system(size: 22 + textSizeOffset)
-        case 3: .system(size: 18 + textSizeOffset)
-        case 4: .system(size: 16 + textSizeOffset)
-        case 5: .system(size: 15 + textSizeOffset)
-        default: .system(size: 14 + textSizeOffset)
-        }
-    }
-
-    private func inlineMarkdown(_ value: String) -> AttributedString {
-        (try? AttributedString(markdown: value)) ?? AttributedString(value)
     }
 }
 
-enum RenderedBlock {
-    case heading(String, level: Int)
-    case paragraph(String)
-    case bullet(String)
-    case ordered(marker: String, text: String)
-    case todo(text: String, checked: Bool, lineIndex: Int)
-    case quote(String)
-    case divider
-    case code(String, language: String?)
-    case table(headers: [String], rows: [[String]], alignments: [TableAlignment])
-    case image(MarkdownImage)
-    case space
-}
-
-struct MarkdownTodo {
-    struct Match {
-        let text: String
-        let checked: Bool
-    }
-
-    private struct MarkerMatch {
-        let checked: Bool
-        let text: String
-        let checkboxRange: Range<String.Index>
-    }
-
-    private static let checkboxMarkers: [(marker: String, checked: Bool)] = [
-        ("[ ]", false),
-        ("[x]", true),
-        ("[X]", true)
-    ]
-
-    private static let listPrefixes = ["", "- ", "* ", ". ", "• "]
-
-    static func parse(_ line: String) -> Match? {
-        guard let match = markerMatch(in: line) else { return nil }
-        return Match(text: match.text, checked: match.checked)
-    }
-
-    static func toggledBody(_ body: String) -> String? {
-        guard let match = markerMatch(in: body) else { return nil }
-        var updated = body
-        updated.replaceSubrange(match.checkboxRange, with: match.checked ? "[ ]" : "[x]")
-        return updated
-    }
-
-    private static func markerMatch(in line: String) -> MarkerMatch? {
-        for prefix in listPrefixes {
-            if let match = markerMatch(in: line, after: prefix) {
-                return match
-            }
+private final class ReaderImageHandler: NSObject, WKURLSchemeHandler {
+    func webView(_ webView: WKWebView, start task: WKURLSchemeTask) {
+        do {
+            guard let url = task.request.url, url.host == "attachment",
+                  let path = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "path" })?.value
+            else { throw CocoaError(.fileReadInvalidFileName) }
+            let root = AppGroup.attachmentsURL.resolvingSymlinksInPath().standardizedFileURL
+            let relativePath = path.hasPrefix("Attachments/") ? String(path.dropFirst("Attachments/".count)) : path
+            let file = (path.hasPrefix("/") ? URL(fileURLWithPath: path) : root.appendingPathComponent(relativePath))
+                .resolvingSymlinksInPath().standardizedFileURL
+            guard file.path.hasPrefix(root.path + "/"),
+                  let type = UTType(filenameExtension: file.pathExtension), type.conforms(to: .image),
+                  let mime = type.preferredMIMEType else { throw CocoaError(.fileReadNoPermission) }
+            let data = try Data(contentsOf: file, options: .mappedIfSafe)
+            task.didReceive(URLResponse(url: url, mimeType: mime, expectedContentLength: data.count, textEncodingName: nil))
+            task.didReceive(data)
+            task.didFinish()
+        } catch {
+            task.didFailWithError(error)
         }
-
-        if let prefix = orderedListPrefix(in: line),
-           let match = markerMatch(in: line, after: prefix) {
-            return match
-        }
-
-        return nil
     }
 
-    private static func markerMatch(in line: String, after prefix: String) -> MarkerMatch? {
-        guard line.hasPrefix(prefix) else { return nil }
-        let checkboxStart = line.index(line.startIndex, offsetBy: prefix.count)
-
-        for checkbox in checkboxMarkers {
-            guard line[checkboxStart...].hasPrefix(checkbox.marker) else { continue }
-            let checkboxEnd = line.index(checkboxStart, offsetBy: checkbox.marker.count)
-            if checkboxEnd == line.endIndex {
-                return MarkerMatch(
-                    checked: checkbox.checked,
-                    text: "",
-                    checkboxRange: checkboxStart..<checkboxEnd
-                )
-            }
-
-            guard line[checkboxEnd] == " " else { continue }
-            let textStart = line.index(after: checkboxEnd)
-            return MarkerMatch(
-                checked: checkbox.checked,
-                text: String(line[textStart...]),
-                checkboxRange: checkboxStart..<checkboxEnd
-            )
-        }
-
-        return nil
-    }
-
-    private static func orderedListPrefix(in line: String) -> String? {
-        var cursor = line.startIndex
-        var hasDigit = false
-
-        while cursor < line.endIndex, line[cursor].isNumber {
-            hasDigit = true
-            cursor = line.index(after: cursor)
-        }
-
-        guard hasDigit, cursor < line.endIndex else { return nil }
-        let delimiter = line[cursor]
-        guard delimiter == "." || delimiter == ")" else { return nil }
-
-        let afterDelimiter = line.index(after: cursor)
-        guard afterDelimiter < line.endIndex, line[afterDelimiter] == " " else { return nil }
-        return String(line[...afterDelimiter])
-    }
+    func webView(_ webView: WKWebView, stop task: WKURLSchemeTask) {}
 }

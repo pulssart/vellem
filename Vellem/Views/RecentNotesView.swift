@@ -2,370 +2,182 @@ import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
 
-extension FolderColor {
-    var swiftUIColor: Color {
-        Color(nsColor: nsColor)
-    }
+struct MailboxFolderPanel: View {
+    @ObservedObject var store: NotesStore
+    let isFullScreen: Bool
+    let close: () -> Void
+    let onNavigate: () -> Void
+    @State private var naming: FolderNameRequest?
+    @State private var confirmDeletion: Folder?
+    @State private var hovered: UUID?
+    @State private var dropTarget: UUID?
 
-    var nsColor: NSColor {
-        switch self {
-        case .yellow: return .systemYellow
-        case .orange: return .systemOrange
-        case .red:    return .systemRed
-        case .pink:   return .systemPink
-        case .purple: return .systemPurple
-        case .blue:   return .systemBlue
-        case .teal:   return .systemTeal
-        case .green:  return .systemGreen
-        case .gray:   return .systemGray
+    private var root: SidebarMailbox { store.sidebarRoot }
+    private var folders: [Folder] {
+        root.visibleFolders(in: store.folders, notes: store.notes)
+    }
+    private var rootLabel: LocalizedStringKey {
+        switch root {
+        case .today: "Today’s notes"
+        case .folders: "All filed notes"
+        default: "All notes"
         }
     }
 
-    func dotImage(diameter: CGFloat = 12) -> NSImage {
-        let size = NSSize(width: diameter, height: diameter)
-        let image = NSImage(size: size)
-        image.lockFocus()
-        nsColor.setFill()
-        NSBezierPath(ovalIn: NSRect(origin: .zero, size: size)).fill()
-        image.unlockFocus()
-        image.isTemplate = false
-        return image
-    }
-}
-
-struct RecentNotesView: View {
-    @ObservedObject var store: NotesStore
-    @State private var renamingFolderID: UUID?
-    @State private var renameDraft: String = ""
-    @State private var hoveredFolderID: UUID?
-    @State private var isHoveringInbox = false
-    @State private var isHoveringToday = false
-    @State private var isHoveringFoldersHeader = false
-    @AppStorage(AppPreferences.colorSidebarKey) private var colorSidebar = true
-    @AppStorage(AppPreferences.trueTransparentSidebarKey) private var trueTransparentSidebar = false
-    @AppAccent private var accent
-    private let sidebarIconSize: CGFloat = 18
-    private let sidebarIconFrameWidth: CGFloat = 22
-    // Static: NSColor(dynamicProvider:) adapts at draw time — no need to recreate each render.
-    private static let smartFolderInk = Color(nsColor: NSColor(name: nil, dynamicProvider: { appearance in
-        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-            ? NSColor(calibratedWhite: 0.85, alpha: 1)
-            : NSColor(calibratedWhite: 0.22, alpha: 1)
-    }))
-
     var body: some View {
-        ZStack {
-            sidebarBackground
+        let rootHasUnread = store.hasUnread(in: root)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text(LocalizedStringKey(root.title)).font(.system(size: 17, weight: .semibold)).lineLimit(1)
+                Spacer(minLength: 4)
+                Button(action: close) { Image(systemName: "sidebar.left") }
+                    .help("Collapse folders").accessibilityLabel("Collapse folders")
+            }
+            .padding(.horizontal, 14).frame(height: 45)
+            .background { Color.clear.contentShape(Rectangle()).gesture(WindowDragGesture()) }
+
+            Button {
+                onNavigate()
+                store.selectRoot(root)
+            } label: {
+                HStack {
+                    Label(rootLabel, systemImage: "tray.2")
+                    Spacer(minLength: 2)
+                    if rootHasUnread { MailboxUnreadDot() }
+                }
+                .font(.system(size: 13, weight: .medium)).padding(.horizontal, 10)
+                .frame(height: 32).contentShape(Rectangle())
+            }
+            .background(.white.opacity(store.selectedFolderID == nil ? 0.12 : 0), in: RoundedRectangle(cornerRadius: 7))
+            .accessibilityAddTraits(store.selectedFolderID == nil ? .isSelected : [])
+            .accessibilityValue(rootHasUnread ? Text("Unread") : Text(""))
+            .padding(.horizontal, 8)
+
+            HStack {
+                Text("Folders").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
+                Spacer()
+                Button { naming = FolderNameRequest(folder: nil) } label: {
+                    Image(systemName: "plus").frame(width: 24, height: 24).contentShape(Rectangle())
+                }.help("New folder").accessibilityLabel("New folder")
+            }.padding(.leading, 16).padding(.trailing, 9).padding(.top, 22)
 
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 2) {
-                    inboxRow
-
-                    todayRow
-
-                    if hasItemsBelowTopSection {
-                        sectionGap
-                    }
-
-                    systemFoldersSection
-
-                    if !systemFolders.isEmpty && !regularFolders.isEmpty {
-                        sectionGap
-                    }
-
-                    foldersSection
-                }
-                .padding(.vertical, 8)
-            }
-        }
-        .tint(accent.color)
-        .accentColor(accent.color)
-        .navigationTitle("Vellem")
-    }
-
-    @ViewBuilder
-    private var sidebarBackground: some View {
-        if trueTransparentSidebar {
-            SidebarBehindWindowMaterial()
-                .ignoresSafeArea()
-        } else {
-            accent.color
-                .opacity(colorSidebar ? 0.12 : 0)
-                .ignoresSafeArea()
-        }
-    }
-
-    // MARK: - Sections
-
-    private var inboxRow: some View {
-        let count = store.inboxUnreadCount
-
-        return HStack(spacing: 8) {
-            Image(systemName: "tray.full")
-                .font(.system(size: sidebarIconSize, weight: .semibold))
-                .foregroundStyle(Self.smartFolderInk)
-                .frame(width: sidebarIconFrameWidth, alignment: .leading)
-
-            Text("Inbox")
-                .font(.system(size: 15))
-                .lineLimit(1)
-
-            Spacer()
-
-            if count > 0 {
-                Text("\(count)")
-                    .font(.system(size: 13))
-                    .foregroundStyle(.tertiary)
-            }
-        }
-        .padding(.leading, 8)
-        .padding(.trailing, 10)
-        .padding(.vertical, 7)
-        .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(store.isInboxSelected ? accent.color.opacity(0.34) : (isHoveringInbox ? accent.color.opacity(0.18) : Color.clear))
-        )
-        .padding(.leading, 8)
-        .padding(.trailing, 8)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            store.selectInbox()
-        }
-        .onHover { hovering in
-            isHoveringInbox = hovering
-        }
-    }
-
-    private var todayRow: some View {
-        let count = store.todayUnreadCount
-
-        return HStack(spacing: 8) {
-            Image(systemName: "calendar")
-                .font(.system(size: sidebarIconSize, weight: .semibold))
-                .foregroundStyle(Self.smartFolderInk)
-                .frame(width: sidebarIconFrameWidth, alignment: .leading)
-
-            Text("Today")
-                .font(.system(size: 15))
-                .lineLimit(1)
-
-            Spacer()
-
-            if count > 0 {
-                Text("\(count)")
-                    .font(.system(size: 13))
-                    .foregroundStyle(.tertiary)
-            }
-        }
-        .padding(.leading, 8)
-        .padding(.trailing, 10)
-        .padding(.vertical, 7)
-        .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(store.isTodaySelected ? accent.color.opacity(0.34) : (isHoveringToday ? accent.color.opacity(0.18) : Color.clear))
-        )
-        .padding(.leading, 8)
-        .padding(.trailing, 8)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            store.selectToday()
-        }
-        .onHover { hovering in
-            isHoveringToday = hovering
-        }
-    }
-
-    private var foldersSection: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            folderSectionHeader
-
-            if !regularFolders.isEmpty {
-                ForEach(regularFolders) { folder in
-                    folderRow(folder)
-                }
-            }
-        }
-    }
-
-    private var systemFoldersSection: some View {
-        Group {
-            if !systemFolders.isEmpty {
-                sectionHeader("Smart folders")
-
-                ForEach(systemFolders) { folder in
-                    folderRow(folder)
-                }
-            }
-        }
-    }
-
-    private var sectionGap: some View {
-        Color.clear
-            .frame(height: 12)
-    }
-
-    private var folderSectionHeader: some View {
-        HStack(spacing: 6) {
-            Text("Folders")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-
-            Button {
-                addFolder()
-            } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 10, weight: .semibold))
-                    .frame(width: 15, height: 15)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            .opacity(isHoveringFoldersHeader ? 1 : 0)
-            .allowsHitTesting(isHoveringFoldersHeader)
-            .help("New folder")
-        }
-        .padding(.horizontal, 12)
-        .padding(.top, 6)
-        .contentShape(Rectangle())
-        .onHover { hovering in
-            isHoveringFoldersHeader = hovering
-        }
-    }
-
-    private func folderRow(_ folder: Folder) -> some View {
-        let isHovering = hoveredFolderID == folder.id
-        let isSelected = !store.isInboxSelected && !store.isTodaySelected && store.selectedFolderID == folder.id
-        let count = store.unreadNoteCountForDisplay(in: folder)
-
-        return HStack(spacing: 8) {
-            Image(systemName: folderIconName(for: folder, selected: isSelected))
-                .font(.system(size: sidebarIconSize, weight: .semibold))
-                .foregroundStyle(folderIconColor(for: folder))
-                .frame(width: sidebarIconFrameWidth, alignment: .leading)
-
-            if renamingFolderID == folder.id {
-                TextField("Folder name", text: $renameDraft, onCommit: {
-                    store.renameFolder(folder.id, to: renameDraft)
-                    renamingFolderID = nil
-                })
-                .textFieldStyle(.roundedBorder)
-                .onExitCommand { renamingFolderID = nil }
-            } else {
-                Text(folder.name)
-                    .font(.system(size: 15))
-                    .lineLimit(1)
-                Spacer()
-                if count > 0 {
-                    Text("\(count)")
-                        .font(.system(size: 13))
-                        .foregroundStyle(.tertiary)
-                }
-            }
-        }
-        .padding(.leading, 8)
-        .padding(.trailing, 10)
-        .padding(.vertical, 7)
-        .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(isSelected ? accent.color.opacity(0.34) : (isHovering ? accent.color.opacity(0.18) : Color.clear))
-        )
-        .padding(.leading, 8)
-        .padding(.trailing, 8)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            selectFolder(folder.id)
-        }
-        .onHover { hovering in
-            hoveredFolderID = hovering ? folder.id : (hoveredFolderID == folder.id ? nil : hoveredFolderID)
-        }
-        .dropDestination(for: String.self) { items, _ in
-            handleDrop(items: items, intoFolder: folder.id)
-        } isTargeted: { hovering in
-            hoveredFolderID = hovering ? folder.id : (hoveredFolderID == folder.id ? nil : hoveredFolderID)
-        }
-        .contextMenu {
-            if !folder.isSmart {
-                Button("Rename") {
-                    renameDraft = folder.name
-                    renamingFolderID = folder.id
-                }
-                Menu("Color") {
-                    Button {
-                        store.setFolderColor(folder.id, color: nil)
-                    } label: {
-                        Label("Default", systemImage: folder.color == nil ? "checkmark" : "circle")
-                    }
-                    Divider()
-                    ForEach(FolderColor.allCases) { color in
-                        Button {
-                            store.setFolderColor(folder.id, color: color)
-                        } label: {
-                            Label {
-                                Text(folder.color == color.rawValue ? "✓ \(color.label)" : color.label)
-                            } icon: {
-                                Image(nsImage: color.dotImage())
+                    if folders.isEmpty {
+                        Button("Create a folder…") { naming = FolderNameRequest(folder: nil) }
+                            .font(.callout).foregroundStyle(.secondary)
+                            .padding(.leading, 17).padding(.top, 5)
+                    } else {
+                        let groups = Dictionary(grouping: folders, by: { root == .folders ? ($0.mailbox ?? "") : "" })
+                        ForEach(groups.keys.sorted(), id: \.self) { key in
+                            if !key.isEmpty {
+                                Text(LocalizedStringKey(key)).font(.caption).foregroundStyle(.secondary)
+                                    .padding(.horizontal, 17).padding(.top, 9)
                             }
+                            ForEach(groups[key] ?? []) { folder in row(folder) }
                         }
                     }
                 }
             }
-            if !folder.isSmart {
-                Button("Delete folder", role: .destructive) {
-                    store.deleteFolder(folder.id)
+        }
+        .padding(.top, isFullScreen ? 14 : 32).padding(.bottom, 8)
+        .buttonStyle(.plain)
+        .environment(\.colorScheme, .dark)
+        .sheet(item: $naming) { request in
+            FolderNameSheet(folder: request.folder, root: root, store: store) { name in
+                if let folder = request.folder {
+                    store.renameFolder(folder.id, to: name)
+                } else {
+                    store.createFolder(name: name, mailbox: root.folderKey)
                 }
+                naming = nil
             }
         }
+        .alert("Delete folder?", isPresented: Binding(get: { confirmDeletion != nil }, set: { if !$0 { confirmDeletion = nil } }),
+               presenting: confirmDeletion) { folder in
+            Button("Cancel", role: .cancel) {}
+            Button("Delete folder", role: .destructive) { store.deleteFolder(folder.id) }
+        } message: { folder in Text("“\(folder.name)” will be removed. Its notes stay in your library.") }
     }
 
-    private func folderIconName(for folder: Folder, selected: Bool) -> String {
-        selected ? folder.systemImage : folder.outlineSystemImage
-    }
-
-    private func folderIconColor(for folder: Folder) -> Color {
-        folder.isSmart ? Self.smartFolderInk : (FolderColor.named(folder.color)?.swiftUIColor ?? .primary)
-    }
-
-    private func sectionHeader(_ title: String) -> some View {
-        Text(title)
-            .font(.caption2)
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 12)
-            .padding(.top, 6)
-    }
-
-    private var systemFolders: [Folder] {
-        store.folders.filter { $0.isSmart && $0.kind != .smartPromptLibrary }
-    }
-
-    private var regularFolders: [Folder] {
-        store.folders.filter { !$0.isSmart }
-    }
-
-    private var hasItemsBelowTopSection: Bool {
-        !systemFolders.isEmpty || !regularFolders.isEmpty
-    }
-
-    // MARK: - Actions
-
-    private func selectFolder(_ folderID: UUID) {
-        store.selectFolder(folderID)
-    }
-
-    private func addFolder() {
-        let folder = store.createFolder(name: "New folder")
-        selectFolder(folder.id)
-        renameDraft = folder.name
-        renamingFolderID = folder.id
-    }
-
-    private func handleDrop(items: [String], intoFolder folderID: UUID?) -> Bool {
-        var moved = false
-        for item in items {
-            guard let uuid = UUID(uuidString: item) else { continue }
-            store.moveNote(uuid, toFolder: folderID)
-            moved = true
+    private func row(_ folder: Folder) -> some View {
+        let selected = store.selectedFolderID == folder.id
+        let hasUnread = store.unreadNoteCountForDisplay(in: folder) > 0
+        return Button {
+            onNavigate()
+            store.selectFolder(folder.id, from: root)
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: selected ? "folder.fill" : "folder")
+                    .foregroundStyle(selected ? Color.primary : Color.secondary)
+                Text(folder.name).lineLimit(1)
+                Spacer(minLength: 2)
+                if hasUnread { MailboxUnreadDot() }
+            }.font(.system(size: 13))
+            .padding(.horizontal, 10).frame(height: 31).contentShape(Rectangle())
         }
-        return moved
+        .accessibilityAddTraits(selected ? .isSelected : [])
+        .accessibilityValue(hasUnread ? Text("Unread") : Text(""))
+        .background(.white.opacity(selected || dropTarget == folder.id ? 0.16 : hovered == folder.id ? 0.07 : 0),
+                    in: RoundedRectangle(cornerRadius: 7))
+        .onHover { hovered = $0 ? folder.id : nil }
+        .onDrop(of: [UTType.text], isTargeted: Binding(
+            get: { dropTarget == folder.id },
+            set: { if $0 { dropTarget = folder.id } else if dropTarget == folder.id { dropTarget = nil } }
+        )) { providers in
+            let strings = providers.filter { $0.canLoadObject(ofClass: NSString.self) }
+            for provider in strings {
+                provider.loadObject(ofClass: NSString.self) { value, _ in
+                    guard let value = value as? String, let id = UUID(uuidString: value) else { return }
+                    Task { @MainActor in store.moveNote(id, toFolder: folder.id) }
+                }
+            }
+            return !strings.isEmpty
+        }
+        .contextMenu {
+            Button("Rename…") { naming = FolderNameRequest(folder: folder) }
+            Divider()
+            Button("Delete folder…", role: .destructive) { confirmDeletion = folder }
+        }
+        .padding(.horizontal, 8)
+    }
+}
+
+private struct FolderNameRequest: Identifiable {
+    let id = UUID()
+    let folder: Folder?
+}
+
+private struct FolderNameSheet: View {
+    let folder: Folder?
+    let root: SidebarMailbox
+    @ObservedObject var store: NotesStore
+    let save: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @FocusState private var focused: Bool
+    @State private var name = ""
+
+    private var cleaned: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var duplicate: Bool {
+        let key = folder == nil ? root.folderKey : folder?.mailbox
+        let matches = store.folders.filter { $0.id != folder?.id && $0.name.localizedCaseInsensitiveCompare(cleaned) == .orderedSame }
+        if matches.contains(where: { $0.mailbox == key }) { return true }
+        guard case .agent = root, !matches.isEmpty else { return false }
+        return !root.visibleFolders(in: matches, notes: store.notes).isEmpty
     }
 
+    var body: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            Text(folder == nil ? "New folder" : "Rename folder").font(.title3.bold())
+            TextField("Folder name", text: $name).textFieldStyle(.roundedBorder).focused($focused)
+            if duplicate { Text("A folder with this name already exists here.").font(.callout).foregroundStyle(.secondary) }
+            HStack {
+                Spacer()
+                Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
+                Button(folder == nil ? "Create" : "Save") { save(cleaned) }
+                    .keyboardShortcut(.defaultAction).disabled(cleaned.isEmpty || duplicate)
+            }
+        }.padding(20).frame(width: 300)
+        .onAppear { name = folder?.name ?? ""; focused = true }
+    }
 }

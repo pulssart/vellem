@@ -5,6 +5,7 @@ enum AppGroup {
     static let legacyIdentifier = "group.com.adriendonot.Vellem"
 
     static var containerURL: URL {
+        if let directory = VellemStorageEnvironment.isolatedDirectory { return directory }
         if let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier) {
             return url
         }

@@ -66,6 +66,7 @@ xcodebuild \
   -allowProvisioningUpdates \
   SYMROOT="${PWD}/${DERIVED_DIR}/Build/Products" \
   OBJROOT="${PWD}/${DERIVED_DIR}/Build/Intermediates.noindex" \
+  ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
   CODE_SIGN_STYLE=Automatic \
   DEVELOPMENT_TEAM="${TEAM_ID}" \
   OTHER_CODE_SIGN_FLAGS="--timestamp --options=runtime" \
@@ -86,6 +87,16 @@ if [ ! -d "${BUILT_APP}" ]; then
   exit 1
 fi
 echo "  → built: ${BUILT_APP}"
+for binary in "Contents/MacOS/Vellem" "Contents/Resources/vellem-mcp" \
+              "Contents/XPCServices/VellemReplies.xpc/Contents/MacOS/VellemReplies" \
+              "Contents/PlugIns/VellemWidget.appex/Contents/MacOS/VellemWidget"; do
+  archs="$(lipo -archs "${BUILT_APP}/${binary}")"
+  for required in arm64 x86_64; do
+    if [[ " ${archs} " != *" ${required} "* ]]; then
+      echo "Missing architecture ${required} in ${binary}"; exit 1
+    fi
+  done
+done
 
 # ---------- Sign nested binaries inside-out with Developer ID + hardened runtime ----------
 # We do NOT use --deep on the outer bundle because that would overwrite Sparkle's
@@ -129,12 +140,18 @@ codesign --force --sign "${SIGN_IDENTITY}" \
 
 # Embedded MCP CLI binary
 EMBEDDED_MCP="${BUILT_APP}/Contents/Resources/vellem-mcp"
-if [ -f "${EMBEDDED_MCP}" ]; then
-  echo "▶ Signing vellem-mcp…"
-  codesign --force --sign "${SIGN_IDENTITY}" \
-    --options runtime --timestamp \
-    "${EMBEDDED_MCP}"
-fi
+echo "▶ Signing vellem-mcp…"
+codesign --force --sign "${SIGN_IDENTITY}" \
+  --options runtime --timestamp \
+  --entitlements VellemMCP/VellemMCP.entitlements \
+  "${EMBEDDED_MCP}"
+/bin/sh script/verify-mcp-signature.sh "${EMBEDDED_MCP}"
+
+# Sign the private, on-demand conversation helper before sealing the outer app.
+codesign --force --sign "${SIGN_IDENTITY}" \
+  --options runtime --timestamp \
+  --entitlements VellemMCP/VellemMCP.entitlements \
+  "${BUILT_APP}/Contents/XPCServices/VellemReplies.xpc"
 
 # Widget extension - sign with its own entitlements (strips any stray get-task-allow)
 WIDGET_EXT="${BUILT_APP}/Contents/PlugIns/VellemWidget.appex"

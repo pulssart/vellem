@@ -1,59 +1,40 @@
-import Carbon
 import Foundation
 
 enum AppPreferences {
-    static let quickCaptureKeyCodeKey = "quickCaptureShortcutKeyCode"
-    static let quickCaptureModifiersKey = "quickCaptureShortcutModifiers"
+    static let settingsTabKey = "VellemSettingsTab"
     static let showMenuBarExtraKey = "showMenuBarExtra"
     static let showDockIconKey = "showDockIcon"
-    static let hasCompletedOnboardingKey = "hasCompletedOnboarding"
-    static let colorSidebarKey = "colorSidebar"
-    static let colorTopBarKey = "colorTopBar"
-    static let trueTransparentSidebarKey = "trueTransparentSidebar"
-
-    static let defaultQuickCaptureKeyCode = UInt32(kVK_ANSI_N)
-    static let defaultQuickCaptureModifiers = UInt32(controlKey | optionKey)
+    static let hasReceivedMessagesKey = "hasReceivedMessages"
+    static let hiddenInboxAgentsKey = "hiddenInboxAgents"
 
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [
-            quickCaptureKeyCodeKey: Int(defaultQuickCaptureKeyCode),
-            quickCaptureModifiersKey: Int(defaultQuickCaptureModifiers),
             showMenuBarExtraKey: true,
             showDockIconKey: true,
-            hasCompletedOnboardingKey: false,
-            colorSidebarKey: true,
-            colorTopBarKey: true,
-            trueTransparentSidebarKey: false,
-            AppAccentColor.storageKey: AppAccentColor.defaultValue.rawValue
+            hasReceivedMessagesKey: false,
+            hiddenInboxAgentsKey: HiddenInboxAgents().rawValue
         ])
-
-        if let shared = AppAccentColor.sharedDefaults {
-            let current = UserDefaults.standard.string(forKey: AppAccentColor.storageKey)
-                ?? AppAccentColor.defaultValue.rawValue
-            shared.set(current, forKey: AppAccentColor.storageKey)
-        }
-    }
-
-    static var quickCaptureShortcut: AppShortcut {
-        AppShortcut(
-            keyCode: UInt32(UserDefaults.standard.integer(forKey: quickCaptureKeyCodeKey)),
-            modifiers: UInt32(UserDefaults.standard.integer(forKey: quickCaptureModifiersKey))
-        )
-        .normalized
     }
 }
 
-struct AppShortcut: Equatable {
-    var keyCode: UInt32
-    var modifiers: UInt32
+struct HiddenInboxAgents: RawRepresentable, Equatable {
+    private var names: Set<String>
 
-    var normalized: AppShortcut {
-        guard keyCode != 0 || modifiers != 0 else {
-            return AppShortcut(
-                keyCode: AppPreferences.defaultQuickCaptureKeyCode,
-                modifiers: AppPreferences.defaultQuickCaptureModifiers
-            )
+    init(rawValue: String = "") {
+        names = Set(rawValue.split(separator: ",").map(String.init))
+    }
+
+    var rawValue: String { names.sorted().joined(separator: ",") }
+
+    func isVisible(_ agent: InboxAgent) -> Bool {
+        !names.contains(agent.rawValue)
+    }
+
+    mutating func setVisible(_ visible: Bool, for agent: InboxAgent) {
+        if visible {
+            names.remove(agent.rawValue)
+        } else {
+            names.insert(agent.rawValue)
         }
-        return self
     }
 }

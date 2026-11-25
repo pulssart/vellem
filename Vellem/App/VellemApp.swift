@@ -3,14 +3,13 @@ import UserNotifications
 
 @main
 struct VellemApp: App {
+    @AppStorage(VellemLanguage.preferenceKey, store: VellemLanguage.defaults) private var language: VellemLanguage = .system
     @Environment(\.openWindow) private var openWindow
 
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var store = NotesStore()
-    @State private var quickText = ""
     @AppStorage(AppPreferences.showMenuBarExtraKey) private var showMenuBarExtra = true
     @AppStorage(AppPreferences.showDockIconKey) private var showDockIcon = true
-    @AppAccent private var accent
     @StateObject private var updateController = UpdateController.shared
 
     init() {
@@ -20,22 +19,12 @@ struct VellemApp: App {
     var body: some Scene {
         WindowGroup("Vellem", id: "main") {
             ContentView(store: store)
-                .frame(minWidth: 1080, minHeight: 620)
-                .tint(accent.color)
+                .environment(\.locale, language.locale)
+                .frame(minWidth: 830, minHeight: 560)
+                .tint(InboxPalette.accent)
                 .background(ExternalNoteEventBridge(store: store))
                 .onOpenURL { url in
                     handle(url)
-                }
-                .onReceive(NotificationCenter.default.publisher(for: .vellemSaveSelection)) { notification in
-                    if let capture = notification.object as? SelectionCapture {
-                        store.captureFromServices(text: capture.text, source: capture.source)
-                    } else if let text = notification.object as? String {
-                        store.captureFromServices(text: text)
-                    }
-                    showMainWindow()
-                }
-                .onReceive(NotificationCenter.default.publisher(for: .vellemOpenQuickCapture)) { _ in
-                    openQuickCapture()
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .vellemOpenNoteViewer)) { notification in
                     guard let noteID = notification.object as? Note.ID else { return }
@@ -44,84 +33,95 @@ struct VellemApp: App {
                     NSApp.activate(ignoringOtherApps: true)
                 }
         }
+        .environment(\.locale, language.locale)
+        .windowStyle(.hiddenTitleBar)
+        .defaultSize(width: 1180, height: 760)
         .commands {
             CommandGroup(after: .appInfo) {
-                Button("Check for Updates…") {
+                Button(VellemLanguage.text("Check for Updates…", locale: language.locale)) {
                     updateController.checkForUpdates()
                 }
                 .disabled(!updateController.canCheckForUpdates)
             }
 
             CommandGroup(replacing: .newItem) {
-                Button("New Note") {
-                    store.createDraft()
-                    NSApp.activate(ignoringOtherApps: true)
-                }
-                .keyboardShortcut("n", modifiers: [.command])
-
-                Button("Quick Capture") {
-                    openQuickCapture()
-                }
-
-                Button("Open Today") {
-                    store.upsertDailyNote()
+                Button(VellemLanguage.text("Open Today", locale: language.locale)) {
+                    NotificationCenter.default.post(name: .vellemMailboxReset, object: nil)
+                    store.selectToday()
                     showMainWindow()
                 }
                 .keyboardShortcut("d", modifiers: [.command, .option])
+                .disabled(store.libraryUnavailable)
 
-                Button("Show Vellem") {
+                Button(VellemLanguage.text("Show Vellem", locale: language.locale)) {
                     showMainWindow()
                 }
                 .keyboardShortcut("n", modifiers: [.command, .shift])
             }
+
+            CommandGroup(after: .textEditing) {
+                Button(VellemLanguage.text("Search Notes", locale: language.locale)) {
+                    NotificationCenter.default.post(name: .vellemFocusSearch, object: nil)
+                }
+                .keyboardShortcut("f", modifiers: [.command])
+            }
         }
 
-        MenuBarExtra("Vellem", systemImage: "note.text.badge.plus", isInserted: menuBarExtraBinding) {
-            MenuBarComposerView(store: store, text: $quickText)
-                .frame(width: 360)
-                .tint(accent.color)
+        MenuBarExtra("Vellem", image: "FoldMark", isInserted: menuBarExtraBinding) {
+            Button(VellemLanguage.text("Open inbox", locale: language.locale), action: showInbox)
+            if !store.notes.isEmpty {
+                Section(VellemLanguage.text("Recent messages", locale: language.locale)) {
+                    ForEach(store.notes.prefix(5)) { note in
+                        Button(note.title) {
+                            store.viewerNoteID = note.id
+                            openWindow(id: "note-viewer")
+                            NSApp.activate(ignoringOtherApps: true)
+                        }
+                    }
+                }
+            }
+            Divider()
+            SettingsLink { Text(verbatim: VellemLanguage.text("Settings…", locale: language.locale)) }
+            Button(VellemLanguage.text("Quit Vellem", locale: language.locale)) { NSApp.terminate(nil) }
         }
-        .menuBarExtraStyle(.window)
 
-        Window("Quick Capture", id: "quick-capture") {
-            QuickCaptureView(store: store)
-                .tint(accent.color)
-        }
-        .defaultSize(width: 420, height: 300)
-        .windowResizability(.automatic)
-        .windowStyle(.hiddenTitleBar)
+        .environment(\.locale, language.locale)
 
-        Window("View Note", id: "note-viewer") {
+        Window(Text(verbatim: VellemLanguage.text("View Note", locale: language.locale)), id: "note-viewer") {
             NoteViewerView(store: store)
-                .tint(accent.color)
+                .environment(\.locale, language.locale)
+                .tint(InboxPalette.accent)
         }
         .defaultSize(width: 560, height: 600)
         .windowResizability(.automatic)
+        .environment(\.locale, language.locale)
         .windowStyle(.hiddenTitleBar)
 
         Settings {
             SettingsView(store: store)
+                .environment(\.locale, language.locale)
+                .tint(InboxPalette.accent)
         }
     }
 
     private func handle(_ url: URL) {
         guard url.scheme == "vellem" else { return }
-        if url.host == "new" {
-            openQuickCapture()
-            hideMainWindowAfterOpeningQuickCapture()
-        } else if url.host == "note",
-                  let idString = url.pathComponents.dropFirst().first,
-                  let uuid = UUID(uuidString: idString) {
+        if url.host == "note",
+           let idString = url.pathComponents.dropFirst().first,
+           let uuid = UUID(uuidString: idString) {
             NotificationCenter.default.post(name: .vellemOpenNoteViewer, object: uuid)
             NSApp.activate(ignoringOtherApps: true)
+        } else if url.host == "inbox" || url.host == "new" {
+            showInbox()
         } else {
-            NSApp.activate(ignoringOtherApps: true)
+            showMainWindow()
         }
     }
 
-    private func openQuickCapture() {
-        openWindow(id: "quick-capture")
-        NSApp.activate(ignoringOtherApps: true)
+    private func showInbox() {
+        store.selectInbox()
+        NotificationCenter.default.post(name: .vellemMailboxReset, object: nil)
+        showMainWindow()
     }
 
     private func showMainWindow() {
@@ -129,12 +129,6 @@ struct VellemApp: App {
         NSApp.activate(ignoringOtherApps: true)
         DispatchQueue.main.async {
             NSApp.showVellemMainWindow()
-        }
-    }
-
-    private func hideMainWindowAfterOpeningQuickCapture() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            NSApp.hideVellemMainWindow()
         }
     }
 
@@ -149,42 +143,40 @@ struct VellemApp: App {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate, NSUserNotificationCenterDelegate {
-    private let servicesProvider = SelectionServicesProvider()
-    private let hotKeyService = GlobalHotKeyService()
-    private var activationObserver: NSObjectProtocol?
+    private let mobileMailbox = MobileMailboxMonitor()
     private var observesPreferences = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        #if DEBUG
+        if VellemStorageEnvironment.isolatedDirectory != nil,
+           ProcessInfo.processInfo.environment["VELLEM_TEST_APPEARANCE"] == "dark" {
+            NSApp.appearance = NSAppearance(named: .darkAqua)
+        }
+        #endif
         AppPreferences.registerDefaults()
         Self.applyDockIconPreference(
             showDockIcon: UserDefaults.standard.bool(forKey: AppPreferences.showDockIconKey)
         )
-        NSApp.servicesProvider = servicesProvider
+        // Use the icon of the launched copy, including the user's Finder icon preference.
+        let dockIcon = NSWorkspace.shared.icon(forFile: Bundle.main.bundlePath)
+        dockIcon.size = NSSize(width: 512, height: 512)
+        NSApp.applicationIconImage = dockIcon
         NSUserNotificationCenter.default.delegate = self
-        NoteNotifications.requestAuthorization(delegate: self)
-        hotKeyService.register()
-        observeActiveApplications()
+        if VellemStorageEnvironment.isolatedDirectory == nil {
+            NoteNotifications.requestAuthorization(delegate: self)
+        }
         observePreferenceChanges()
+        mobileMailbox.start()
 
+        #if DEBUG
+        if VellemStorageEnvironment.isolatedDirectory != nil,
+           ProcessInfo.processInfo.environment["VELLEM_TEST_BACKGROUND"] == "1" {
+            return
+        }
+        #endif
         DispatchQueue.main.async {
             NSApp.activate(ignoringOtherApps: true)
             NSApp.showVellemMainWindow()
-        }
-    }
-
-    private func observeActiveApplications() {
-        activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.didActivateApplicationNotification,
-            object: nil,
-            queue: .main
-        ) { notification in
-            guard let application = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else {
-                return
-            }
-
-            Task { @MainActor in
-                CaptureContextProvider.rememberActiveApplication(application)
-            }
         }
     }
 
@@ -272,34 +264,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 }
 
 extension Notification.Name {
-    static let vellemSaveSelection = Notification.Name("vellemSaveSelection")
-    static let vellemOpenQuickCapture = Notification.Name("vellemOpenQuickCapture")
     static let vellemOpenNoteViewer = Notification.Name("vellemOpenNoteViewer")
-    static let vellemShowOnboarding = Notification.Name("vellemShowOnboarding")
-}
-
-struct SelectionCapture {
-    var text: String
-    var source: CaptureSource
-}
-
-@MainActor
-final class SelectionServicesProvider: NSObject {
-    @objc func addSelectionToVellem(
-        _ pasteboard: NSPasteboard,
-        userData: String?,
-        error: AutoreleasingUnsafeMutablePointer<NSString?>
-    ) {
-        guard let text = pasteboard.string(forType: .string)?
-            .trimmingCharacters(in: .whitespacesAndNewlines),
-              !text.isEmpty else {
-            error.pointee = "No selected text found."
-            return
-        }
-
-        let capture = SelectionCapture(text: text, source: CaptureContextProvider.currentSource())
-        NotificationCenter.default.post(name: .vellemSaveSelection, object: capture)
-    }
+    static let vellemFocusSearch = Notification.Name("vellemFocusSearch")
 }
 
 struct ExternalNoteEventBridge: NSViewRepresentable {

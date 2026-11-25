@@ -29,10 +29,11 @@ struct NoteContextMenu: View {
                 store.moveNote(note.id, toFolder: nil)
             }
 
-            if !store.folders.isEmpty {
+            let destinations = store.folders.filter { !$0.isSmart }
+            if !destinations.isEmpty {
                 Divider()
-                ForEach(store.folders) { folder in
-                    Button(folder.name) {
+                ForEach(destinations) { folder in
+                    Button(folder.displayPath) {
                         store.moveNote(note.id, toFolder: folder.id)
                     }
                 }

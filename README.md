@@ -1,50 +1,54 @@
 # Vellem
 
-**The notes app for your AI agents.**
+Vellem is a native macOS inbox for agent outputs. Ask an agent to send a project brief, report, code snippet or any other text. Select its icon to read messages and select it again to open its folders.
 
-A native macOS app that gives Claude, Codex and any MCP client a real place to take notes. Beautiful, local-first, yours.
+The macOS app and MCP server share a local App Group library. Vellem also attempts to publish a copy to iCloud Drive for the iPhone app when the container is available. Availability and sync depend on the device and iCloud configuration.
 
-**Download:** <https://pulssart.github.io/vellem/>
+## Connect an agent
 
-## Why
+Open **Settings → Agents** and choose Codex, Claude Code, Gemini CLI or Grok Build. **Copy and open Terminal** copies the registration command for the bundled stdio server. Paste it into Terminal and press Return. Start a new client session and ask it to send the result to Vellem. Claude Desktop has a JSON configuration to copy.
 
-Every session with an AI agent ends with research, plans, decisions, code reviews — that vanish when the window closes. Vellem makes that work persist in a place you own. A real macOS app. Searchable. Foldered. Forever.
+The MCP tool `send_output` requires only `text`. Optional fields are `title`, `format` (`markdown`, `text`, `json` or `code`), `source_agent`, and `folder_id` or `folder_name`. The app stores the original text verbatim. Delivered messages are read-only. Send a new message to deliver a revision. Existing clients can still call `add_note`. Known clients are attributed automatically. Bridges can pass the actual sender name.
 
-## What's in the box
+For a bot with local shell access, deliver a UTF-8 file directly:
 
-- **MCP-native** — bundled `vellem-mcp` server with 14 tools (`add_note`, `create_todo_list`, `append_to_daily`, `search_notes`, folders, color tags…). Your agents write directly into the app.
-- **One folder per agent** — out-of-the-box smart folders for Claude, Codex, Services. You always know who wrote what.
-- **Native macOS reader** — menu bar quick capture, global hotkey, WidgetKit widgets (all sizes), Today view, Markdown rendering with interactive todos.
-- **Local-first, private** — everything lives in your Apple App Group container. No cloud, no sync server, no telemetry.
-- **Apple Foundation Models** editing actions on capable Macs (macOS 26+).
-
-## Connect to Claude / Codex
-
-After installing Vellem, add this to Claude Desktop's `claude_desktop_config.json` and restart Claude:
-
-```json
-{
-  "mcpServers": {
-    "vellem": {
-      "command": "/Applications/Vellem.app/Contents/Resources/vellem-mcp"
-    }
-  }
-}
+```sh
+/Applications/Vellem.app/Contents/Resources/vellem-mcp send --agent Grokbot --format markdown --title "Project brief" < brief.md
 ```
 
-Same shape for Codex or any MCP client. Claude can now say *"I'll save that report to Vellem"* — and actually do it. Notes land in the `Claude` smart folder automatically.
+The Mac reader displays Markdown tables, nested lists, checklists, quotations, footnotes, LaTeX formulas and static HTML such as figures with captions. Fenced code blocks can specify a language for highlighting. Wide tables scroll horizontally. JSON is indented for reading, and copying a message returns the original text.
 
-## Run from source
+## Build and test
+
+The app targets macOS 26 or later. Install Xcode and `xcodegen`, then run:
 
 ```sh
 ./script/build_and_run.sh
 ```
 
-Requires Xcode 16+ and [xcodegen](https://github.com/yonki/XcodeGen) (`brew install xcodegen`).
+The script builds and installs the app in both `~/Applications` and `/Applications`. It no longer merges old note files on every launch. The app imports legacy notes when there is no current library.
 
-## Releasing
+Run the storage merge checks with:
 
-See [RELEASE.md](RELEASE.md) for the signed + notarized DMG pipeline.
+```sh
+./script/test-library-merge.sh
+./script/test-library-files.sh
+./script/test-archive.sh
+```
+
+To exercise the MCP server against a temporary library, pass a Debug build of the server:
+
+```sh
+python3 Tests/test_mcp.py /path/to/Debug/vellem-mcp
+./script/test-concurrent-store.sh /path/to/Debug/vellem-mcp
+python3 Tests/test_codex_discovery.py /path/to/Debug/vellem-mcp
+python3 Tests/test_claude_connection.py /path/to/Debug/vellem-mcp
+swift Tests/MessageReaderTests.swift /path/to/Debug/Vellem.app
+```
+
+## Release
+
+See [RELEASE.md](RELEASE.md) for the signed and notarized DMG pipeline.
 
 ## License
 

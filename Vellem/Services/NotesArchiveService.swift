@@ -8,11 +8,11 @@ enum NotesArchiveError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidArchive:
-            "This file is not a Vellem archive."
+            VellemLanguage.text("This file is not a Vellem archive.")
         case .invalidAttachmentPath(let path):
-            "Attachment path is not valid: \(path)"
+            VellemLanguage.format("Attachment path is not valid: %@", path)
         case .invalidAttachmentData(let path):
-            "Attachment data is not valid: \(path)"
+            VellemLanguage.format("Attachment data is not valid: %@", path)
         }
     }
 }
@@ -27,6 +27,7 @@ struct NotesArchiveImport {
     let notes: [Note]
     let folders: [Folder]
     let summary: NotesArchiveSummary
+    let restorePreferences: () -> Void
 }
 
 enum NotesArchiveService {
@@ -53,7 +54,9 @@ enum NotesArchiveService {
     static func importArchive(from data: Data) throws -> NotesArchiveImport {
         let archive = try archiveDecoder.decode(NotesArchive.self, from: data)
 
-        guard archive.format == format else {
+        guard archive.format == format, archive.schemaVersion == schemaVersion,
+              Set(archive.notes.map(\.id)).count == archive.notes.count,
+              Set(archive.folders.map(\.id)).count == archive.folders.count else {
             throw NotesArchiveError.invalidArchive
         }
 
@@ -66,14 +69,14 @@ enum NotesArchiveService {
             return restored
         }
 
-        archive.preferences.restore()
-
         let summary = NotesArchiveSummary(
             noteCount: notes.count,
             folderCount: archive.folders.count,
             attachmentCount: archive.attachments.count
         )
-        return NotesArchiveImport(notes: notes, folders: archive.folders, summary: summary)
+        return NotesArchiveImport(notes: notes, folders: archive.folders, summary: summary) {
+            archive.preferences.restore()
+        }
     }
 
     private static func archive(notes: [Note], folders: [Folder]) throws -> NotesArchive {
@@ -136,10 +139,15 @@ private struct PreferencesArchive: Codable {
     var standard: DefaultsDomainArchive?
     var appGroup: DefaultsDomainArchive?
 
+    private static var groupDefaults: UserDefaults? {
+        guard VellemStorageEnvironment.isolatedDirectory == nil else { return nil }
+        return UserDefaults(suiteName: AppGroup.identifier)
+    }
+
     static func current() -> PreferencesArchive {
         AppPreferences.registerDefaults()
         UserDefaults.standard.synchronize()
-        AppAccentColor.sharedDefaults?.synchronize()
+        Self.groupDefaults?.synchronize()
 
         let standardName = Bundle.main.bundleIdentifier ?? "com.adriendonot.Vellem"
         var standardDomain = UserDefaults.standard.persistentDomain(forName: standardName) ?? [:]
@@ -149,11 +157,7 @@ private struct PreferencesArchive: Codable {
             }
         }
 
-        var appGroupDomain = AppAccentColor.sharedDefaults?.persistentDomain(forName: AppGroup.identifier) ?? [:]
-        if let sharedAccent = AppAccentColor.sharedDefaults?.string(forKey: AppAccentColor.storageKey) {
-            appGroupDomain[AppAccentColor.storageKey] = sharedAccent
-        }
-
+        let appGroupDomain = Self.groupDefaults?.persistentDomain(forName: AppGroup.identifier) ?? [:]
         return PreferencesArchive(
             standard: DefaultsDomainArchive(name: standardName, domain: standardDomain),
             appGroup: DefaultsDomainArchive(name: AppGroup.identifier, domain: appGroupDomain)
@@ -162,31 +166,21 @@ private struct PreferencesArchive: Codable {
 
     func restore() {
         standard?.restore(into: .standard)
-        if let appGroupDefaults = AppAccentColor.sharedDefaults {
+        if let appGroupDefaults = Self.groupDefaults {
             appGroup?.restore(into: appGroupDefaults)
         }
 
-        if let rawAccent = UserDefaults.standard.string(forKey: AppAccentColor.storageKey) {
-            AppAccentColor.sharedDefaults?.set(rawAccent, forKey: AppAccentColor.storageKey)
-        }
-
         UserDefaults.standard.synchronize()
-        AppAccentColor.sharedDefaults?.synchronize()
+        Self.groupDefaults?.synchronize()
     }
 
     private static let standardPreferenceKeys = [
-        AppPreferences.quickCaptureKeyCodeKey,
-        AppPreferences.quickCaptureModifiersKey,
         AppPreferences.showMenuBarExtraKey,
         AppPreferences.showDockIconKey,
-        AppPreferences.hasCompletedOnboardingKey,
-        AppPreferences.colorSidebarKey,
-        AppPreferences.colorTopBarKey,
-        AppPreferences.trueTransparentSidebarKey,
-        AppAccentColor.storageKey,
+        AppPreferences.hasReceivedMessagesKey,
+        AppPreferences.hiddenInboxAgentsKey,
         "SUEnableAutomaticChecks",
-        "SUAutomaticallyUpdate",
-        "quickCaptureFloatsAboveOtherWindows"
+        "SUAutomaticallyUpdate"
     ]
 }
 
@@ -194,7 +188,10 @@ private struct DefaultsDomainArchive: Codable {
     var name: String
     var propertyListBase64: String
 
+    private static let retiredKeys: Set<String> = ["appAccentColor", "colorSidebar", "colorTopBar", "trueTransparentSidebar"]
+
     init?(name: String, domain: [String: Any]) {
+        let domain = domain.filter { !Self.retiredKeys.contains($0.key) }
         guard !domain.isEmpty,
               let data = try? PropertyListSerialization.data(
                 fromPropertyList: domain,
@@ -218,7 +215,7 @@ private struct DefaultsDomainArchive: Codable {
             return
         }
 
-        for (key, value) in domain {
+        for (key, value) in domain where !Self.retiredKeys.contains(key) {
             defaults.set(value, forKey: key)
         }
     }
@@ -241,19 +238,22 @@ private struct AttachmentArchive: Codable {
         }
 
         var attachments: [AttachmentArchive] = []
+        let canonicalRoot = root.standardizedFileURL.resolvingSymlinksInPath().path
+        let rootPrefix = canonicalRoot.hasSuffix("/") ? canonicalRoot : canonicalRoot + "/"
         for case let fileURL as URL in enumerator {
             let values = try fileURL.resourceValues(forKeys: [.isRegularFileKey])
             guard values.isRegularFile == true else { continue }
 
-            let relativePath = fileURL.path.replacingOccurrences(
-                of: root.path + "/",
-                with: ""
-            )
+            let canonicalPath = fileURL.standardizedFileURL.resolvingSymlinksInPath().path
+            guard canonicalPath.hasPrefix(rootPrefix) else {
+                throw NotesArchiveError.invalidAttachmentPath(fileURL.path)
+            }
+            let relativePath = String(canonicalPath.dropFirst(rootPrefix.count))
             let data = try Data(contentsOf: fileURL)
             attachments.append(
                 AttachmentArchive(
                     relativePath: relativePath,
-                    originalURL: fileURL.absoluteString,
+                    originalURL: root.appending(path: relativePath).absoluteString,
                     dataBase64: data.base64EncodedString()
                 )
             )
@@ -265,40 +265,44 @@ private struct AttachmentArchive: Codable {
     static func restore(_ attachments: [AttachmentArchive]) throws -> [String: String] {
         guard !attachments.isEmpty else { return [:] }
 
-        try FileManager.default.createDirectory(
-            at: AppGroup.attachmentsURL,
-            withIntermediateDirectories: true
-        )
-
-        var replacements: [String: String] = [:]
+        let importRoot = AppGroup.attachmentsURL.appending(path: "Import-\(UUID().uuidString)", directoryHint: .isDirectory)
+        var entries: [(AttachmentArchive, URL, Data)] = []
+        var paths = Set<String>()
+        var originalURLs = Set<String>()
         for attachment in attachments {
-            let destination = try restoredURL(for: attachment.relativePath)
+            let destination = try restoredURL(for: attachment.relativePath, root: importRoot)
+            guard paths.insert(destination.path).inserted, originalURLs.insert(attachment.originalURL).inserted else {
+                throw NotesArchiveError.invalidAttachmentPath(attachment.relativePath)
+            }
             guard let data = Data(base64Encoded: attachment.dataBase64) else {
                 throw NotesArchiveError.invalidAttachmentData(attachment.relativePath)
             }
-
-            try FileManager.default.createDirectory(
-                at: destination.deletingLastPathComponent(),
-                withIntermediateDirectories: true
-            )
-            try data.write(to: destination, options: [.atomic])
-            replacements[attachment.originalURL] = destination.absoluteString
+            entries.append((attachment, destination, data))
         }
-
+        var replacements: [String: String] = [:]
+        do {
+            for (attachment, destination, data) in entries {
+                try FileManager.default.createDirectory(
+                    at: destination.deletingLastPathComponent(),
+                    withIntermediateDirectories: true
+                )
+                try data.write(to: destination, options: [.atomic])
+                replacements[attachment.originalURL] = destination.absoluteString
+            }
+        } catch {
+            try? FileManager.default.removeItem(at: importRoot)
+            throw error
+        }
         return replacements
     }
 
-    private static func restoredURL(for relativePath: String) throws -> URL {
-        let parts = relativePath
-            .split(separator: "/")
-            .map(String.init)
-            .filter { !$0.isEmpty && $0 != "." && $0 != ".." }
-
-        guard !parts.isEmpty else {
+    private static func restoredURL(for relativePath: String, root: URL) throws -> URL {
+        let parts = relativePath.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
+        guard !parts.isEmpty, !relativePath.hasPrefix("/"),
+              parts.allSatisfy({ !$0.isEmpty && $0 != "." && $0 != ".." }) else {
             throw NotesArchiveError.invalidAttachmentPath(relativePath)
         }
-
-        return parts.reduce(AppGroup.attachmentsURL) { url, part in
+        return parts.reduce(root) { url, part in
             url.appending(path: part)
         }
     }

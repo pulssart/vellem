@@ -5,6 +5,7 @@ import UserNotifications
 
 @main
 struct VellemMobileApp: App {
+    @AppStorage(VellemLanguage.preferenceKey, store: VellemLanguage.defaults) private var language: VellemLanguage = .system
     @UIApplicationDelegateAdaptor(MobileAppDelegate.self) private var appDelegate
     @StateObject private var store = MobileNotesStore()
     @Environment(\.scenePhase) private var scenePhase
@@ -12,6 +13,7 @@ struct VellemMobileApp: App {
     var body: some Scene {
         WindowGroup {
             MobileRootView(store: store)
+                .environment(\.locale, language.locale)
                 .onAppear {
                     store.start()
                 }

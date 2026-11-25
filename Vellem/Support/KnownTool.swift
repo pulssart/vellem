@@ -85,23 +85,6 @@ enum KnownTool: String, CaseIterable, Identifiable, Hashable {
         case .github: "chevron.left.forwardslash.chevron.right"
         }
     }
-
-    var brandColor: Color {
-        switch self {
-        case .slack:    Color(red: 0.29, green: 0.08, blue: 0.29)
-        case .gmail:    Color(red: 0.92, green: 0.26, blue: 0.21) // Gmail red
-        case .mail:     Color(red: 0.00, green: 0.48, blue: 1.00)
-        case .calendar: Color(red: 0.10, green: 0.45, blue: 0.91) // Google Calendar blue
-        case .googleDocs: Color(red: 0.10, green: 0.45, blue: 0.91)
-        case .googleSheets: Color(red: 0.20, green: 0.66, blue: 0.33)
-        case .googleSlides: Color(red: 0.96, green: 0.62, blue: 0.04)
-        case .granola:  Color(red: 1.00, green: 0.42, blue: 0.21)
-        case .linear:   Color(red: 0.37, green: 0.42, blue: 0.82)
-        case .figma:    Color(red: 0.95, green: 0.31, blue: 0.12)
-        case .notion:   Color(red: 0.10, green: 0.10, blue: 0.10)
-        case .github:   Color(red: 0.13, green: 0.13, blue: 0.15)
-        }
-    }
 }
 
 struct ToolBadge: View {
@@ -114,10 +97,11 @@ struct ToolBadge: View {
                 Image(nsImage: icon)
                     .resizable()
                     .interpolation(.high)
+                    .saturation(0)
             } else {
                 ZStack {
                     RoundedRectangle(cornerRadius: size * 0.22, style: .continuous)
-                        .fill(tool.brandColor)
+                        .fill(InboxPalette.ink)
                     Image(systemName: tool.systemImageFallback)
                         .font(.system(size: size * 0.60, weight: .semibold))
                         .foregroundStyle(.white)

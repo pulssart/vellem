@@ -1,0 +1,5 @@
+{
+  "images": [{ "filename": "mark.pdf", "idiom": "universal" }],
+  "properties": { "preserves-vector-representation": true, "template-rendering-intent": "template" },
+  "info": { "author": "xcode", "version": 1 }
+}

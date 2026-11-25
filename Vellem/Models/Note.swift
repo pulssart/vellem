@@ -11,6 +11,10 @@ struct Note: Identifiable, Codable, Hashable {
     var updatedAt: Date
     var folderID: UUID?
     var isRead: Bool
+    var outputFormat: OutputFormat?
+    var conversation: ReplyConversation?
+    var replies: [NoteReply]?
+    // Retain metadata in archives created before the agent inbox.
     var decisionContext: NoteDecisionContext?
 
     init(
@@ -24,6 +28,7 @@ struct Note: Identifiable, Codable, Hashable {
         updatedAt: Date = .now,
         folderID: UUID? = nil,
         isRead: Bool = false,
+        outputFormat: OutputFormat? = nil,
         decisionContext: NoteDecisionContext? = nil
     ) {
         self.id = id
@@ -36,6 +41,7 @@ struct Note: Identifiable, Codable, Hashable {
         self.updatedAt = updatedAt
         self.folderID = folderID
         self.isRead = isRead
+        self.outputFormat = outputFormat
         self.decisionContext = decisionContext
     }
 
@@ -50,6 +56,8 @@ struct Note: Identifiable, Codable, Hashable {
         case updatedAt
         case folderID
         case isRead
+        case outputFormat
+        case conversation, replies
         case decisionContext
     }
 
@@ -65,31 +73,18 @@ struct Note: Identifiable, Codable, Hashable {
         updatedAt = try container.decode(Date.self, forKey: .updatedAt)
         folderID = try container.decodeIfPresent(UUID.self, forKey: .folderID)
         isRead = try container.decodeIfPresent(Bool.self, forKey: .isRead) ?? true
+        outputFormat = try container.decodeIfPresent(OutputFormat.self, forKey: .outputFormat)
+        conversation = try container.decodeIfPresent(ReplyConversation.self, forKey: .conversation)
+        replies = try container.decodeIfPresent([NoteReply].self, forKey: .replies)
         decisionContext = try container.decodeIfPresent(NoteDecisionContext.self, forKey: .decisionContext)
     }
 
     var title: String {
-        if let generatedTitle,
-           !generatedTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            let cleanedTitle = generatedTitle.vellemDisplayText
-            return cleanedTitle.isEmpty ? "Untitled" : cleanedTitle
-        }
-
-        let line = text
-            .split(whereSeparator: \.isNewline)
-            .first
-            .map(String.init)?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-
-        let cleanedTitle = line.vellemDisplayText
-        return cleanedTitle.isEmpty ? "Untitled" : cleanedTitle
+        text.vellemTitle(explicit: generatedTitle, format: outputFormat?.rawValue)
     }
 
     var preview: String {
-        let cleaned = text
-            .vellemDisplayText
-
-        return cleaned.isEmpty ? "Empty note" : cleaned
+        text.vellemPreview(removingTitle: title, format: outputFormat?.rawValue)
     }
 
     var wordCount: Int {
@@ -113,6 +108,10 @@ struct Note: Identifiable, Codable, Hashable {
     }
 }
 
+enum OutputFormat: String, Codable, CaseIterable {
+    case markdown, text, json, code
+}
+
 enum NoteKind: String, Codable, Hashable {
     case regular
     case daily
@@ -127,107 +126,56 @@ struct NoteDecisionContext: Codable, Hashable {
     var validationRule: String
     var resolvedAt: Date?
     var updatedAt: Date
-
-    init(
-        sourceDetail: String = "",
-        capturedAt: Date = .now,
-        decisionTitle: String = "",
-        effect: DecisionEffect = .influenced,
-        expiresAt: Date? = nil,
-        validationRule: String = "",
-        resolvedAt: Date? = nil,
-        updatedAt: Date = .now
-    ) {
-        self.sourceDetail = sourceDetail
-        self.capturedAt = capturedAt
-        self.decisionTitle = decisionTitle
-        self.effect = effect
-        self.expiresAt = expiresAt
-        self.validationRule = validationRule
-        self.resolvedAt = resolvedAt
-        self.updatedAt = updatedAt
-    }
-
-    var isEmpty: Bool {
-        sourceDetail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-            decisionTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-            validationRule.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-            expiresAt == nil &&
-            resolvedAt == nil
-    }
-
-    func status(relativeTo date: Date = .now) -> DecisionContextStatus {
-        if resolvedAt != nil {
-            return .resolved
-        }
-
-        guard let expiresAt else {
-            return .active
-        }
-
-        if expiresAt < date {
-            return .expired
-        }
-
-        let reviewThreshold = Calendar.current.date(byAdding: .day, value: 3, to: date) ?? date
-        return expiresAt <= reviewThreshold ? .needsReview : .active
-    }
 }
 
-enum DecisionEffect: String, CaseIterable, Codable, Hashable, Identifiable {
-    case influenced
-    case confirmed
-    case blocked
-    case cancelled
-    case questioned
-
-    var id: String { rawValue }
-
-    var label: String {
-        switch self {
-        case .influenced:
-            return "Influenced"
-        case .confirmed:
-            return "Confirmed"
-        case .blocked:
-            return "Blocked"
-        case .cancelled:
-            return "Cancelled"
-        case .questioned:
-            return "Questioned"
-        }
-    }
+enum DecisionEffect: String, Codable, Hashable {
+    case influenced, confirmed, blocked, cancelled, questioned
 }
 
-enum DecisionContextStatus: String, Codable, Hashable {
-    case active
-    case needsReview
-    case expired
-    case resolved
+// Provenance is independent of where a note is filed.
+enum InboxAgent: String, CaseIterable {
+    case chatGPT = "ChatGPT"
+    case codex = "Codex"
+    case claude = "Claude"
+    case grok = "Grok"
+    case gemini = "Gemini"
+    case grokbot = "Grokbot"
 
-    var label: String {
-        switch self {
-        case .active:
-            return "Active"
-        case .needsReview:
-            return "Review"
-        case .expired:
-            return "Expired"
-        case .resolved:
-            return "Resolved"
-        }
+    static func identify(_ name: String?) -> Self? {
+        guard let name else { return nil }
+        let tokens = name.lowercased().split { !$0.isLetter && !$0.isNumber }
+        if tokens.contains("grokbot") || tokens.contains("grokbots") || (tokens.contains("grok") && (tokens.contains("bot") || tokens.contains("bots"))) { return .grokbot }
+        return allCases.first { tokens.contains(Substring($0.rawValue.lowercased())) }
     }
 
-    var systemImage: String {
-        switch self {
-        case .active:
-            return "checkmark.circle"
-        case .needsReview:
-            return "clock.badge.exclamationmark"
-        case .expired:
-            return "exclamationmark.triangle"
-        case .resolved:
-            return "checkmark.seal"
+    static func origin(of note: Note) -> Self? {
+        if let agent = identify(note.sourceApp) { return agent }
+        guard let host = note.sourceURL?.host?.lowercased() else { return nil }
+        for (domain, agent) in webOrigins where host == domain || host.hasSuffix("." + domain) {
+            return agent
         }
+        return nil
     }
+
+    private static let webOrigins: [(String, Self)] = [
+        ("chatgpt.com", .chatGPT), ("chat.openai.com", .chatGPT),
+        ("claude.ai", .claude), ("grok.com", .grok), ("gemini.google.com", .gemini)
+    ]
+}
+
+struct ReplyConversation: Codable, Hashable, Sendable {
+    enum Provider: String, Codable, Sendable { case codex = "Codex", claude = "Claude" }
+
+    let provider: Provider
+    let sessionID: UUID
+    let directory: String
+}
+
+struct NoteReply: Identifiable, Codable, Hashable, Sendable {
+    let id: UUID
+    let question: String
+    var answer: String
+    let date: Date
+    enum Delivery: String, Codable { case queued, failed }
+    var delivery: Delivery? = nil
 }

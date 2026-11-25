@@ -352,7 +352,7 @@ private struct MobileMarkdownImageView: View {
                     .scaledToFit()
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             case .failure:
-                Label("Image indisponible", systemImage: "photo")
+                Label("Image unavailable", systemImage: "photo")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             default:

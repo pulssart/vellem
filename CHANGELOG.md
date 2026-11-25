@@ -1,3 +1,11 @@
+# Vellem 1.1.0
+
+Vellem for Mac organizes AI outputs into mailboxes by agent. Read reports, find unread messages and file them in folders. Supported conversations have a reply field.
+
+The prompt library includes 15 work prompts and 12 personal prompts in English and French. Filter by role or service, then click a card to copy its instructions. The personal collection covers research, fact checking, school, family plans and household decisions.
+
+This version includes the Sparkle installer configuration for sandboxed Macs. Automatic downloads and installations can be enabled in Settings under Updates.
+
 # Vellem 1.0.16
 
 This release adds the experimental true transparent sidebar setting for macOS 27.

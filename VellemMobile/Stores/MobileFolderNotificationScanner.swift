@@ -23,7 +23,7 @@ enum MobileFolderNotificationScanner {
                 continue
             }
 
-            notify(note: note, folderName: folderNames[folderID] ?? "Folder")
+            notify(note: note, folderName: folderNames[folderID] ?? VellemLanguage.text("Folder"))
         }
 
         defaults.set(next, forKey: assignmentsKey)
@@ -50,7 +50,7 @@ enum MobileFolderNotificationScanner {
 
     private static func notify(note: Note, folderName: String) {
         let content = UNMutableNotificationContent()
-        content.title = "Nouvelle note dans \(folderName)"
+        content.title = VellemLanguage.format("New note in %@", folderName)
         content.body = note.title
         content.sound = .default
         content.userInfo = ["noteID": note.id.uuidString]

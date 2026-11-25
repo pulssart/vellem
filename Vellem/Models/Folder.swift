@@ -25,6 +25,9 @@ struct Folder: Identifiable, Codable, Hashable {
     var createdAt: Date
     var color: String?
     var kind: FolderKind
+    var mailbox: String?
+
+    var displayPath: String { mailbox.map { "\($0) / \(name)" } ?? name }
 
     var isSmart: Bool { kind != .regular }
 
@@ -63,13 +66,15 @@ struct Folder: Identifiable, Codable, Hashable {
         name: String,
         createdAt: Date = .now,
         color: String? = nil,
-        kind: FolderKind = .regular
+        kind: FolderKind = .regular,
+        mailbox: String? = nil
     ) {
         self.id = id
         self.name = name
         self.createdAt = createdAt
         self.color = color
         self.kind = kind
+        self.mailbox = mailbox
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -78,6 +83,7 @@ struct Folder: Identifiable, Codable, Hashable {
         case createdAt
         case color
         case kind
+        case mailbox
     }
 
     init(from decoder: Decoder) throws {
@@ -85,6 +91,7 @@ struct Folder: Identifiable, Codable, Hashable {
         id = try c.decode(UUID.self, forKey: .id)
         name = try c.decode(String.self, forKey: .name)
         createdAt = try c.decode(Date.self, forKey: .createdAt)
+        mailbox = try c.decodeIfPresent(String.self, forKey: .mailbox)
         color = try c.decodeIfPresent(String.self, forKey: .color)
         // Tolerate unknown legacy kinds (e.g. removed enum cases on disk) by
         // falling back to .regular instead of failing the whole folder array.
@@ -96,27 +103,49 @@ struct Folder: Identifiable, Codable, Hashable {
     }
 }
 
-enum FolderColor: String, CaseIterable, Identifiable {
-    case yellow, orange, red, pink, purple, blue, teal, green, gray
+enum SidebarMailbox: Hashable {
+    case inbox, today, folders, captures
+    case agent(InboxAgent)
 
-    var id: String { rawValue }
-
-    var label: String {
+    var title: String {
         switch self {
-        case .yellow: "Yellow"
-        case .orange: "Orange"
-        case .red:    "Red"
-        case .pink:   "Pink"
-        case .purple: "Purple"
-        case .blue:   "Blue"
-        case .teal:   "Teal"
-        case .green:  "Green"
-        case .gray:   "Gray"
+        case .inbox: "All inboxes"
+        case .today: "Today"
+        case .folders: "Folders"
+        case .captures: "Quick captures"
+        case .agent(let agent): agent.rawValue
         }
     }
 
-    static func named(_ raw: String?) -> FolderColor? {
-        guard let raw else { return nil }
-        return FolderColor(rawValue: raw.lowercased())
+    var folderKey: String? { self == .folders ? nil : title }
+
+    func visibleFolders(in folders: [Folder], notes: [Note]) -> [Folder] {
+        guard case .agent(let agent) = self else {
+            return folders.filter { !$0.isSmart && (self == .folders || $0.mailbox == folderKey) }
+        }
+
+        // A shared folder can appear in several agents’ sidebars without changing its owner.
+        let contributedTo = Set(notes.compactMap { note -> UUID? in
+            guard let id = note.folderID, InboxAgent.origin(of: note) == agent else { return nil }
+            return id
+        })
+        return folders.filter { folder in
+            !folder.isSmart && (folder.mailbox == agent.rawValue || (folder.mailbox == nil && contributedTo.contains(folder.id)))
+        }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+
+    init(folder: Folder) {
+        switch folder.kind {
+        case .smartServices: self = .captures
+        case .smartPromptLibrary: self = .folders
+        case .smartClaude: self = .agent(.claude)
+        case .smartCodex: self = .agent(.codex)
+        case .regular:
+            if let name = folder.mailbox, let agent = InboxAgent(rawValue: name) {
+                self = .agent(agent)
+            } else {
+                self = [Self.inbox, .today, .captures].first { $0.title == folder.mailbox } ?? .folders
+            }
+        }
     }
 }

@@ -1,0 +1,10 @@
+{
+  "fill": { "solid": "srgb:0.06275,0.06275,0.06275,1.00000" },
+  "groups": [
+    {
+      "name": "Le pli",
+      "layers": [{ "name": "Papier", "image-name": "Fold.png" }]
+    }
+  ],
+  "supported-platforms": { "squares": "shared" }
+}

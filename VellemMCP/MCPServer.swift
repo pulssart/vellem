@@ -58,8 +58,12 @@ final class MCPServer {
     // MARK: - Initialize
 
     private func handleInitialize(id: Any?, params: [String: Any]) {
+        let clientInfo = params["clientInfo"] as? [String: Any]
+        store.clientName = (clientInfo?["title"] as? String) ?? (clientInfo?["name"] as? String)
+        store.clientAgent = InboxAgent.identify(clientInfo?["name"] as? String) ?? InboxAgent.identify(clientInfo?["title"] as? String)
         let result: [String: Any] = [
             "protocolVersion": protocolVersion,
+            "instructions": "Vellem is a local inbox. Use send_output when the user asks to deliver text to Vellem. Send the complete original content and its format.",
             "capabilities": [
                 "tools": [:] as [String: Any]
             ],
@@ -74,65 +78,22 @@ final class MCPServer {
     // MARK: - Tools list
 
     private func handleToolsList(id: Any?) {
+        let deliveryFields: [String: Any] = [
+            "text": ["type": "string", "description": "Complete UTF-8 output. Preserve line breaks and indentation."],
+            "format": ["type": "string", "enum": OutputFormat.allCases.map(\.rawValue), "description": "Use markdown for reports, tables, static HTML or LaTeX. Use text for literal prose, json for JSON data, and code for source files. Defaults to markdown."],
+            "source_agent": ["type": "string", "description": "Sender name, for example Codex, Claude, Gemini, Grok or Grokbot. Defaults to the connected client."],
+            "title": ["type": "string", "description": "Brief subject. Defaults to the first line."],
+            "folder_id": ["type": "string", "description": "Destination folder UUID."],
+            "folder_name": ["type": "string", "description": "Destination folder in the sender’s mailbox. Created if needed."]
+        ]
         let tools: [[String: Any]] = [
-            tool(
-                "add_note",
-                description: "Create a new note in Vellem with complete decision context. The server rejects missing source, capture, decision, effect, expiration, or validation fields.",
-                properties: [
-                    "text": ["type": "string", "description": "Markdown body of the note."],
-                    "title": ["type": "string", "description": "Optional explicit title. If omitted, the first line or first heading is used."],
-                    "folder_id": ["type": "string", "description": "Optional folder UUID to place the note in."],
-                    "folder_name": ["type": "string", "description": "Optional folder name. If it doesn't exist, it will be created."],
-                    "source_detail": ["type": "string", "description": "Required. Where the idea came from. Link, person, file, conversation, or exact passage."],
-                    "decision_title": ["type": "string", "description": "Required. The choice, direction, or question this note influenced."],
-                    "effect": ["type": "string", "description": "Required. How the note affected the decision.", "enum": ["influenced", "confirmed", "blocked", "cancelled", "questioned"]],
-                    "captured_at": ["type": "string", "description": "Required ISO-8601 date for when this context was captured."],
-                    "expires_at": ["type": "string", "description": "Optional ISO-8601 date after which the context should be verified again. Use this instead of expires_in_days for an exact date."],
-                    "expires_in_days": ["type": "integer", "description": "Required unless expires_at is provided. Sets expires_at to now plus this many days."],
-                    "validation_rule": ["type": "string", "description": "Required. What would make this context still true, or prove it outdated."],
-                    "resolved_at": ["type": "string", "description": "Optional ISO-8601 date if the related decision is already closed."]
-                ],
-                required: ["text", "source_detail", "decision_title", "effect", "captured_at", "expires_in_days", "validation_rule"]
-            ),
-            tool(
-                "add_decision_note",
-                description: "Create a new note with complete decision context in one call. Use this when the note preserves why an idea mattered, where it came from, what decision it changed, and when it should be checked again. The server rejects missing decision fields.",
-                properties: [
-                    "text": ["type": "string", "description": "Markdown body of the note."],
-                    "title": ["type": "string", "description": "Optional explicit title. If omitted, the first line or first heading is used."],
-                    "folder_id": ["type": "string", "description": "Optional folder UUID to place the note in."],
-                    "folder_name": ["type": "string", "description": "Optional folder name. If it doesn't exist, it will be created."],
-                    "source_detail": ["type": "string", "description": "Required. Where the idea came from. Link, person, file, conversation, or exact passage."],
-                    "decision_title": ["type": "string", "description": "Required. The choice, direction, or question this note influenced."],
-                    "effect": ["type": "string", "description": "Required. How the note affected the decision.", "enum": ["influenced", "confirmed", "blocked", "cancelled", "questioned"]],
-                    "captured_at": ["type": "string", "description": "Required ISO-8601 date for when this context was captured."],
-                    "expires_at": ["type": "string", "description": "Required unless expires_in_days is provided. ISO-8601 date after which the context should be verified again."],
-                    "expires_in_days": ["type": "integer", "description": "Required unless expires_at is provided. Sets expires_at to now plus this many days."],
-                    "validation_rule": ["type": "string", "description": "Required. What would make this context still true, or prove it outdated."],
-                    "resolved_at": ["type": "string", "description": "Optional ISO-8601 date if the related decision is already closed."]
-                ],
-                required: ["text", "source_detail", "decision_title", "effect", "captured_at", "expires_in_days", "validation_rule"]
-            ),
-            tool(
-                "append_to_daily",
-                description: "Append a snippet to today's daily note. If no daily note exists yet, complete decision context is required and stored on the new daily note.",
-                properties: [
-                    "text": ["type": "string", "description": "Markdown text to append."],
-                    "source_detail": ["type": "string", "description": "Required only when creating the daily note. Where the captured context came from."],
-                    "decision_title": ["type": "string", "description": "Required only when creating the daily note. The choice, direction, or workflow this daily note supports."],
-                    "effect": ["type": "string", "description": "Required only when creating the daily note. How the captured context affected the decision.", "enum": ["influenced", "confirmed", "blocked", "cancelled", "questioned"]],
-                    "captured_at": ["type": "string", "description": "Required only when creating the daily note. ISO-8601 date for when this context was captured."],
-                    "expires_at": ["type": "string", "description": "Optional ISO-8601 date after which the context should be verified again. Use this instead of expires_in_days for an exact date."],
-                    "expires_in_days": ["type": "integer", "description": "Required only when creating the daily note unless expires_at is provided."],
-                    "validation_rule": ["type": "string", "description": "Required only when creating the daily note. What would make this context still true, or prove it outdated."],
-                    "resolved_at": ["type": "string", "description": "Optional ISO-8601 date if the related decision is already closed."]
-                ],
-                required: ["text"]
-            ),
+            tool("send_output", description: "Deliver a report, project, code snippet or other text to the user's Vellem inbox on request.", properties: deliveryFields, required: ["text"]),
+            tool("add_note", description: "Save text to Vellem. Compatible alias for send_output.", properties: deliveryFields, required: ["text"]),
             tool(
                 "create_todo_list",
-                description: "Create a Vellem note formatted as a to-do list with complete decision context. Tasks are written as Markdown checkboxes that Vellem renders as interactive todos.",
+                description: "Create a Vellem note formatted as a to-do list.",
                 properties: [
+                    "source_agent": ["type": "string", "enum": InboxAgent.allCases.map(\.rawValue), "description": "Originating agent, if different from the MCP client or when using a generic bridge."],
                     "title": ["type": "string", "description": "Todo list title."],
                     "tasks": [
                         "type": "array",
@@ -153,26 +114,8 @@ final class MCPServer {
                     ],
                     "folder_id": ["type": "string", "description": "Optional folder UUID to place the note in."],
                     "folder_name": ["type": "string", "description": "Optional folder name. If it doesn't exist, it will be created."],
-                    "source_detail": ["type": "string", "description": "Required. Where the to-do list came from. Link, person, file, conversation, or exact passage."],
-                    "decision_title": ["type": "string", "description": "Required. The choice, direction, or workflow this to-do list supports."],
-                    "effect": ["type": "string", "description": "Required. How the to-do list affected the decision.", "enum": ["influenced", "confirmed", "blocked", "cancelled", "questioned"]],
-                    "captured_at": ["type": "string", "description": "Required ISO-8601 date for when this context was captured."],
-                    "expires_at": ["type": "string", "description": "Optional ISO-8601 date after which the context should be verified again. Use this instead of expires_in_days for an exact date."],
-                    "expires_in_days": ["type": "integer", "description": "Required unless expires_at is provided. Sets expires_at to now plus this many days."],
-                    "validation_rule": ["type": "string", "description": "Required. What would make this to-do list still relevant, or prove it outdated."],
-                    "resolved_at": ["type": "string", "description": "Optional ISO-8601 date if the related decision is already closed."]
                 ],
-                required: ["title", "tasks", "source_detail", "decision_title", "effect", "captured_at", "expires_in_days", "validation_rule"]
-            ),
-            tool(
-                "add_todo",
-                description: "Append one task to an existing Vellem note as a Markdown checkbox.",
-                properties: [
-                    "id": ["type": "string", "description": "Target note UUID."],
-                    "text": ["type": "string", "description": "Task text."],
-                    "checked": ["type": "boolean", "description": "Whether the task starts completed. Default false."]
-                ],
-                required: ["id", "text"]
+                required: ["title", "tasks"]
             ),
             tool(
                 "list_notes",
@@ -222,51 +165,9 @@ final class MCPServer {
             ),
             tool(
                 "get_daily_log",
-                description: "Return today's daily note (the one written by `append_to_daily`). Returns null content with status `missing` if no daily note exists yet.",
+                description: "Read an existing daily note for today, if present.",
                 properties: [:],
                 required: []
-            ),
-            tool(
-                "capture_decision_context",
-                description: "Attach decision context to a note. Use this to preserve why a note mattered, where it came from, what decision it influenced, and when it should be reviewed.",
-                properties: [
-                    "id": ["type": "string", "description": "Note UUID."],
-                    "source_detail": ["type": "string", "description": "Where the idea came from. Link, person, file, conversation, or exact passage."],
-                    "decision_title": ["type": "string", "description": "The choice, direction, or question this note influenced."],
-                    "effect": ["type": "string", "description": "How the note affected the decision. Default influenced.", "enum": ["influenced", "confirmed", "blocked", "cancelled", "questioned"]],
-                    "captured_at": ["type": "string", "description": "Optional ISO-8601 date. Defaults to the note creation date."],
-                    "expires_at": ["type": "string", "description": "Optional ISO-8601 date after which the context should be verified again."],
-                    "expires_in_days": ["type": "integer", "description": "Optional shortcut. Sets expires_at to now plus this many days."],
-                    "validation_rule": ["type": "string", "description": "What would make this context still true, or prove it outdated."]
-                ],
-                required: ["id"]
-            ),
-            tool(
-                "list_expiring_contexts",
-                description: "List notes whose decision context is expired or will expire soon. Use this to find memory that should not be trusted without revalidation.",
-                properties: [
-                    "days": ["type": "integer", "description": "Lookahead window in days. Default 14.", "minimum": 0, "maximum": 365],
-                    "include_expired": ["type": "boolean", "description": "Include contexts already past their expiration date. Default true."],
-                    "limit": ["type": "integer", "description": "Maximum results. Default 50.", "minimum": 1, "maximum": 200]
-                ],
-                required: []
-            ),
-            tool(
-                "get_decision_trail",
-                description: "Return the source note and other notes linked to the same decision title.",
-                properties: [
-                    "id": ["type": "string", "description": "Source note UUID."]
-                ],
-                required: ["id"]
-            ),
-            tool(
-                "mark_context_resolved",
-                description: "Mark a note's decision context as resolved because the related decision is closed.",
-                properties: [
-                    "id": ["type": "string", "description": "Note UUID."],
-                    "resolved_at": ["type": "string", "description": "Optional ISO-8601 date. Defaults to now."]
-                ],
-                required: ["id"]
             ),
             tool(
                 "get_note",
@@ -275,17 +176,6 @@ final class MCPServer {
                     "id": ["type": "string", "description": "Note UUID."]
                 ],
                 required: ["id"]
-            ),
-            tool(
-                "update_note",
-                description: "Modify a note's body by id. Supports three modes: `replace` (default) overwrites the whole body, `append` adds the new text at the end, `prepend` inserts it at the start. The `title` argument is only honored in replace mode; in append/prepend the title is re-derived from the resulting first heading or first line.",
-                properties: [
-                    "id": ["type": "string"],
-                    "text": ["type": "string", "description": "Markdown text to apply."],
-                    "title": ["type": "string", "description": "Optional explicit title (replace mode only). If omitted, derived from the first heading / first line of the new text."],
-                    "mode": ["type": "string", "description": "How to apply `text`. One of `replace`, `append`, `prepend`. Default `replace`.", "enum": ["replace", "append", "prepend"]]
-                ],
-                required: ["id", "text"]
             ),
             tool(
                 "delete_note",
@@ -319,7 +209,7 @@ final class MCPServer {
             ),
             tool(
                 "set_folder_color",
-                description: "Set or clear a folder's color. Accepted values: yellow, orange, red, pink, purple, blue, teal, green, gray, or null/empty to reset.",
+                description: "Set or clear a folder’s color metadata for legacy clients. Vellem for Mac shows all folders in grayscale. Accepted values: yellow, orange, red, pink, purple, blue, teal, green, gray, or null/empty to reset.",
                 properties: [
                     "id": ["type": "string", "description": "Folder UUID."],
                     "color": ["type": "string", "description": "Color name, or empty to clear."]
@@ -341,14 +231,15 @@ final class MCPServer {
     }
 
     private func tool(_ name: String, description: String, properties: [String: Any], required: [String]) -> [String: Any] {
+        let schema: [String: Any] = [
+            "type": "object",
+            "properties": properties,
+            "required": required
+        ]
         return [
             "name": name,
             "description": description,
-            "inputSchema": [
-                "type": "object",
-                "properties": properties,
-                "required": required
-            ]
+            "inputSchema": schema
         ]
     }
 
@@ -359,7 +250,15 @@ final class MCPServer {
         let args = params["arguments"] as? [String: Any] ?? [:]
 
         do {
-            let text = try execute(toolName: name, args: args)
+            let mutations: Set<String> = ["add_note", "send_output", "create_todo_list", "delete_note", "create_folder", "delete_folder", "set_folder_color", "move_note"]
+            let text: String
+            if mutations.contains(name) {
+                text = try LibraryWriteLock.withLock(in: store.libraryDirectory) {
+                    try execute(toolName: name, args: args, metadata: params["_meta"] as? [String: Any] ?? [:])
+                }
+            } else {
+                text = try execute(toolName: name, args: args, metadata: params["_meta"] as? [String: Any] ?? [:])
+            }
             send(id: id, result: [
                 "content": [["type": "text", "text": text]],
                 "isError": false
@@ -372,49 +271,68 @@ final class MCPServer {
         }
     }
 
-    private func execute(toolName: String, args: [String: Any]) throws -> String {
+    private func sourceAgent(from args: [String: Any]) throws -> InboxAgent? {
+        guard let value = args["source_agent"] else { return nil }
+        guard let name = value as? String, let agent = InboxAgent.identify(name) else {
+            throw MCPError.invalidArguments("Choose a supported source_agent or omit it.")
+        }
+        return agent
+    }
+
+    private func replyConversation(agent: InboxAgent?, args: [String: Any], metadata: [String: Any]) throws -> ReplyConversation? {
+        // A label or destination folder alone cannot identify a conversation.
+        guard store.isDirectDelivery || store.clientAgent == agent else { return nil }
+        let env = ProcessInfo.processInfo.environment
+        let provider: ReplyConversation.Provider
+        let session: String?
+        switch agent {
+        case .codex:
+            provider = .codex
+            session = metadata["threadId"] as? String ?? (store.isDirectDelivery ? env["CODEX_THREAD_ID"] : nil)
+        case .claude:
+            provider = .claude
+            session = env["CLAUDE_CODE_SESSION_ID"]
+        default: return nil
+        }
+        let explicit = store.isDirectDelivery ? args["session_id"] as? String : nil
+        if let explicit, UUID(uuidString: explicit) == nil {
+            throw MCPError.invalidArguments("Provide the originating CLI session UUID.")
+        }
+        guard let id = (explicit ?? session).flatMap(UUID.init(uuidString:)) else { return nil }
+        let directory = provider == .claude ? env["CLAUDE_PROJECT_DIR"] : nil
+        return ReplyConversation(provider: provider, sessionID: id,
+                                 directory: directory ?? FileManager.default.currentDirectoryPath)
+    }
+
+    func deliverFromCLI(_ arguments: [String: Any]) throws -> String {
+        store.isDirectDelivery = true
+        return try LibraryWriteLock.withLock(in: store.libraryDirectory) {
+            try execute(toolName: "send_output", args: arguments)
+        }
+    }
+
+    private func execute(toolName: String, args: [String: Any], metadata: [String: Any] = [:]) throws -> String {
         switch toolName {
-        case "add_note":
-            guard let text = (args["text"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
-                  !text.isEmpty else {
-                throw MCPError.invalidArguments("`text` is required and cannot be empty.")
+        case "send_output", "add_note":
+            guard let text = args["text"] as? String,
+                  !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                throw MCPError.invalidArguments("Provide a non-empty text body.")
             }
+            let rawFormat = args["format"] ?? "markdown"
+            guard let value = rawFormat as? String, let format = OutputFormat(rawValue: value) else {
+                throw MCPError.invalidArguments("Choose markdown, text, json or code.")
+            }
+            let sender = (args["source_agent"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            if args["source_agent"] != nil && sender?.isEmpty != false {
+                throw MCPError.invalidArguments("Provide a sender name or omit source_agent.")
+            }
+            let agent = sender == nil ? store.clientAgent : InboxAgent.identify(sender)
+            let folderID = try resolveFolderArg(args, agent: agent, sender: sender)
             let title = (args["title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
-            let folderID = try resolveFolderArg(args)
-            let context = try requiredDecisionContext(from: args)
-            let note = try store.addNote(
-                text: text,
-                generatedTitle: title?.isEmpty == false ? title : nil,
-                folderID: folderID,
-                decisionContext: context
-            )
-            return "Created note with decision context.\n\n" + formatNoteCreated(note) + "\n\n" + formatDecisionContext(for: note)
-
-        case "add_decision_note":
-            guard let text = (args["text"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
-                  !text.isEmpty else {
-                throw MCPError.invalidArguments("`text` is required and cannot be empty.")
-            }
-            let title = (args["title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
-            let folderID = try resolveFolderArg(args)
-            let context = try requiredDecisionContext(from: args)
-            let note = try store.addDecisionNote(
-                text: text,
-                generatedTitle: title?.isEmpty == false ? title : nil,
-                folderID: folderID,
-                decisionContext: context
-            )
-            return "Created decision note.\n\n" + formatNoteCreated(note) + "\n\n" + formatDecisionContext(for: note)
-
-        case "append_to_daily":
-            guard let text = (args["text"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
-                  !text.isEmpty else {
-                throw MCPError.invalidArguments("`text` is required.")
-            }
-            let existingDailyNote = try store.dailyNote(for: Date())
-            let context = existingDailyNote == nil ? try requiredDecisionContext(from: args) : nil
-            let note = try store.appendToDaily(text: text, decisionContext: context)
-            return "Added to today's note (\(note.id)). New length: \(note.text.count) chars."
+            let note = try store.addNote(text: text, generatedTitle: title?.isEmpty == false ? title : nil,
+                                         folderID: folderID, agent: agent, sender: sender, format: format,
+                                         conversation: try replyConversation(agent: agent, args: args, metadata: metadata))
+            return formatNoteCreated(note)
 
         case "create_todo_list":
             guard let title = (args["title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -425,33 +343,17 @@ final class MCPServer {
             guard !tasks.isEmpty else {
                 throw MCPError.invalidArguments("`tasks` must include at least one task.")
             }
-            let folderID = try resolveFolderArg(args)
+            let agent = try sourceAgent(from: args)
+            let folderID = try resolveFolderArg(args, agent: agent)
             let text = todoListMarkdown(title: title, tasks: tasks)
-            let context = try requiredDecisionContext(from: args)
             let note = try store.addNote(
                 text: text,
                 generatedTitle: title,
                 folderID: folderID,
-                decisionContext: context
+                agent: agent,
+                conversation: try replyConversation(agent: agent ?? store.clientAgent, args: args, metadata: metadata)
             )
-            return "Created to-do list with decision context.\n\n" + formatNoteCreated(note) + "\n\n" + formatDecisionContext(for: note)
-
-        case "add_todo":
-            guard let idString = args["id"] as? String,
-                  let uuid = UUID(uuidString: idString) else {
-                throw MCPError.invalidArguments("`id` must be a valid UUID.")
-            }
-            guard let taskText = (args["text"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
-                  !taskText.isEmpty else {
-                throw MCPError.invalidArguments("`text` is required.")
-            }
-            guard let note = try store.getNote(id: uuid) else {
-                throw MCPError.notFound("Note \(idString) not found.")
-            }
-            let checked = (args["checked"] as? Bool) ?? false
-            let updatedText = appendTodo(taskText, checked: checked, to: note.text)
-            let updated = try store.updateNote(id: uuid, text: updatedText)
-            return "Added todo to note \(updated.id). Title: \(updated.title)."
+            return formatNoteCreated(note)
 
         case "list_notes":
             let limit = (args["limit"] as? Int) ?? 20
@@ -514,51 +416,9 @@ final class MCPServer {
 
         case "get_daily_log":
             guard let note = try store.dailyNote(for: Date()) else {
-                return "status: missing\nNo daily note exists for today. Use `append_to_daily` to start one."
+                return "status: missing\nNo daily note exists for today."
             }
             return formatFullNote(note)
-
-        case "capture_decision_context":
-            guard let idString = args["id"] as? String,
-                  let uuid = UUID(uuidString: idString) else {
-                throw MCPError.invalidArguments("`id` must be a valid UUID.")
-            }
-            guard let note = try store.getNote(id: uuid) else {
-                throw MCPError.notFound("Note \(idString) not found.")
-            }
-            let context = try decisionContext(from: args, fallbackNote: note)
-            let updated = try store.updateDecisionContext(id: uuid, context: context)
-            return "Decision context saved.\n\n" + formatDecisionContext(for: updated)
-
-        case "list_expiring_contexts":
-            let days = (args["days"] as? Int) ?? 14
-            let includeExpired = (args["include_expired"] as? Bool) ?? true
-            let limit = (args["limit"] as? Int) ?? 50
-            let notes = try store.notesWithExpiringDecisionContext(days: days, includeExpired: includeExpired, limit: limit)
-            if notes.isEmpty {
-                return "No decision contexts expire within \(days) day\(days == 1 ? "" : "s")."
-            }
-            return notes.map { formatDecisionContext(for: $0) }.joined(separator: "\n\n")
-
-        case "get_decision_trail":
-            guard let idString = args["id"] as? String,
-                  let uuid = UUID(uuidString: idString) else {
-                throw MCPError.invalidArguments("`id` must be a valid UUID.")
-            }
-            let notes = try store.decisionTrail(for: uuid)
-            if notes.isEmpty {
-                return "No decision trail for note \(idString)."
-            }
-            return notes.map { formatDecisionContext(for: $0) }.joined(separator: "\n\n")
-
-        case "mark_context_resolved":
-            guard let idString = args["id"] as? String,
-                  let uuid = UUID(uuidString: idString) else {
-                throw MCPError.invalidArguments("`id` must be a valid UUID.")
-            }
-            let resolvedAt = try parseISODate(args["resolved_at"]) ?? Date()
-            let updated = try store.markDecisionContextResolved(id: uuid, resolvedAt: resolvedAt)
-            return "Decision context resolved.\n\n" + formatDecisionContext(for: updated)
 
         case "get_note":
             guard let idString = args["id"] as? String,
@@ -569,31 +429,6 @@ final class MCPServer {
                 throw MCPError.notFound("Note \(idString) not found.")
             }
             return formatFullNote(note)
-
-        case "update_note":
-            guard let idString = args["id"] as? String,
-                  let uuid = UUID(uuidString: idString) else {
-                throw MCPError.invalidArguments("`id` must be a valid UUID.")
-            }
-            guard let text = args["text"] as? String else {
-                throw MCPError.invalidArguments("`text` is required.")
-            }
-            let modeRaw = (args["mode"] as? String)?
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-                .lowercased() ?? "replace"
-            let note: Note
-            switch modeRaw {
-            case "", "replace":
-                let titleArg = args["title"] as? String
-                note = try store.updateNote(id: uuid, text: text, title: titleArg)
-            case "append":
-                note = try store.appendToNote(id: uuid, text: text)
-            case "prepend":
-                note = try store.prependToNote(id: uuid, text: text)
-            default:
-                throw MCPError.invalidArguments("`mode` must be one of replace, append, prepend.")
-            }
-            return "Updated note \(note.id) (\(modeRaw == "" ? "replace" : modeRaw)). Title: \(note.title). Words: \(note.wordCount)."
 
         case "delete_note":
             guard let idString = args["id"] as? String,
@@ -610,7 +445,7 @@ final class MCPServer {
             let f = ISO8601DateFormatter()
             return folders.map { folder in
                 let count = notes.filter { noteMatchesFolderDisplay($0, folder: folder) }.count
-                return "\(folder.id)  \(folder.name)  (\(count) notes, created \(f.string(from: folder.createdAt)))"
+                return "\(folder.id)  \(folder.displayPath)  (\(count) notes, created \(f.string(from: folder.createdAt)))"
             }.joined(separator: "\n")
 
         case "create_folder":
@@ -670,7 +505,7 @@ final class MCPServer {
 
     // MARK: - Folder resolution
 
-    private func resolveFolderArg(_ args: [String: Any]) throws -> UUID? {
+    private func resolveFolderArg(_ args: [String: Any], agent: InboxAgent? = nil, sender: String? = nil) throws -> UUID? {
         if let idString = (args["folder_id"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
            !idString.isEmpty {
             guard let uuid = UUID(uuidString: idString) else {
@@ -680,7 +515,7 @@ final class MCPServer {
         }
         if let name = (args["folder_name"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
            !name.isEmpty {
-            let folder = try store.createFolder(name: name)
+            let folder = try store.createFolder(name: name, agent: agent, sender: sender)
             return folder.id
         }
         return nil
@@ -728,114 +563,9 @@ final class MCPServer {
         return nil
     }
 
-    private func decisionContext(from args: [String: Any], fallbackNote note: Note) throws -> NoteDecisionContext {
-        let existing = note.decisionContext
-        let sourceDetail = stringArg("source_detail", in: args) ?? existing?.sourceDetail ?? sourceDescription(for: note) ?? ""
-        let decisionTitle = stringArg("decision_title", in: args) ?? existing?.decisionTitle ?? ""
-        let validationRule = stringArg("validation_rule", in: args) ?? existing?.validationRule ?? ""
-        let capturedAt = try parseISODate(args["captured_at"]) ?? existing?.capturedAt ?? note.createdAt
-        let effect = try parseDecisionEffect(args["effect"]) ?? existing?.effect ?? .influenced
-        let expiresAt = try parseExpiration(args, existing: existing?.expiresAt)
-
-        return NoteDecisionContext(
-            sourceDetail: sourceDetail,
-            capturedAt: capturedAt,
-            decisionTitle: decisionTitle,
-            effect: effect,
-            expiresAt: expiresAt,
-            validationRule: validationRule,
-            resolvedAt: existing?.resolvedAt,
-            updatedAt: Date()
-        )
-    }
-
-    private func requiredDecisionContext(from args: [String: Any]) throws -> NoteDecisionContext {
-        let sourceDetail = try requiredStringArg("source_detail", in: args)
-        let decisionTitle = try requiredStringArg("decision_title", in: args)
-        let validationRule = try requiredStringArg("validation_rule", in: args)
-
-        guard args.keys.contains("captured_at"),
-              let capturedAt = try parseISODate(args["captured_at"]) else {
-            throw MCPError.invalidArguments("`captured_at` is required and must be an ISO-8601 date.")
-        }
-
-        guard let effect = try parseDecisionEffect(args["effect"]) else {
-            throw MCPError.invalidArguments("`effect` is required and must be one of influenced, confirmed, blocked, cancelled, questioned.")
-        }
-
-        guard args.keys.contains("expires_at") || args.keys.contains("expires_in_days") else {
-            throw MCPError.invalidArguments("Either `expires_at` or `expires_in_days` is required.")
-        }
-
-        guard let expiresAt = try parseExpiration(args, existing: nil) else {
-            throw MCPError.invalidArguments("`expires_at` must be an ISO-8601 date, or provide `expires_in_days`.")
-        }
-
-        let resolvedAt = try parseISODate(args["resolved_at"])
-
-        return NoteDecisionContext(
-            sourceDetail: sourceDetail,
-            capturedAt: capturedAt,
-            decisionTitle: decisionTitle,
-            effect: effect,
-            expiresAt: expiresAt,
-            validationRule: validationRule,
-            resolvedAt: resolvedAt,
-            updatedAt: Date()
-        )
-    }
-
-    private func stringArg(_ key: String, in args: [String: Any]) -> String? {
-        guard let value = args[key] as? String else { return nil }
-        let cleaned = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        return cleaned.isEmpty ? nil : cleaned
-    }
-
-    private func requiredStringArg(_ key: String, in args: [String: Any]) throws -> String {
-        guard let value = stringArg(key, in: args) else {
-            throw MCPError.invalidArguments("`\(key)` is required and cannot be empty.")
-        }
-        return value
-    }
-
-    private func parseDecisionEffect(_ raw: Any?) throws -> DecisionEffect? {
-        guard let value = (raw as? String)?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
-              !value.isEmpty else {
-            return nil
-        }
-        guard let effect = DecisionEffect(rawValue: value) else {
-            throw MCPError.invalidArguments("`effect` must be one of influenced, confirmed, blocked, cancelled, questioned.")
-        }
-        return effect
-    }
-
-    private func parseExpiration(_ args: [String: Any], existing: Date?) throws -> Date? {
-        if let days = args["expires_in_days"] as? Int {
-            return Calendar.current.date(byAdding: .day, value: days, to: Date()) ?? Date()
-        }
-        if let daysDouble = args["expires_in_days"] as? Double {
-            let seconds = daysDouble * 86_400
-            return Date().addingTimeInterval(seconds)
-        }
-        if args.keys.contains("expires_at") {
-            return try parseISODate(args["expires_at"])
-        }
-        return existing
-    }
-
-    private func parseISODate(_ raw: Any?) throws -> Date? {
-        guard let value = (raw as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !value.isEmpty else {
-            return nil
-        }
-        guard let date = Self.iso8601.date(from: value) else {
-            throw MCPError.invalidArguments("Date values must be ISO-8601 strings, for example 2026-06-04T09:00:00Z.")
-        }
-        return date
-    }
-
     private func formatFullNote(_ note: Note) -> String {
         var meta = "id: \(note.id)\ntitle: \(note.title)\nkind: \(note.isDailyNote ? "daily" : "regular")\nupdatedAt: \(Self.iso8601.string(from: note.updatedAt))\n"
+        if let format = note.outputFormat { meta += "format: \(format.rawValue)\n" }
         if let src = note.sourceApp { meta += "sourceApp: \(src)\n" }
         if let url = note.sourceURL { meta += "sourceURL: \(url.absoluteString)\n" }
         if let folderID = note.folderID {
@@ -845,52 +575,8 @@ final class MCPServer {
         return meta + "\n---\n\n" + note.text
     }
 
-    private func formatDecisionContext(for note: Note) -> String {
-        guard let context = note.decisionContext else {
-            return """
-            id: \(note.id)
-            title: \(note.title)
-            status: no_context
-            """
-        }
-
-        var lines = [
-            "id: \(note.id)",
-            "title: \(note.title)",
-            "status: \(context.status().rawValue)",
-            "decision: \(context.decisionTitle.isEmpty ? "<none>" : context.decisionTitle)",
-            "effect: \(context.effect.rawValue)",
-            "source: \(context.sourceDetail.isEmpty ? "<none>" : context.sourceDetail)",
-            "capturedAt: \(Self.iso8601.string(from: context.capturedAt))"
-        ]
-
-        if let expiresAt = context.expiresAt {
-            lines.append("expiresAt: \(Self.iso8601.string(from: expiresAt))")
-        }
-        if !context.validationRule.isEmpty {
-            lines.append("validationRule: \(context.validationRule)")
-        }
-        if let resolvedAt = context.resolvedAt {
-            lines.append("resolvedAt: \(Self.iso8601.string(from: resolvedAt))")
-        }
-
-        return lines.joined(separator: "\n")
-    }
-
-    private func sourceDescription(for note: Note) -> String? {
-        switch (note.sourceApp, note.sourceURL) {
-        case let (sourceApp?, sourceURL?):
-            return "\(sourceApp), \(sourceURL.absoluteString)"
-        case let (sourceApp?, nil):
-            return sourceApp
-        case let (nil, sourceURL?):
-            return sourceURL.absoluteString
-        case (nil, nil):
-            return nil
-        }
-    }
-
     private func noteMatchesFolderDisplay(_ note: Note, folder: Folder) -> Bool {
+        if folder.kind == .regular { return note.folderID == folder.id }
         guard !note.isDailyNote else { return false }
 
         switch folder.kind {
@@ -934,12 +620,6 @@ final class MCPServer {
         return "# \(title)\n\n" + rows.joined(separator: "\n")
     }
 
-    private func appendTodo(_ text: String, checked: Bool, to noteText: String) -> String {
-        let cleanedNote = noteText.trimmingCharacters(in: .whitespacesAndNewlines)
-        let separator = cleanedNote.isEmpty ? "" : "\n"
-        return cleanedNote + separator + todoLine(text: text, checked: checked)
-    }
-
     private func todoLine(text: String, checked: Bool) -> String {
         "- [\(checked ? "x" : " ")] \(text)"
     }
@@ -968,21 +648,5 @@ final class MCPServer {
         guard let data = try? JSONSerialization.data(withJSONObject: envelope, options: []) else { return }
         FileHandle.standardOutput.write(data)
         FileHandle.standardOutput.write("\n".data(using: .utf8)!)
-    }
-}
-
-enum MCPError: LocalizedError {
-    case invalidArguments(String)
-    case notFound(String)
-    case unknownTool(String)
-    case io(String)
-
-    var errorDescription: String? {
-        switch self {
-        case .invalidArguments(let msg): return msg
-        case .notFound(let msg): return msg
-        case .unknownTool(let name): return "Unknown tool: \(name)"
-        case .io(let msg): return msg
-        }
     }
 }

@@ -20,12 +20,12 @@ enum NoteNotifications {
 
     static func notifyNewNote(_ note: Note, source: String) {
         let sourceLabel = source.trimmingCharacters(in: .whitespacesAndNewlines)
-        let body = body(for: note, source: sourceLabel.isEmpty ? "External capture" : sourceLabel)
+        let body = body(for: note, source: sourceLabel.isEmpty ? VellemLanguage.text("External capture") : sourceLabel)
         appendDiagnostic("notifyNewNote note=\(note.id.uuidString) source=\(sourceLabel)")
-        deliverLegacyNotification(title: "New note in Vellem", body: body, noteID: note.id)
+        deliverLegacyNotification(title: VellemLanguage.text("New note in Vellem"), body: body, noteID: note.id)
 
         let content = UNMutableNotificationContent()
-        content.title = "New note in Vellem"
+        content.title = VellemLanguage.text("New note in Vellem")
         content.body = body
         content.sound = .default
         content.interruptionLevel = .timeSensitive
@@ -51,7 +51,7 @@ enum NoteNotifications {
 
     private static func body(for note: Note, source: String) -> String {
         let title = note.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        let noteTitle = title.isEmpty ? "Untitled" : title
+        let noteTitle = title.isEmpty ? VellemLanguage.text("Untitled") : title
         return "\(source): \(noteTitle)"
     }
 

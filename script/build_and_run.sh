@@ -18,9 +18,6 @@ SYSTEM_INSTALLED_APP_BUNDLE="$SYSTEM_INSTALL_DIR/$APP_NAME.app"
 LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/LaunchServices.framework/Versions/Current/Support/lsregister"
 SYMROOT="$DERIVED_DATA/Build/Products"
 OBJROOT="$DERIVED_DATA/Build/Intermediates.noindex"
-MAC_GROUP_NOTES="$HOME/Library/Group Containers/MKAFV9VL9V.com.adriendonot.Vellem/notes.json"
-LEGACY_GROUP_NOTES="$HOME/Library/Group Containers/group.com.adriendonot.Vellem/notes.json"
-APP_SUPPORT_NOTES="$HOME/Library/Application Support/Vellem/notes.json"
 
 cd "$ROOT_DIR"
 
@@ -85,37 +82,7 @@ cleanup_stale_services() {
   fi
 }
 
-merge_notes() {
-  local tmp_file
-  local note_files=()
-  tmp_file="$(mktemp)"
-
-  for note_file in "$MAC_GROUP_NOTES" "$LEGACY_GROUP_NOTES" "$APP_SUPPORT_NOTES"; do
-    if [ -f "$note_file" ]; then
-      note_files+=("$note_file")
-    fi
-  done
-
-  if [ "${#note_files[@]}" -eq 0 ]; then
-    rm -f "$tmp_file"
-    return
-  fi
-
-  /opt/homebrew/bin/jq -s 'add | unique_by(.id) | sort_by(.updatedAt) | reverse' \
-    "${note_files[@]}" \
-    2>/dev/null > "$tmp_file" || true
-
-  if [ -s "$tmp_file" ]; then
-    mkdir -p "$(dirname "$MAC_GROUP_NOTES")"
-    mv "$tmp_file" "$MAC_GROUP_NOTES"
-  else
-    rm -f "$tmp_file"
-  fi
-}
-
 open_app() {
-  merge_notes
-
   local widget_ext="${APP_NAME}Widget.appex"
 
   # Un-register old widget extensions from both locations BEFORE copying the new bundle,

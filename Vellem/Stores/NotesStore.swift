@@ -9,27 +9,29 @@ final class NotesStore: ObservableObject {
     @Published var selectedNoteID: Note.ID?
     @Published var viewerNoteID: Note.ID?
     @Published var selectedFolderID: Folder.ID?
-    @Published var isInboxSelected = false
+    @Published private(set) var inboxAgent: InboxAgent?
+    @Published private(set) var sidebarRoot: SidebarMailbox = .inbox
+    @Published var isInboxSelected = true
     @Published var isTodaySelected = false
+    @Published var persistenceError: String?
+    @Published private(set) var libraryUnavailable = false
 
     var viewerNote: Note? {
         guard let viewerNoteID else { return nil }
         return notesByID[viewerNoteID]
     }
 
-    var unreadCount: Int {
-        notes.reduce(0) { $0 + ($1.isRead ? 0 : 1) }
-    }
-
     // O(1) lookup index — kept in sync via $notes publisher
     private var notesByID: [Note.ID: Note] = [:]
+    private var persistedNotes: [Note] = []
+    private var persistedFolders: [Folder] = []
+    private var persistenceGeneration = 0
     private var indexCancellable: AnyCancellable?
 
     private let fileURL: URL
     private let foldersURL: URL
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
-    private let editor = FoundationNoteEditor()
     private var fileWatcher: DispatchSourceFileSystemObject?
     private var foldersWatcher: DispatchSourceFileSystemObject?
     private var externalEventWatcher: DispatchSourceFileSystemObject?
@@ -44,7 +46,7 @@ final class NotesStore: ObservableObject {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         // Keep notesByID in sync whenever notes array changes (fires in willSet with new value).
         indexCancellable = $notes.sink { [weak self] newNotes in
-            self?.notesByID = Dictionary(uniqueKeysWithValues: newNotes.map { ($0.id, $0) })
+            self?.notesByID = Dictionary(newNotes.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         }
         load()
         loadFolders()
@@ -53,9 +55,6 @@ final class NotesStore: ObservableObject {
         startWatchingFoldersFile()
         startWatchingExternalEvents()
         WidgetReloader.reload()
-        Task {
-            await generateTitles()
-        }
     }
 
     deinit {
@@ -70,84 +69,57 @@ final class NotesStore: ObservableObject {
         folders.first { $0.kind == .smartServices }?.id
     }
 
+    var hasArchivedCaptures: Bool {
+        if folders.contains(where: { $0.mailbox == SidebarMailbox.captures.folderKey }) { return true }
+        guard let id = servicesFolderID else { return false }
+        return notes.contains { $0.folderID == id }
+    }
+
     var selectedNote: Note? {
         guard let selectedNoteID else { return notes.first }
         return notesByID[selectedNoteID] ?? notes.first
     }
 
     private func ensureSmartFolders() {
-        var changed = false
-        changed = ensureSystemFolder(name: "Claude", color: FolderColor.red.rawValue, kind: .smartClaude) || changed
-        changed = ensureSystemFolder(name: "Codex", color: FolderColor.blue.rawValue, kind: .smartCodex) || changed
-        changed = ensureSystemFolder(name: "Prompt Library", color: FolderColor.purple.rawValue, kind: .smartPromptLibrary) || changed
-        changed = ensureSystemFolder(name: "Quick captures", color: FolderColor.green.rawValue, kind: .smartServices) || changed
-
-        if changed {
-            sortFolders()
-            saveFolders()
-        }
+        let normalized = Self.normalizedSystemFolders(folders)
+        guard normalized != folders else { return }
+        folders = normalized
+        saveFolders()
     }
 
-    private func ensureSystemFolder(name: String, color: String, kind: FolderKind) -> Bool {
-        if let index = folders.firstIndex(where: { $0.kind == kind }) {
-            var changed = false
-            if folders[index].name != name {
-                folders[index].name = name
-                changed = true
+    private static func normalizedSystemFolders(_ input: [Folder]) -> [Folder] {
+        // Keep notes already filed in the retired library reachable as a normal folder.
+        var result = input.map { folder in
+            var folder = folder
+            if folder.kind == .smartPromptLibrary { folder.kind = .regular }
+            return folder
+        }
+        let system: [(String, FolderKind)] = [
+            ("Claude", .smartClaude),
+            ("Codex", .smartCodex),
+            ("Quick captures", .smartServices)
+        ]
+        for (name, kind) in system {
+            if let index = result.firstIndex(where: { $0.kind == kind })
+                ?? result.firstIndex(where: { $0.mailbox == nil && $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame }) {
+                result[index].kind = kind
+                result[index].name = name
+            } else {
+                result.append(Folder(name: name, kind: kind))
             }
-            if folders[index].color != color {
-                folders[index].color = color
-                changed = true
-            }
-            return changed
         }
-
-        if let index = folders.firstIndex(where: { $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame }) {
-            folders[index].kind = kind
-            folders[index].name = name
-            folders[index].color = color
-            return true
-        }
-
-        folders.append(Folder(name: name, color: color, kind: kind))
-        return true
+        return result.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
     @discardableResult
-    func captureFromServices(text: String, source: CaptureSource? = nil) -> Note? {
-        guard let note = create(text: text, source: source) else { return nil }
-        if let folderID = servicesFolderID {
-            moveNote(note.id, toFolder: folderID)
-        }
-        let deliveredNote = notes.first { $0.id == note.id } ?? note
-        NoteNotifications.notifyNewNote(deliveredNote, source: source?.appName ?? "Services")
-        return deliveredNote
-    }
-
-    @discardableResult
-    func createQuickCapture(text: String) -> Note? {
-        guard let note = create(text: text) else { return nil }
-        if let folderID = servicesFolderID {
-            moveNote(note.id, toFolder: folderID)
-        }
-        return notes.first { $0.id == note.id } ?? note
-    }
-
-    @discardableResult
-    func createFolder(name: String) -> Folder {
+    func createFolder(name: String, mailbox: String? = nil) -> Folder {
         let cleaned = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let finalName = cleaned.isEmpty ? "New folder" : cleaned
-        let folder = Folder(name: finalName)
+        let folder = Folder(name: finalName, mailbox: mailbox)
         folders.append(folder)
         sortFolders()
-        saveFolders()
+        if !saveFolders() { folders.removeAll { $0.id == folder.id } }
         return folder
-    }
-
-    func setFolderColor(_ folderID: Folder.ID, color: FolderColor?) {
-        guard let index = folders.firstIndex(where: { $0.id == folderID }) else { return }
-        folders[index].color = color?.rawValue
-        saveFolders()
     }
 
     func renameFolder(_ folderID: Folder.ID, to name: String) {
@@ -161,14 +133,47 @@ final class NotesStore: ObservableObject {
 
     func deleteFolder(_ folderID: Folder.ID) {
         guard let target = folders.first(where: { $0.id == folderID }), !target.isSmart else { return }
-        folders.removeAll { $0.id == folderID }
-        for index in notes.indices where notes[index].folderID == folderID {
-            notes[index].folderID = nil
+        do {
+            let (updatedFolders, updatedNotes, hadConflict) = try LibraryWriteLock.withLock(in: fileURL.deletingLastPathComponent()) {
+                let folderData = FileManager.default.fileExists(atPath: foldersURL.path) ? try Data(contentsOf: foldersURL) : nil
+                let noteData = FileManager.default.fileExists(atPath: fileURL.path) ? try Data(contentsOf: fileURL) : nil
+                let diskFolders = try folderData.map { try VellemLibraryValidation.uniqueIDs(decoder.decode([Folder].self, from: $0), kind: "folders") } ?? []
+                let diskNotes = try noteData.map { try VellemLibraryValidation.uniqueIDs(decoder.decode([Note].self, from: $0), kind: "notes") } ?? []
+
+                let baseline = Dictionary(uniqueKeysWithValues: persistedFolders.map { ($0.id, $0) })
+                let current = Dictionary(uniqueKeysWithValues: folders.map { ($0.id, $0) })
+                var combined = Dictionary(uniqueKeysWithValues: diskFolders.map { ($0.id, $0) })
+                for id in baseline.keys where current[id] == nil { combined.removeValue(forKey: id) }
+                for folder in folders where baseline[folder.id] != folder { combined[folder.id] = folder }
+                combined.removeValue(forKey: folderID)
+                let newFolders = combined.values.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+
+                let merge = NoteLibraryMerge.merge(baseline: persistedNotes, local: notes, disk: diskNotes, removingFolder: folderID)
+                let newNotes = merge.notes
+                let encodedFolders = try encoder.encode(newFolders)
+                let encodedNotes = try encoder.encode(newNotes)
+                try LibraryFileTransaction.replace(notesData: encodedNotes, foldersData: encodedFolders,
+                                                   notesURL: fileURL, foldersURL: foldersURL)
+                try? CloudMirrorStore.publish(notesData: encodedNotes, foldersData: encodedFolders)
+                return (newFolders, newNotes, merge.hasTextConflict)
+            }
+            folders = updatedFolders
+            persistedFolders = updatedFolders
+            notes = updatedNotes
+            persistedNotes = updatedNotes
+            persistenceGeneration += 1
+            if selectedFolderID == folderID {
+                selectRoot(sidebarRoot)
+            }
+            normalizeSelection()
+            updateDockBadge()
+            WidgetReloader.reload()
+            if hadConflict {
+                persistenceError = VellemLanguage.text("A note changed in another app. A conflict copy was created to preserve the edits.")
+            }
+        } catch {
+            persistenceError = VellemLanguage.format("Could not delete the folder: %@", error.localizedDescription)
         }
-        if selectedFolderID == folderID { selectedFolderID = nil }
-        normalizeSelection()
-        saveFolders()
-        save()
     }
 
     func moveNote(_ noteID: Note.ID, toFolder folderID: Folder.ID?) {
@@ -176,6 +181,9 @@ final class NotesStore: ObservableObject {
         guard notes[index].folderID != folderID else { return }
         if let folderID, !folders.contains(where: { $0.id == folderID }) { return }
         var moved = notes.remove(at: index)
+        if InboxAgent.origin(of: moved) == nil, let originalAgent = agent(for: moved) {
+            moved.sourceApp = originalAgent.rawValue
+        }
         moved.folderID = folderID
         moved.updatedAt = .now
         notes.insert(moved, at: 0)
@@ -190,28 +198,44 @@ final class NotesStore: ObservableObject {
     // MARK: - Folder persistence
 
     private func loadFolders() {
-        guard FileManager.default.fileExists(atPath: foldersURL.path),
-              let data = try? Data(contentsOf: foldersURL),
-              let loaded = try? decoder.decode([Folder].self, from: data) else {
-            folders = []
-            return
+        guard FileManager.default.fileExists(atPath: foldersURL.path) else { return }
+        do {
+            let loaded = try VellemLibraryValidation.uniqueIDs(decoder.decode([Folder].self, from: Data(contentsOf: foldersURL)), kind: "folders")
+            folders = loaded
+            persistedFolders = loaded
+            sortFolders()
+            ensureSmartFolders()
+            if let selectedFolderID, !folders.contains(where: { $0.id == selectedFolderID }) {
+                selectRoot(sidebarRoot)
+            }
+        } catch {
+            persistenceError = VellemLanguage.format("Could not read folders: %@", error.localizedDescription)
         }
-        folders = loaded
-        sortFolders()
-        ensureSmartFolders()
     }
 
-    private func saveFolders() {
+    @discardableResult
+    private func saveFolders() -> Bool {
         do {
-            try FileManager.default.createDirectory(
-                at: foldersURL.deletingLastPathComponent(),
-                withIntermediateDirectories: true
-            )
-            let data = try encoder.encode(folders)
-            try data.write(to: foldersURL, options: [.atomic])
-            try? CloudMirrorStore.publish(foldersData: data)
+            let merged = try LibraryWriteLock.withLock(in: foldersURL.deletingLastPathComponent()) {
+                let disk = FileManager.default.fileExists(atPath: foldersURL.path)
+                    ? try VellemLibraryValidation.uniqueIDs(decoder.decode([Folder].self, from: Data(contentsOf: foldersURL)), kind: "folders") : []
+                let baseline = Dictionary(uniqueKeysWithValues: persistedFolders.map { ($0.id, $0) })
+                let current = Dictionary(uniqueKeysWithValues: folders.map { ($0.id, $0) })
+                var combined = Dictionary(uniqueKeysWithValues: disk.map { ($0.id, $0) })
+                for id in baseline.keys where current[id] == nil { combined.removeValue(forKey: id) }
+                for folder in folders where baseline[folder.id] != folder { combined[folder.id] = folder }
+                let result = combined.values.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+                let data = try encoder.encode(result)
+                try data.write(to: foldersURL, options: [.atomic])
+                try? CloudMirrorStore.publish(foldersData: data)
+                return result
+            }
+            folders = merged
+            persistedFolders = merged
+            return true
         } catch {
-            assertionFailure("Could not save folders: \(error)")
+            persistenceError = VellemLanguage.format("Could not save folders: %@", error.localizedDescription)
+            return false
         }
     }
 
@@ -373,13 +397,16 @@ final class NotesStore: ObservableObject {
 
     private func reloadIfChanged() {
         let url = fileURL
+        let generation = persistenceGeneration
         Task.detached(priority: .utility) { [weak self] in
             do {
                 let data = try Data(contentsOf: url)
-                let loaded = try JSONDecoder().decode([Note].self, from: data)
+                let loaded = try VellemLibraryValidation.uniqueIDs(JSONDecoder().decode([Note].self, from: data), kind: "notes")
                     .sorted { $0.updatedAt > $1.updatedAt }
                 await MainActor.run { [weak self] in
-                    guard let self, loaded != self.notes else { return }
+                    guard let self, generation == self.persistenceGeneration else { return }
+                    self.libraryUnavailable = false
+                    guard loaded != self.notes else { return }
                     let existingNoteIDs = Set(self.notes.map(\.id))
                     let externalNewNotes = loaded.filter { !existingNoteIDs.contains($0.id) }
                     self.applyLoadedNotes(loaded)
@@ -412,12 +439,15 @@ final class NotesStore: ObservableObject {
 
     private func reloadFromDisk() async {
         let url = fileURL
+        let generation = persistenceGeneration
         do {
             let data = try await Task.detached(priority: .utility) {
                 try Data(contentsOf: url)
             }.value
-            let loaded = try JSONDecoder().decode([Note].self, from: data)
+            let loaded = try VellemLibraryValidation.uniqueIDs(JSONDecoder().decode([Note].self, from: data), kind: "notes")
                 .sorted { $0.updatedAt > $1.updatedAt }
+            guard generation == persistenceGeneration else { return }
+            libraryUnavailable = false
             guard loaded != notes else { return }
             applyLoadedNotes(loaded)
         } catch {
@@ -428,6 +458,7 @@ final class NotesStore: ObservableObject {
     private func applyLoadedNotes(_ loaded: [Note]) {
         let existingCount = notes.count
         notes = loaded
+        persistedNotes = loaded
         normalizeSelection()
         updateDockBadge()
         WidgetReloader.reload()
@@ -518,7 +549,7 @@ final class NotesStore: ObservableObject {
             return sourceApp
         }
 
-        return "Sans dossier"
+        return "No folder"
     }
 
     func noteReference(for note: Note) -> String {
@@ -545,13 +576,13 @@ final class NotesStore: ObservableObject {
         if note.isDailyNote {
             location = "Today"
         } else if let folder {
-            location = folder.name
+            location = folder.displayPath
         } else if note.isFromCodex,
                   let folder = folders.first(where: { $0.kind == .smartCodex }) {
-            location = folder.name
+            location = folder.displayPath
         } else if note.isFromClaude,
                   let folder = folders.first(where: { $0.kind == .smartClaude }) {
-            location = folder.name
+            location = folder.displayPath
         } else {
             location = "Inbox"
         }
@@ -562,6 +593,7 @@ final class NotesStore: ObservableObject {
     }
 
     func noteMatchesDisplay(_ note: Note, in folder: Folder) -> Bool {
+        if folder.kind == .regular { return note.folderID == folder.id }
         guard !note.isDailyNote else { return false }
 
         switch folder.kind {
@@ -576,25 +608,56 @@ final class NotesStore: ObservableObject {
         }
     }
 
-    func selectToday() {
-        isInboxSelected = false
-        isTodaySelected = true
-        selectedFolderID = nil
-        selectedNoteID = firstTodayNoteID()
-        if let selectedNoteID {
-            markRead(selectedNoteID)
+    func agent(for note: Note) -> InboxAgent? {
+        if let origin = InboxAgent.origin(of: note) { return origin }
+        guard note.sourceApp == nil || note.sourceApp == "MCP",
+              let id = note.folderID else { return nil }
+        switch folders.first(where: { $0.id == id })?.kind {
+        case .smartClaude: return .claude
+        case .smartCodex: return .codex
+        default: return nil
         }
     }
 
-    func selectInbox() {
-        isInboxSelected = true
-        isTodaySelected = false
-        selectedFolderID = nil
-        selectedNoteID = firstInboxNoteID()
-        if let selectedNoteID {
-            markRead(selectedNoteID)
+    var displayedNotes: [Note] {
+        if let id = selectedFolderID, let folder = folders.first(where: { $0.id == id && !$0.isSmart }) {
+            return notesForDisplay(in: folder)
+        }
+        return notes.filter(mailboxFilter(for: sidebarRoot))
+    }
+
+    func hasUnread(in root: SidebarMailbox) -> Bool {
+        let matches = mailboxFilter(for: root)
+        return notes.contains { !$0.isRead && matches($0) }
+    }
+
+    private func mailboxFilter(for root: SidebarMailbox) -> (Note) -> Bool {
+        switch root {
+        case .inbox: return { !$0.isDailyNote }
+        case .today: return { Calendar.current.isDateInToday($0.createdAt) }
+        case .folders, .captures, .agent:
+            let filed = Set(folders.filter { !$0.isSmart && (root == .folders || $0.mailbox == root.folderKey) }.map(\.id))
+            if case .agent(let origin) = root {
+                return { !$0.isDailyNote && (self.agent(for: $0) == origin || $0.folderID.map(filed.contains) == true) }
+            }
+            let captureID = root == .captures ? servicesFolderID : nil
+            return { note in note.folderID.map { $0 == captureID || filed.contains($0) } == true }
         }
     }
+
+    func selectRoot(_ root: SidebarMailbox) {
+        sidebarRoot = root
+        selectedFolderID = nil
+        if case .agent(let agent) = root { inboxAgent = agent } else { inboxAgent = nil }
+        isInboxSelected = root == .inbox || inboxAgent != nil
+        isTodaySelected = root == .today
+        selectedNoteID = displayedNotes.first?.id
+        if let selectedNoteID { markRead(selectedNoteID) }
+    }
+
+    func selectToday() { selectRoot(.today) }
+
+    func selectInbox(agent: InboxAgent? = nil) { selectRoot(agent.map(SidebarMailbox.agent) ?? .inbox) }
 
     func selectNote(_ noteID: Note.ID, inToday: Bool = false, inFolder folderID: Folder.ID? = nil) {
         selectedNoteID = noteID
@@ -604,7 +667,13 @@ final class NotesStore: ObservableObject {
         markRead(noteID)
     }
 
-    func selectFolder(_ folderID: Folder.ID) {
+    func selectFolder(_ folderID: Folder.ID, from root: SidebarMailbox? = nil) {
+        guard let folder = folders.first(where: { $0.id == folderID }) else { return }
+        if folder.isSmart {
+            selectRoot(SidebarMailbox(folder: folder))
+            return
+        }
+        sidebarRoot = root ?? SidebarMailbox(folder: folder)
         selectedFolderID = folderID
         isInboxSelected = false
         isTodaySelected = false
@@ -618,28 +687,26 @@ final class NotesStore: ObservableObject {
         do {
             migrateLegacyNotes()
             let data = try Data(contentsOf: fileURL)
-            notes = try decoder.decode([Note].self, from: data)
+            notes = try VellemLibraryValidation.uniqueIDs(decoder.decode([Note].self, from: data), kind: "notes")
                 .sorted { $0.updatedAt > $1.updatedAt }
-            selectedNoteID = notes.first?.id
+            libraryUnavailable = false
+            persistedNotes = notes
+            selectedNoteID = firstInboxNoteID()
             updateDockBadge()
         } catch {
             notes = []
             selectedNoteID = nil
+            if FileManager.default.fileExists(atPath: fileURL.path) {
+                libraryUnavailable = true
+                persistenceError = VellemLanguage.format("Could not read notes: %@", error.localizedDescription)
+            }
             updateDockBadge()
         }
     }
 
     func replaceLibrary(notes importedNotes: [Note], folders importedFolders: [Folder]) throws {
         let sortedNotes = importedNotes.sorted { $0.updatedAt > $1.updatedAt }
-
-        folders = importedFolders
-        sortFolders()
-        ensureSmartFolders()
-
-        selectedFolderID = nil
-        isInboxSelected = false
-        isTodaySelected = false
-        selectedNoteID = sortedNotes.first?.id
+        let preparedFolders = Self.normalizedSystemFolders(importedFolders)
 
         try FileManager.default.createDirectory(
             at: fileURL.deletingLastPathComponent(),
@@ -650,100 +717,30 @@ final class NotesStore: ObservableObject {
             withIntermediateDirectories: true
         )
 
-        let notesData = try encoder.encode(sortedNotes)
-        let foldersData = try encoder.encode(folders)
-        try notesData.write(to: fileURL, options: [.atomic])
-        try foldersData.write(to: foldersURL, options: [.atomic])
-        try? CloudMirrorStore.publish(notesData: notesData, foldersData: foldersData)
+        try LibraryWriteLock.withLock(in: fileURL.deletingLastPathComponent()) {
+            let notesData = try encoder.encode(sortedNotes)
+            let foldersData = try encoder.encode(preparedFolders)
+            try LibraryFileTransaction.replace(notesData: notesData, foldersData: foldersData,
+                                               notesURL: fileURL, foldersURL: foldersURL)
+            try? CloudMirrorStore.publish(notesData: notesData, foldersData: foldersData)
+        }
 
+        folders = preparedFolders
         notes = sortedNotes
+        persistedNotes = sortedNotes
+        persistedFolders = preparedFolders
+        persistenceGeneration += 1
+        libraryUnavailable = false
+        selectedFolderID = nil
+        sidebarRoot = .inbox
+        inboxAgent = nil
+        isInboxSelected = true
+        isTodaySelected = false
+        selectedNoteID = firstInboxNoteID()
         normalizeSelection()
         updateDockBadge()
         WidgetReloader.reload()
         pruneEmbeddingCache(keeping: Set(sortedNotes.map(\.id)))
-    }
-
-    @discardableResult
-    func create(text: String, source: CaptureSource? = nil) -> Note? {
-        let cleaned = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cleaned.isEmpty else { return nil }
-
-        let note = Note(text: cleaned, sourceApp: source?.appName, sourceURL: source?.url, isRead: source == nil)
-        notes.insert(note, at: 0)
-        selectedNoteID = note.id
-        isInboxSelected = false
-        isTodaySelected = false
-        save()
-        return note
-    }
-
-    @discardableResult
-    func createDraft() -> Note {
-        let note = Note(text: "", isRead: true)
-        notes.insert(note, at: 0)
-        selectedNoteID = note.id
-        isInboxSelected = false
-        isTodaySelected = false
-        save()
-        return note
-    }
-
-    func update(_ note: Note, text: String, regenerateTitle: Bool = false) {
-        update(noteID: note.id, text: text, regenerateTitle: regenerateTitle)
-    }
-
-    func update(noteID: Note.ID, text: String, regenerateTitle: Bool = false) {
-        guard let index = notes.firstIndex(where: { $0.id == noteID }) else { return }
-        guard notes[index].text != text else { return }
-
-        var updated = notes.remove(at: index)
-        updated.text = text
-        updated.updatedAt = .now
-        notes.insert(updated, at: 0)
-        selectedNoteID = updated.id
-        save()
-
-        if regenerateTitle {
-            Task {
-                await generateTitle(for: updated.id, text: text)
-            }
-        }
-    }
-
-    func updateTitle(_ title: String, for noteID: Note.ID) {
-        guard let index = notes.firstIndex(where: { $0.id == noteID }) else { return }
-        notes[index].generatedTitle = cleanTitle(title)
-        save()
-    }
-
-    func updateDecisionContext(_ context: NoteDecisionContext?, for noteID: Note.ID) {
-        guard let index = notes.firstIndex(where: { $0.id == noteID }) else { return }
-        let normalized = context?.isEmpty == true ? nil : context
-        guard notes[index].decisionContext != normalized else { return }
-
-        var updated = notes.remove(at: index)
-        updated.decisionContext = normalized
-        updated.updatedAt = .now
-        notes.insert(updated, at: 0)
-        selectedNoteID = updated.id
-        save()
-    }
-
-    func decisionTrail(for note: Note) -> [Note] {
-        guard let decisionTitle = note.decisionContext?.decisionTitle.trimmingCharacters(in: .whitespacesAndNewlines),
-              !decisionTitle.isEmpty else {
-            return []
-        }
-
-        return notes.filter { candidate in
-            guard candidate.id != note.id,
-                  let candidateDecision = candidate.decisionContext?.decisionTitle.trimmingCharacters(in: .whitespacesAndNewlines),
-                  !candidateDecision.isEmpty else {
-                return false
-            }
-
-            return candidateDecision.localizedCaseInsensitiveCompare(decisionTitle) == .orderedSame
-        }
     }
 
     func markRead(_ noteID: Note.ID) {
@@ -770,218 +767,81 @@ final class NotesStore: ObservableObject {
         pruneEmbeddingCache(keeping: Set(notes.map(\.id)))
     }
 
-    @discardableResult
-    func upsertDailyNote(for date: Date = .now, appending text: String? = nil, source: CaptureSource? = nil) -> Note {
-        let day = Calendar.current.startOfDay(for: date)
-        let title = dailyTitle(for: day)
-
-        if let index = notes.firstIndex(where: { $0.kind == .daily && Calendar.current.isDate($0.createdAt, inSameDayAs: day) }) {
-            if let text,
-               !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                notes[index].text = append(text, toDailyText: notes[index].text)
-                notes[index].updatedAt = .now
-                if source != nil {
-                    notes[index].isRead = false
-                }
-            }
-            if let source {
-                notes[index].sourceApp = source.appName
-                notes[index].sourceURL = source.url
-            }
-            notes[index].generatedTitle = title
-            let movedNote = notes.remove(at: index)
-            notes.insert(movedNote, at: 0)
-            selectedNoteID = movedNote.id
-            isInboxSelected = false
-            isTodaySelected = false
-            save()
-            return notes.first { $0.id == selectedNoteID } ?? notes[0]
-        }
-
-        let note = Note(
-            text: text.map { append($0, toDailyText: "") } ?? "",
-            generatedTitle: title,
-            kind: .daily,
-            sourceApp: source?.appName,
-            sourceURL: source?.url,
-            createdAt: day,
-            updatedAt: .now,
-            isRead: source == nil
-        )
-        notes.insert(note, at: 0)
-        selectedNoteID = note.id
-        isInboxSelected = false
-        isTodaySelected = false
-        save()
-        return note
-    }
-
-    private func generateTitles() async {
-        for note in notes where note.generatedTitle == nil && !note.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            await generateTitle(for: note.id, text: note.text)
-        }
-    }
-
-    private func generateTitle(for noteID: Note.ID, text: String) async {
-        do {
-            let title = try await editor.title(for: text)
-            updateTitle(title, for: noteID)
-        } catch {
-            // Keep the readable fallback title when Foundation Models is not available.
-        }
-    }
-
     private func normalizeSelection() {
-        if let selectedNoteID,
-           let note = notes.first(where: { $0.id == selectedNoteID }),
-           noteMatchesCurrentSelection(note) {
-            return
-        }
-
-        selectedNoteID = firstNoteIDForCurrentSelection()
+        let candidates = displayedNotes
+        if let selectedNoteID, candidates.contains(where: { $0.id == selectedNoteID }) { return }
+        selectedNoteID = candidates.first?.id
     }
 
-    private func noteMatchesCurrentSelection(_ note: Note) -> Bool {
-        if isInboxSelected {
-            return !note.isDailyNote
-        }
-
-        if isTodaySelected {
-            return Calendar.current.isDateInToday(note.createdAt)
-        }
-
-        if let selectedFolderID,
-           let folder = folders.first(where: { $0.id == selectedFolderID }) {
-            return noteMatchesDisplay(note, in: folder)
-        }
-
-        return true
-    }
-
-    private func firstNoteIDForCurrentSelection() -> Note.ID? {
-        if isInboxSelected {
-            return firstInboxNoteID()
-        }
-
-        if isTodaySelected {
-            return firstTodayNoteID()
-        }
-
-        if let selectedFolderID {
-            return firstNoteID(inFolderID: selectedFolderID)
-        }
-
-        return notes.first?.id
-    }
-
-    private func firstTodayNoteID() -> Note.ID? {
-        notes.first { Calendar.current.isDateInToday($0.createdAt) }?.id
-    }
-
-    private func firstInboxNoteID() -> Note.ID? {
-        notes.first { !$0.isDailyNote }?.id
-    }
+    private func firstInboxNoteID() -> Note.ID? { inboxNotes.first?.id }
 
     private func firstNoteID(inFolderID folderID: Folder.ID) -> Note.ID? {
         guard let folder = folders.first(where: { $0.id == folderID }) else { return nil }
         return notes.first { noteMatchesDisplay($0, in: folder) }?.id
     }
 
-    private func cleanTitle(_ title: String) -> String {
-        let cleaned = title
-            .replacingOccurrences(of: "\n", with: " ")
-            .replacingOccurrences(of: "\"", with: "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-
-        var words = cleaned
-            .split(separator: " ")
-            .prefix(4)
-            .map(String.init)
-
-        let trailingStopWords = [
-            "a", "an", "and", "as", "at", "for", "from", "in", "of", "on", "or", "the", "to",
-            "à", "au", "aux", "avec", "de", "des", "du", "en", "et", "la", "le", "les", "ou", "un", "une"
-        ]
-
-        while words.count > 3,
-              let last = words.last?.lowercased(),
-              trailingStopWords.contains(last) {
-            words.removeLast()
-        }
-
-        return words.joined(separator: " ")
-    }
-
-    private static let dailyTitleFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = .current
-        f.setLocalizedDateFormatFromTemplate("EEE d MMM")
-        return f
-    }()
-
-    private func dailyTitle(for date: Date) -> String {
-        "Today, \(Self.dailyTitleFormatter.string(from: date))"
-    }
-
-    private func append(_ entry: String, toDailyText text: String) -> String {
-        let cleaned = entry.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cleaned.isEmpty else { return text }
-
-        let time = DateFormatter.localizedString(from: .now, dateStyle: .none, timeStyle: .short)
-        let block = "## \(time)\n\(cleaned)"
-
-        let existing = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        return existing.isEmpty ? block : "\(existing)\n\n\(block)"
-    }
-
-    private func save() {
+    @discardableResult
+    private func save() -> Bool {
         do {
-            try FileManager.default.createDirectory(
-                at: fileURL.deletingLastPathComponent(),
-                withIntermediateDirectories: true
-            )
-            let data = try encoder.encode(notes)
-            try data.write(to: fileURL, options: [.atomic])
-            let foldersData = try? encoder.encode(folders)
-            try? CloudMirrorStore.publish(notesData: data, foldersData: foldersData)
+            var hadTextConflict = false
+            let merged = try LibraryWriteLock.withLock(in: fileURL.deletingLastPathComponent()) {
+                let disk = FileManager.default.fileExists(atPath: fileURL.path)
+                    ? try VellemLibraryValidation.uniqueIDs(decoder.decode([Note].self, from: Data(contentsOf: fileURL)), kind: "notes") : []
+                let result = NoteLibraryMerge.merge(baseline: persistedNotes, local: notes, disk: disk)
+                hadTextConflict = result.hasTextConflict
+                let data = try encoder.encode(result.notes)
+                try data.write(to: fileURL, options: [.atomic])
+                let foldersData = try? Data(contentsOf: foldersURL)
+                try? CloudMirrorStore.publish(notesData: data, foldersData: foldersData)
+                return result.notes
+            }
+            notes = merged
+            persistedNotes = merged
+            persistenceGeneration += 1
+            if hadTextConflict {
+                persistenceError = VellemLanguage.text("A note changed in another app while you were editing. A conflict copy was created to preserve the edits.")
+            }
             updateDockBadge()
             WidgetReloader.reload()
+            return true
         } catch {
-            assertionFailure("Could not save notes: \(error)")
+            persistenceError = VellemLanguage.format("Could not save notes: %@", error.localizedDescription)
+            return false
         }
     }
 
     private func updateDockBadge() {
-        let count = unreadCount
+        let count = inboxUnreadCount
         NSApp.dockTile.badgeLabel = count > 0 ? "\(count)" : nil
     }
 
     private func migrateLegacyNotes() {
+        guard VellemStorageEnvironment.isolatedDirectory == nil else { return }
         guard fileURL == AppGroup.notesURL else {
             return
         }
 
         do {
-            var mergedNotes = fileNotes(at: fileURL)
-            var existingIDs = Set(mergedNotes.map(\.id))
-
-            for sourceURL in [AppGroup.applicationSupportNotesURL, AppGroup.legacyNotesURL] {
-                for note in fileNotes(at: sourceURL) where !existingIDs.contains(note.id) {
-                    mergedNotes.append(note)
-                    existingIDs.insert(note.id)
+            try LibraryWriteLock.withLock(in: fileURL.deletingLastPathComponent()) {
+                // Legacy data is imported only when no current library exists.
+                // Re-importing on every launch would resurrect deleted notes.
+                guard !FileManager.default.fileExists(atPath: fileURL.path) else { return }
+                var mergedNotes: [Note] = []
+                var existingIDs = Set(mergedNotes.map(\.id))
+                var changed = false
+                for sourceURL in [AppGroup.applicationSupportNotesURL, AppGroup.legacyNotesURL] {
+                    for note in fileNotes(at: sourceURL) where !existingIDs.contains(note.id) {
+                        mergedNotes.append(note)
+                        existingIDs.insert(note.id)
+                        changed = true
+                    }
                 }
+                guard changed else { return }
+                let data = try encoder.encode(mergedNotes.sorted { $0.updatedAt > $1.updatedAt })
+                try data.write(to: fileURL, options: [.atomic])
             }
-
-            guard !mergedNotes.isEmpty else { return }
-
-            try FileManager.default.createDirectory(
-                at: fileURL.deletingLastPathComponent(),
-                withIntermediateDirectories: true
-            )
-            let data = try encoder.encode(mergedNotes.sorted { $0.updatedAt > $1.updatedAt })
-            try data.write(to: fileURL, options: [.atomic])
         } catch {
-            assertionFailure("Could not migrate notes: \(error)")
+            persistenceError = VellemLanguage.format("Could not migrate notes: %@", error.localizedDescription)
         }
     }
 

@@ -1,0 +1,1604 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "birthday-plan.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask for the date range, number of guests and kind of celebration. Find two possible slots in the family Google Calendar. In the Gmail thread I choose, collect the availability people have shared and the outstanding replies.\n\nCompare the dates and recommend the one that suits the most respondents. List tasks for a week before and the day before, then draft a short invitation showing which details are still open. Keep the draft in Vellem without sending invitations or creating an event."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande-moi la période, le nombre de personnes et le type de fête. Repère deux créneaux dans le Google Calendar familial. Dans le fil Gmail que je choisis, relève les disponibilités déjà exprimées et les réponses en attente.\n\nCompare les deux dates et recommande celle qui convient au plus de personnes ayant répondu. Prépare les tâches à J−7 et la veille, puis un court brouillon d’invitation avec les détails à confirmer. Garde le brouillon dans Vellem, sans envoyer d’invitation ni créer d’événement."
+          }
+        }
+      }
+    },
+    "birthday-plan.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Possible dates, guest replies and a preparation checklist."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les créneaux possibles, les réponses des invités et les préparatifs à répartir."
+          }
+        }
+      }
+    },
+    "birthday-plan.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Organize a family birthday"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préparer un anniversaire en famille"
+          }
+        }
+      }
+    },
+    "campaign-brief.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use the Granola kickoff notes and the campaign plan in Notion for the campaign I name. If several campaigns match, ask which one to use.\n\nDraft a one-page brief with the target audience, their problem, the promise, the evidence behind it, the channels and the launch date. Close with the success metric and any decisions still needed. If the meeting and the plan disagree, quote both positions."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Croise les notes de la réunion de lancement dans Granola avec le plan Notion de la campagne que je nomme. Si plusieurs campagnes correspondent, demande-moi laquelle utiliser.\n\nRédige un brief d’une page avec le public visé, son problème, la promesse, les preuves disponibles, les canaux et la date de lancement. Termine par l’indicateur de succès et les décisions en suspens. Si le plan et la réunion se contredisent, cite les deux versions."
+          }
+        }
+      }
+    },
+    "campaign-brief.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn the kickoff discussion and the launch plan into a brief for the team."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le brief de l’équipe à partir de la réunion de lancement et du plan de campagne."
+          }
+        }
+      }
+    },
+    "campaign-brief.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Draft a campaign brief"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préparer un brief de campagne"
+          }
+        }
+      }
+    },
+    "claim-check.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask for the claim, screenshot or link I want checked. Isolate the exact statement. Trace it to the earliest identifiable source and check the date, location and context. Look for independent evidence that supports or contradicts it.\n\nGive a short verdict. Say what is established, what remains uncertain and what would change your conclusion. If the quote comes from a screenshot or clip, include the surrounding passage."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande-moi la phrase, la capture ou le lien à vérifier. Isole l’affirmation exacte. Retrouve sa première source identifiable et vérifie la date, le lieu et le contexte. Cherche un élément indépendant qui la confirme ou la contredit.\n\nRends un verdict court. Indique ce qui est établi, ce qui reste incertain et le détail qui pourrait changer ta conclusion. Si la citation vient d’une image ou d’un extrait, donne aussi le passage qui l’entoure."
+          }
+        }
+      }
+    },
+    "claim-check.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find the original source, recover the context and see what the evidence supports."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La source d’origine, le contexte et ce que les preuves permettent de conclure."
+          }
+        }
+      }
+    },
+    "claim-check.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check a claim that’s going around"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier une affirmation qui circule"
+          }
+        }
+      }
+    },
+    "client-thread.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start with the Gmail thread I give you. Find Slack discussions that mention this customer and this request. If I haven’t provided a thread or named a customer, ask which one to use.\n\nSummarize the latest request, the commitments we’ve made and what the team has since confirmed. Finish with a draft reply to the customer. Send the draft to Vellem and leave the Gmail thread as it is."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À partir du fil Gmail que je t’indique, retrouve les échanges Slack qui citent ce client et cette demande. Si je n’ai pas donné de fil ni de client, demande-moi lequel traiter.\n\nRésume la dernière demande, les engagements déjà communiqués et ce que l’équipe a confirmé depuis. Termine par un brouillon de réponse au client. Dépose ce brouillon dans Vellem et laisse le fil Gmail intact."
+          }
+        }
+      }
+    },
+    "client-thread.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The customer’s email and the answers the team has already found."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La demande par e-mail et les réponses déjà trouvées en interne."
+          }
+        }
+      }
+    },
+    "client-thread.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick up a customer conversation"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reprendre un échange client"
+          }
+        }
+      }
+    },
+    "conflicting-reports.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask for both articles or excerpts. For each disagreement, trace it to the figures, testimony or documents cited. Check whether the accounts cover the same time period, place and population. Identify sources they share.\n\nSet the disagreements side by side. For each one, explain whether the difference comes from the data, definitions or interpretation. End with the question the sources leave open."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande-moi les deux articles ou leurs extraits. Pour chaque point de désaccord, remonte aux chiffres, témoignages ou documents cités. Vérifie si les deux textes parlent de la même période, du même territoire et de la même population. Repère aussi les sources qu’ils ont en commun.\n\nPrésente les divergences côte à côte. Pour chacune, explique si l’écart vient des données, de la définition ou de l’interprétation. Termine par la question que ces sources laissent ouverte."
+          }
+        }
+      }
+    },
+    "conflicting-reports.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find the common ground, comparable figures and the reason the accounts diverge."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les points d’accord, les chiffres comparables et l’origine du désaccord."
+          }
+        }
+      }
+    },
+    "conflicting-reports.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compare two conflicting articles"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparer deux articles qui se contredisent"
+          }
+        }
+      }
+    },
+    "deadline-review.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find my open Linear tickets due in the next seven days. Compare their deadlines with time off and existing commitments in my Google Calendar.\n\nList tickets by due date with their status, reported blockers and free time before the deadline during my known working hours. Say when the remaining effort is unknown. End with the first decision I need to make and the facts behind it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relève dans Linear mes tickets ouverts dont l’échéance tombe dans les sept prochains jours. Compare leurs dates aux absences et aux plages déjà occupées dans mon Google Calendar.\n\nPrésente les tickets par date, avec leur état, les blocages signalés et les créneaux encore libres avant l’échéance pendant mes heures de travail connues. Si l’effort restant est inconnu, indique-le. Termine par le premier arbitrage à faire, en expliquant sur quels faits il repose."
+          }
+        }
+      }
+    },
+    "deadline-review.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compare this week’s tickets with the time available."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les tickets à rendre cette semaine face au temps disponible."
+          }
+        }
+      }
+    },
+    "deadline-review.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spot deadlines at risk"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repérer les échéances à risque"
+          }
+        }
+      }
+    },
+    "delivery": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send the result to Vellem in Markdown using the send_output MCP tool. Give it a title that names the subject and set folder_name to “%@”. Confirm once Vellem accepts it."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envoie le résultat en Markdown dans Vellem avec l’outil MCP send_output. Utilise un titre qui nomme le sujet et le paramètre folder_name « %@ ». Confirme l’envoi une fois que Vellem l’a accepté."
+          }
+        }
+      }
+    },
+    "design-review.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use the Notion spec and related Linear issues for the feature I name. If the feature is unclear, ask which one to review.\n\nPrepare an agenda for the design review. For each user flow, identify the states the spec covers and any gaps in empty, loading or error states. Separate decisions already made from questions that need an answer, and link each question to its source."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pars de la spec Notion et des tickets Linear de la fonctionnalité que je t’indique. Si elle n’est pas identifiée, demande-moi laquelle examiner.\n\nPrépare l’ordre du jour de la revue de design. Pour chaque parcours, relève les états décrits et les éventuels oublis concernant le chargement, les erreurs et les écrans vides. Distingue les décisions déjà prises des questions à trancher et relie chaque question à sa source."
+          }
+        }
+      }
+    },
+    "design-review.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The flows to review, the states to check and the decisions still open."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les parcours à relire, les états à vérifier et les décisions à prendre."
+          }
+        }
+      }
+    },
+    "design-review.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prepare a design review"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préparer une revue de design"
+          }
+        }
+      }
+    },
+    "family-outing.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask where we are starting, the ages, budget and maximum travel time. Find a free slot in the family Google Calendar I specify. Check venue websites for opening times on that date, admission for the whole family and booking requirements.\n\nSuggest three different outings, including one indoors. Give a departure time, time on site and estimated total cost for each. Pick the best fit for our constraints and explain why in one sentence."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande-moi le point de départ, les âges, le budget et le trajet maximal. Repère un créneau libre dans le Google Calendar familial que je t’indique. Sur les sites des lieux, vérifie les horaires pour la date précise, les tarifs pour toute la famille et la réservation éventuelle.\n\nPropose trois sorties contrastées, dont une à l’abri. Pour chacune, donne l’heure de départ, le temps sur place et le coût total estimé. Choisis celle qui convient le mieux à nos contraintes et explique pourquoi en une phrase."
+          }
+        }
+      }
+    },
+    "family-outing.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Three outings that fit the time available, including a rainy-day option."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trois idées qui tiennent dans le créneau disponible, avec une option en cas de pluie."
+          }
+        }
+      }
+    },
+    "family-outing.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find a family outing for the weekend"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trouver une sortie pour ce week-end"
+          }
+        }
+      }
+    },
+    "folder.customers": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Customers"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clients"
+          }
+        }
+      }
+    },
+    "folder.incidents": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incidents"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incidents"
+          }
+        }
+      }
+    },
+    "folder.marketing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marketing"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Marketing"
+          }
+        }
+      }
+    },
+    "folder.meetings": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Meetings"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Réunions"
+          }
+        }
+      }
+    },
+    "folder.personal": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personal"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Personnel"
+          }
+        }
+      }
+    },
+    "folder.planning": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Planning"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Organisation"
+          }
+        }
+      }
+    },
+    "folder.product": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Product"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Produit"
+          }
+        }
+      }
+    },
+    "folder.projects": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Projects"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Projets"
+          }
+        }
+      }
+    },
+    "folder.releases": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Releases"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Livraisons"
+          }
+        }
+      }
+    },
+    "folder.research": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Research"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recherche"
+          }
+        }
+      }
+    },
+    "folder.travel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Travel"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voyages"
+          }
+        }
+      }
+    },
+    "home-quotes.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask for both quotes or the Gmail threads where they can be found. Match the scope, quantity, materials, tax-inclusive price and timeline for each line. Check travel, removal, disposal and finishing costs where relevant to the job.\n\nExplain the price difference. Mark missing information as “unspecified” and distinguish optional extras from included work. End with three concrete questions I could send to the contractors before deciding."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande-moi les deux devis ou les fils Gmail où les trouver. Pour chaque poste, aligne la prestation, la quantité, les matériaux, le prix TTC et le délai. Relève les frais de déplacement, la dépose, l’évacuation et les finitions seulement s’ils sont pertinents pour ces travaux.\n\nExplique d’où vient l’écart de prix. Laisse « non précisé » quand une ligne manque et distingue une option d’une prestation incluse. Termine par trois questions concrètes à envoyer aux artisans pour pouvoir décider."
+          }
+        }
+      }
+    },
+    "home-quotes.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Included work, missing costs and questions to ask before choosing."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les prestations incluses, les frais manquants et les questions à poser avant de choisir."
+          }
+        }
+      }
+    },
+    "home-quotes.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compare two quotes for work at home"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparer deux devis pour la maison"
+          }
+        }
+      }
+    },
+    "incident-timeline.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start with the incident’s Slack thread or Linear ticket. If I haven’t provided a starting point, ask for a link or for the date and affected service. Follow links between the discussion and follow-up tickets to confirm they refer to the same incident.\n\nReconstruct the timeline in one time zone. Identify the first signal, observed impact, interventions and recovery if confirmed. Give a source for each event. End with the confirmed cause or remaining hypotheses, followed by the follow-up actions."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pars du fil Slack ou du ticket Linear de l’incident. Si je n’ai fourni aucun repère, demande-moi un lien ou une date et le service concerné. Suis les liens entre la discussion et les tickets de suivi pour identifier le même incident.\n\nReconstitue la chronologie avec des heures exprimées dans un même fuseau. Distingue le premier signal, l’impact observé, les interventions et le rétablissement s’il a été confirmé. Attribue chaque étape à sa source. Termine par la cause confirmée ou les hypothèses encore ouvertes, puis les actions de suivi."
+          }
+        }
+      }
+    },
+    "incident-timeline.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From the first signal to recovery, with a source for each event."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du premier signal au rétablissement, avec une source pour chaque étape."
+          }
+        }
+      }
+    },
+    "incident-timeline.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconstruct an incident"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconstituer un incident"
+          }
+        }
+      }
+    },
+    "learn-a-topic.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask for the topic, what I already know, the question I want to be able to explain afterwards and how much time I have. Pick three freely accessible online resources, including a primary source if one exists.\n\nPut them in reading order. Give the specific passage, estimated time and a question to keep in mind for each. End with a short exercise to check my understanding, followed by its answer in a separate paragraph."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande-moi le sujet, ce que j’en sais déjà, la question que j’aimerais pouvoir expliquer ensuite et le temps disponible. Choisis trois ressources gratuites et accessibles en ligne, dont au moins une source de première main si elle existe.\n\nPropose un ordre de lecture avec le passage précis à consulter, le temps estimé et une question à garder en tête. Termine par un petit exercice pour vérifier ce que j’ai compris et donne sa solution à part."
+          }
+        }
+      }
+    },
+    "learn-a-topic.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A reading path matched to what I already know and the time I have."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un parcours de lecture selon ce que je sais déjà et le temps dont je dispose."
+          }
+        }
+      }
+    },
+    "learn-a-topic.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explore a subject in one evening"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Explorer un sujet en une soirée"
+          }
+        }
+      }
+    },
+    "meeting-record.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find my most recent completed meeting in Granola. If I specify a title or date, use that meeting instead.\n\nWrite a short meeting record. Start with the date and identified participants, then list decisions and actions. For each action, include the owner and date given in the meeting. End with open questions and a link to the meeting."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retrouve ma dernière réunion terminée dans Granola. Si je précise un titre ou une date, utilise cette réunion à la place.\n\nRédige un compte rendu court. Commence par la date et les participants identifiés, puis liste les décisions et les actions. Pour chaque action, conserve le responsable et la date annoncés. Termine par les questions restées ouvertes et un lien vers la réunion."
+          }
+        }
+      }
+    },
+    "meeting-record.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decisions and next steps from the latest Granola meeting."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le compte rendu de la dernière réunion Granola, prêt à retrouver."
+          }
+        }
+      }
+    },
+    "meeting-record.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep a record of a meeting"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Garder la trace d’une réunion"
+          }
+        }
+      }
+    },
+    "next-meeting.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find my next meeting with guests in Google Calendar. In Granola, find the most recent meeting about the same topic with those people. Check that both meetings concern the same project.\n\nPrepare a short brief with the meeting time, participants, open commitments and three questions to ask. If this is our first meeting, use the invitation."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dans Google Calendar, repère ma prochaine réunion avec des invités. Dans Granola, retrouve la dernière réunion sur le même sujet avec ces personnes. Vérifie que le projet correspond avant de rapprocher les deux.\n\nPrépare une fiche courte avec l’heure du rendez-vous, les participants, les engagements encore ouverts et trois questions à poser. Si c’est une première rencontre, appuie-toi sur l’invitation."
+          }
+        }
+      }
+    },
+    "next-meeting.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The next meeting and what was still open last time."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le prochain rendez-vous et ce qui restait à régler la dernière fois."
+          }
+        }
+      }
+    },
+    "next-meeting.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prepare for my next meeting"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préparer mon prochain rendez-vous"
+          }
+        }
+      }
+    },
+    "pantry-meals.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask what is in my fridge and pantry, how many people are eating, any dietary constraints and how long I can cook each evening. Find suitable recipes. Prioritize the ingredients I say need using soon.\n\nPlan five different dinners. For each, give the source recipe, adjusted quantities, active cooking time and what can be reused the next evening. Finish with one shopping list covering only missing ingredients."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande-moi ce qu’il reste au réfrigérateur et au placard, le nombre de personnes, les contraintes alimentaires et le temps de cuisine par soir. Cherche des recettes adaptées. Fais passer en premier les ingrédients que je te dis devoir utiliser vite.\n\nPropose cinq dîners variés. Pour chacun, donne la recette source, les quantités ajustées, le temps actif et ce qui peut resservir le lendemain. Termine par une liste de courses consolidée, limitée aux ingrédients manquants."
+          }
+        }
+      }
+    },
+    "pantry-meals.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A menu that uses up what needs eating, with one shopping list."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un menu qui utilise les aliments à finir, puis une seule liste de courses."
+          }
+        }
+      }
+    },
+    "pantry-meals.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan five dinners from my pantry"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trouver cinq dîners avec ce que j’ai"
+          }
+        }
+      }
+    },
+    "project-handoff.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use the project’s Notion page and messages in its Slack channel since the last page update. If you can’t identify the project from the context, ask for its name.\n\nWrite a handoff for the person taking over tomorrow. Start with the next concrete action, then cover relevant decisions, outstanding replies and documents to open. Include a contact and date for each outstanding item when the sources provide them. Flag discrepancies between the page and the discussions."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilise la page Notion du projet que je te confie et les échanges de son canal Slack depuis la dernière mise à jour de la page. Si le contexte ne permet pas d’identifier le projet, demande-moi son nom.\n\nÉcris une fiche pour la personne qui prend le relais demain. Commence par la prochaine action concrète, puis indique les décisions à connaître, les réponses attendues et les documents à ouvrir. Associe à chaque attente un interlocuteur et une date si les sources les précisent. Signale les contradictions entre la page et les échanges."
+          }
+        }
+      }
+    },
+    "project-handoff.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What a colleague needs to know to take over tomorrow."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce qu’un collègue doit savoir pour reprendre le projet demain."
+          }
+        }
+      }
+    },
+    "project-handoff.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prepare a project handoff"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préparer une passation"
+          }
+        }
+      }
+    },
+    "project-status.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask for the project name if it’s missing. Read the project brief in Notion and its tickets in Linear. Connect a ticket to a goal only when the content or a link supports it.\n\nOrganize the update into four sections: shipped, in progress, blocked and planned without a matching ticket. For each blocker, name the owner and due date only if the sources specify them."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande-moi le nom du projet s’il manque. Lis sa page de cadrage Notion et les tickets du projet correspondant dans Linear. Relie un ticket à un objectif uniquement si son contenu ou un lien le justifie.\n\nRédige un point d’avancement avec quatre rubriques : livré, en cours, bloqué, prévu sans ticket identifié. Pour chaque blocage, mentionne le responsable et l’échéance seulement s’ils sont indiqués dans les sources."
+          }
+        }
+      }
+    },
+    "project-status.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compare the goals in the spec with shipped, open and blocked tickets."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les objectifs de la spec face aux tickets livrés, ouverts ou bloqués."
+          }
+        }
+      }
+    },
+    "project-status.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check a project’s progress"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faire le point sur un projet"
+          }
+        }
+      }
+    },
+    "purchase-recall.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask for the product and country of purchase. Find the exact reference on the Gmail receipt I identify. Check notices from the manufacturer and the relevant public authority. Compare the model, batch number and affected dates. If the receipt lacks a batch number, tell me what to look for on the label.\n\nSay whether my item matches, an identifier rules it out or a missing detail prevents a conclusion. Include the date checked and the applicable official instructions. If you find no notice, specify which sources and references you checked."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande-moi le produit et le pays d’achat. Retrouve la référence exacte dans le reçu Gmail que je t’indique. Vérifie les avis du fabricant et de l’autorité publique du pays. Compare le modèle, le numéro de lot et les dates concernés. Si le reçu ne précise pas le lot, dis-moi quoi chercher sur l’étiquette.\n\nIndique si mon exemplaire correspond, si un identifiant l’exclut ou si un détail empêche de conclure. Cite la date de consultation et la consigne officielle applicable. Si tu ne trouves aucun avis, précise les sources et les références vérifiées."
+          }
+        }
+      }
+    },
+    "purchase-recall.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Match the exact product and batch to an official recall notice."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La référence achetée face aux lots concernés par un avis officiel."
+          }
+        }
+      }
+    },
+    "purchase-recall.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check whether my purchase has been recalled"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vérifier si mon achat fait l’objet d’un rappel"
+          }
+        }
+      }
+    },
+    "release-notes.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start with the version I give you. If it’s missing, ask for the product and version. Find related Linear tickets and their deployment announcements in Slack.\n\nWrite short release notes. For each change confirmed in production, explain in one sentence what the user can now do or which problem was fixed. Put completed tickets with unconfirmed deployments in an internal section called “To verify”."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pars de la version que je t’indique. Si elle manque, demande-moi le produit et la version. Retrouve les tickets associés dans Linear et les annonces de déploiement correspondantes dans Slack.\n\nRédige une courte note de version. Pour chaque changement dont la mise en production est confirmée, explique en une phrase ce que l’utilisateur peut faire ou quel problème a été corrigé. Place les tickets terminés dont la livraison reste incertaine dans une section interne « À vérifier »."
+          }
+        }
+      }
+    },
+    "release-notes.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shipped changes described for the people who use them."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les changements livrés, formulés pour les personnes qui les utilisent."
+          }
+        }
+      }
+    },
+    "release-notes.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write release notes"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Écrire les notes de version"
+          }
+        }
+      }
+    },
+    "repair-or-replace.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask for the appliance model, fault, age, my country and any quote I have. Look up parts availability and the price of an equivalent replacement. Compare like-for-like costs, including labour, parts, transport and installation.\n\nMake a table distinguishing observed prices from estimates. Give the repair price at which your recommendation would change and one specific question to ask the repairer before deciding."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande-moi la référence de l’appareil, sa panne, son âge, mon pays et le devis si j’en ai un. Cherche la disponibilité des pièces et le prix d’un modèle équivalent. Compare réparateur, pièce, transport et remplacement installé à périmètre comparable.\n\nFais un tableau qui distingue les prix constatés des estimations. Donne le prix de réparation à partir duquel tu changerais de recommandation et la question précise à poser au réparateur avant de décider."
+          }
+        }
+      }
+    },
+    "repair-or-replace.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compare total costs and find the repair price that would change the decision."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le coût complet de chaque option, avec le point où la décision bascule."
+          }
+        }
+      }
+    },
+    "repair-or-replace.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decide whether to repair or replace"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir entre réparer et remplacer"
+          }
+        }
+      }
+    },
+    "research-patterns.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For the product or flow we’re discussing, find feedback from the last 30 days in Granola interviews and Gmail threads. If the topic is unclear, ask me which flow to look into.\n\nGroup reports of the same difficulty. Explain what the person was trying to do, where they got stuck and how many distinct people reported it. Count an interview followed up by email only once. Include a specific example from the sources for each difficulty."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour le produit ou le parcours dont nous parlons, cherche les retours des 30 derniers jours dans les entretiens Granola et les fils Gmail. Si le sujet manque, demande-moi quel parcours étudier.\n\nRegroupe les retours qui décrivent la même difficulté. Pour chaque groupe, décris ce que la personne essayait de faire, ce qui l’a arrêtée et combien de personnes distinctes l’ont signalé. Un entretien repris par e-mail compte une seule fois. Illustre chaque difficulté par un exemple précis tiré des sources."
+          }
+        }
+      }
+    },
+    "research-patterns.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Difficulties that recur across interviews and emails."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les difficultés qui reviennent dans les entretiens et les e-mails."
+          }
+        }
+      }
+    },
+    "research-patterns.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find patterns in user feedback"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recouper les retours utilisateurs"
+          }
+        }
+      }
+    },
+    "school-week.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For the week I specify, cross-check school emails in Gmail with the family Google Calendar. Ask for the school or class if it helps narrow the messages. Use the most recent dated notice when it announces a change.\n\nMake a day-by-day list of things to bring, sign or pay for, with deadlines. Put anything due before Monday first. Flag conflicting times or missing details and point me to the relevant notice."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour la semaine que je précise, croise les messages de l’école dans Gmail avec le Google Calendar familial. Demande-moi l’établissement ou la classe si cela permet d’écarter des messages sans rapport. Utilise le dernier message daté lorsqu’il annonce un changement.\n\nPrépare une liste par jour avec ce qu’il faut apporter, signer ou payer et la date limite. Mets en tête ce qui doit être fait avant lundi. Signale les horaires en conflit ou les informations à confirmer en indiquant le message concerné."
+          }
+        }
+      }
+    },
+    "school-week.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trips, things to pack and permission slips, in date order."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les sorties, affaires à apporter et autorisations à rendre, classées par jour."
+          }
+        }
+      }
+    },
+    "school-week.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get ready for the school week"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préparer la semaine d’école"
+          }
+        }
+      }
+    },
+    "seasonal-garden.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask for my town, plot or container size, hours of sunlight, vegetables we enjoy and the time I can spend. Consult a gardening calendar appropriate to the region and season.\n\nChoose three realistic crops. Sketch a simple text layout and give me eight weeks of sowing and planting windows and practical tasks. For weather-sensitive tasks, tell me what to look for on site before going ahead."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande-moi la commune, la surface ou la taille des bacs, les heures de soleil, les légumes que l’on aime et le temps que je peux y consacrer. Consulte un calendrier horticole adapté à la région et à la saison.\n\nChoisis trois cultures réalistes. Dessine un plan simple en texte et donne, sur huit semaines, les fenêtres de semis, de plantation et les gestes utiles. Indique quel signe observer sur place pour décaler une intervention si la météo change."
+          }
+        }
+      }
+    },
+    "seasonal-garden.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What to sow, where to put it and what to do over the next eight weeks."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quoi semer, où le placer et quand intervenir sur les huit prochaines semaines."
+          }
+        }
+      }
+    },
+    "seasonal-garden.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan a small kitchen garden"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Planifier un petit potager"
+          }
+        }
+      }
+    },
+    "sources": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cite the sources you consulted and include links when available. If a source is inaccessible or information is missing, say so. If nothing matches, tell me before sending anything."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cite les sources consultées avec leurs liens lorsqu’ils sont disponibles. Si une source est inaccessible ou si une information manque, indique-le. Si aucun élément ne correspond, dis-le-moi avant tout envoi."
+          }
+        }
+      }
+    },
+    "spec-decisions.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask which project to compare if the context is unclear. Find the latest Granola meeting for that project and the corresponding Notion spec. If several pages match, ask me which one to use.\n\nList the explicit decisions from the meeting. For each, say whether the spec covers it, contradicts it or leaves it out. Link each discrepancy to its section and suggest a short edit. Leave the Notion page as it is."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande-moi quel projet comparer si le contexte ne le précise pas. Trouve la dernière réunion Granola sur ce projet et la spécification Notion correspondante. Si plusieurs pages correspondent, demande-moi laquelle comparer.\n\nRelève les décisions explicites de la réunion, puis indique pour chacune si la spec la couvre, la contredit ou n’en parle pas. Associe chaque écart à la section concernée et propose une formulation courte. Laisse la page Notion intacte."
+          }
+        }
+      }
+    },
+    "spec-decisions.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decisions from the meeting that are still missing from Notion."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les décisions prises en réunion qui manquent encore dans Notion."
+          }
+        }
+      }
+    },
+    "spec-decisions.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compare meeting decisions with the spec"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparer la réunion à la spec"
+          }
+        }
+      }
+    },
+    "subscription-renewals.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For the next thirty days, find renewal notices, trial confirmations and invoices in Gmail for the services I specify. Match each notice with the latest receipt or cancellation notice for that subscription.\n\nSort by date. Distinguish a completed charge, an announced payment and an estimate based on an older invoice. Include the amount, currency, any documented action deadline and a link to the relevant message."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pour les trente prochains jours, cherche dans Gmail les avis de renouvellement, confirmations d’essai et factures des services que je précise. Relie chaque avis au dernier reçu ou avis de résiliation du même abonnement.\n\nClasse les échéances par date. Distingue un débit déjà effectué, un prélèvement annoncé et une simple estimation tirée d’une ancienne facture. Indique le montant, la devise, la date limite connue pour agir et le lien vers le message correspondant."
+          }
+        }
+      }
+    },
+    "subscription-renewals.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upcoming renewal dates and stated amounts, each linked to its evidence."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les prochaines échéances et les montants annoncés, avec le justificatif de chacune."
+          }
+        }
+      }
+    },
+    "subscription-renewals.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spot upcoming subscription renewals"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repérer les abonnements qui se renouvellent"
+          }
+        }
+      }
+    },
+    "technical-risks.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find the next milestone of the project I name in Notion and its open issues in Linear. If I haven’t named a project, ask me which one to use.\n\nIdentify the dependencies and blockers that could affect this milestone. For each, cite the evidence, explain what could be delayed, name the owner if recorded, and suggest the next decision. Distinguish an observed blocker from a possible risk."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retrouve dans Notion la prochaine échéance du projet que je nomme et dans Linear les tickets encore ouverts. Si je n’ai pas nommé de projet, demande-moi lequel examiner.\n\nRepère les dépendances et les blocages qui pourraient compromettre cette échéance. Pour chacun, cite le fait observé, explique ce qui risque de prendre du retard, indique le responsable s’il est connu et propose la prochaine décision. Distingue un blocage avéré d’un risque possible."
+          }
+        }
+      }
+    },
+    "technical-risks.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dependencies and blocked issues that could delay the next milestone."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les dépendances et les tickets bloqués qui menacent la prochaine échéance."
+          }
+        }
+      }
+    },
+    "technical-risks.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review technical risks"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Examiner les risques techniques"
+          }
+        }
+      }
+    },
+    "ticket-origin.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask me for the Linear ticket link or ID if I haven’t given it to you. Read the description and comments, then search Slack for the ticket ID, its link or the discussion it references.\n\nExplain the original problem, the chosen solution and what’s still under discussion. Distinguish confirmed decisions from proposals. Include links to the ticket and the original thread."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande-moi le lien ou l’identifiant du ticket Linear si je ne te l’ai pas donné. Lis sa description et ses commentaires, puis cherche sur Slack son identifiant, son lien ou la discussion explicitement citée.\n\nExplique le problème de départ, la solution retenue et les points encore discutés. Distingue les décisions confirmées des propositions. Garde le lien du ticket et celui du fil d’origine."
+          }
+        }
+      }
+    },
+    "ticket-origin.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Linear ticket, the Slack discussion and the reason for the change."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le ticket Linear, la discussion Slack et la raison du changement."
+          }
+        }
+      }
+    },
+    "ticket-origin.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trace a ticket back to its source"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retrouver l’origine d’un ticket"
+          }
+        }
+      }
+    },
+    "travel-itinerary.instructions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use the destination and dates to find booking confirmations in Gmail and appointments at the destination in Google Calendar. If multiple trips match, ask which one to prepare.\n\nOrganize the itinerary by day. For each stop, include the local time, place and link to the confirmation or appointment. Account for changes and cancellations. Flag conflicting times and any travel between stops that still needs arranging."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "À partir de la destination et des dates du voyage, retrouve mes confirmations de réservation dans Gmail et mes rendez-vous sur place dans Google Calendar. Si plusieurs voyages correspondent, demande-moi lequel préparer.\n\nOrganise le carnet par journée. Pour chaque étape, donne l’heure locale, le lieu et le lien vers la confirmation ou le rendez-vous. Tiens compte des modifications et des annulations. Signale les horaires contradictoires ou un trajet entre deux étapes qui reste à organiser."
+          }
+        }
+      }
+    },
+    "travel-itinerary.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tickets, accommodation and appointments in travel order."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Billets, hébergement et rendez-vous dans l’ordre du trajet."
+          }
+        }
+      }
+    },
+    "travel-itinerary.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Put together my travel itinerary"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rassembler mon carnet de voyage"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

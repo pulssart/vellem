@@ -8,6 +8,10 @@ enum CloudMirrorStore {
     private static let foldersFileName = "folders.json"
 
     static var containerURL: URL? {
+        #if DEBUG && targetEnvironment(simulator)
+        if let directory = VellemStorageEnvironment.isolatedDirectory { return directory }
+        #endif
+        guard VellemStorageEnvironment.isolatedDirectory == nil else { return nil }
         if let ubiquityURL = FileManager.default.url(forUbiquityContainerIdentifier: containerIdentifier) {
             return ubiquityURL
                 .appending(path: "Documents", directoryHint: .isDirectory)
@@ -69,7 +73,7 @@ enum CloudMirrorStore {
         return try decoder.decode(type, from: data)
     }
 
-    private static func write(_ data: Data, to url: URL) throws {
+    static func write(_ data: Data, to url: URL) throws {
         var coordinationError: NSError?
         var writeError: Error?
         let coordinator = NSFileCoordinator(filePresenter: nil)
@@ -89,7 +93,7 @@ enum CloudMirrorStore {
         }
     }
 
-    private static func coordinatedRead(from url: URL) throws -> Data {
+    static func coordinatedRead(from url: URL) throws -> Data {
         var coordinationError: NSError?
         var readResult: Result<Data, Error>?
         let coordinator = NSFileCoordinator(filePresenter: nil)
@@ -105,10 +109,16 @@ enum CloudMirrorStore {
         return try readResult?.get() ?? Data()
     }
 
-    private static func startDownloadingIfNeeded(_ url: URL) throws {
-        guard FileManager.default.fileExists(atPath: url.path) else { return }
+    static func startDownloadingIfNeeded(_ url: URL) throws {
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            let placeholder = url.deletingLastPathComponent().appending(path: "." + url.lastPathComponent + ".icloud")
+            if FileManager.default.fileExists(atPath: placeholder.path) {
+                try FileManager.default.startDownloadingUbiquitousItem(at: url)
+            }
+            return
+        }
         let values = try url.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey])
-        if values.ubiquitousItemDownloadingStatus == .notDownloaded {
+        if let status = values.ubiquitousItemDownloadingStatus, status != .current {
             try FileManager.default.startDownloadingUbiquitousItem(at: url)
         }
     }

@@ -31,7 +31,7 @@ final class SemanticIndex {
     private var wordEmbedders: [NLLanguage: NLEmbedding] = [:]
 
     init() {
-        let container = FileManager.default.containerURL(
+        let container = VellemStorageEnvironment.isolatedDirectory ?? FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: "MKAFV9VL9V.com.adriendonot.Vellem"
         ) ?? FileManager.default.homeDirectoryForCurrentUser
             .appending(path: "Library/Group Containers/MKAFV9VL9V.com.adriendonot.Vellem")

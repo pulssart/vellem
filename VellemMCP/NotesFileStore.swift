@@ -9,9 +9,15 @@ final class NotesFileStore {
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
 
+    var isDirectDelivery = false
+    var clientName: String?
+    var clientAgent: InboxAgent?
+
+    var libraryDirectory: URL { fileURL.deletingLastPathComponent() }
+
     init() {
         // Use the proper App Group container API instead of a hardcoded path.
-        let container = FileManager.default.containerURL(
+        let container = VellemStorageEnvironment.isolatedDirectory ?? FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: "MKAFV9VL9V.com.adriendonot.Vellem"
         ) ?? FileManager.default.homeDirectoryForCurrentUser
             .appending(path: "Library/Group Containers/MKAFV9VL9V.com.adriendonot.Vellem")
@@ -28,47 +34,35 @@ final class NotesFileStore {
         text: String,
         generatedTitle: String? = nil,
         folderID: UUID? = nil,
-        decisionContext: NoteDecisionContext? = nil
+        agent: InboxAgent? = nil,
+        sender: String? = nil,
+        format: OutputFormat? = nil,
+        conversation: ReplyConversation? = nil
     ) throws -> Note {
         var notes = try load()
         // Load folders once and pass through — avoids two separate JSON parses.
         let folders = try loadFolders()
         let resolvedFolderID = try resolveFolderID(folderID, folders: folders)
-        let sourceApp = sourceApp(for: resolvedFolderID, folders: folders)
-        let note = Note(
+        let sourceApp: String
+        if isDirectDelivery {
+            sourceApp = sender.map { "\(agent?.rawValue ?? $0) (CLI)" } ?? "CLI"
+        } else if let sender {
+            sourceApp = "\(agent?.rawValue ?? sender) (MCP)"
+        } else if clientAgent == nil, let clientName, !clientName.isEmpty {
+            sourceApp = "\(clientName) (MCP)"
+        } else {
+            sourceApp = self.sourceApp(agent: agent ?? clientAgent, folderID: resolvedFolderID, folders: folders)
+        }
+        var note = Note(
             text: text,
             generatedTitle: generatedTitle,
             kind: .regular,
             sourceApp: sourceApp,
             sourceURL: nil,
             folderID: resolvedFolderID,
-            decisionContext: decisionContext
+            outputFormat: format
         )
-        notes.insert(note, at: 0)
-        try save(notes)
-        ExternalNoteEvent.postCreated(noteID: note.id, source: sourceApp)
-        return note
-    }
-
-    func addDecisionNote(
-        text: String,
-        generatedTitle: String? = nil,
-        folderID: UUID? = nil,
-        decisionContext: NoteDecisionContext
-    ) throws -> Note {
-        var notes = try load()
-        let folders = try loadFolders()
-        let resolvedFolderID = try resolveFolderID(folderID, folders: folders)
-        let sourceApp = sourceApp(for: resolvedFolderID, folders: folders)
-        let note = Note(
-            text: text,
-            generatedTitle: generatedTitle,
-            kind: .regular,
-            sourceApp: sourceApp,
-            sourceURL: nil,
-            folderID: resolvedFolderID,
-            decisionContext: decisionContext
-        )
+        note.conversation = conversation
         notes.insert(note, at: 0)
         try save(notes)
         ExternalNoteEvent.postCreated(noteID: note.id, source: sourceApp)
@@ -84,10 +78,10 @@ final class NotesFileStore {
         return folderID
     }
 
-    private func sourceApp(for folderID: UUID?, folders: [Folder]? = nil) -> String {
+    private func sourceApp(agent: InboxAgent?, folderID: UUID?, folders: [Folder]) -> String {
+        if let agent { return "\(agent.rawValue) (MCP)" }
         guard let folderID else { return "MCP" }
-        let all = (try? folders ?? loadFolders()) ?? []
-        guard let folder = all.first(where: { $0.id == folderID }) else { return "MCP" }
+        guard let folder = folders.first(where: { $0.id == folderID }) else { return "MCP" }
 
         switch folder.kind {
         case .smartCodex:
@@ -108,43 +102,55 @@ final class NotesFileStore {
         }
     }
 
-    func appendToDaily(text: String, decisionContext: NoteDecisionContext? = nil) throws -> Note {
-        var notes = try load()
-        let now = Date()
-        let cal = Calendar.current
-        let sourceApp = "MCP"
-
-        if let index = notes.firstIndex(where: { $0.kind == .daily && cal.isDate($0.createdAt, inSameDayAs: now) }) {
-            var updated = notes[index]
-            // Match the app's append format: ## HH:mm timestamp block.
-            let time = DateFormatter.localizedString(from: now, dateStyle: .none, timeStyle: .short)
-            let block = "## \(time)\n\(text.trimmingCharacters(in: .whitespacesAndNewlines))"
-            let existing = updated.text.trimmingCharacters(in: .whitespacesAndNewlines)
-            updated.text = existing.isEmpty ? block : "\(existing)\n\n\(block)"
-            updated.updatedAt = now
-            updated.sourceApp = sourceApp
-            // Move updated note to front (updatedAt = now).
-            notes.remove(at: index)
-            notes.insert(updated, at: 0)
+    @discardableResult
+    func appendReply(_ reply: NoteReply, to id: UUID, in conversation: ReplyConversation) throws -> Bool {
+        try LibraryWriteLock.withLock(in: libraryDirectory) {
+            var notes = try load()
+            guard let index = notes.firstIndex(where: { $0.id == id && $0.conversation == conversation }) else {
+                throw MCPError.notFound("The original message is no longer available.")
+            }
+            var replies = notes[index].replies ?? []
+            if let i = replies.firstIndex(where: { $0.id == reply.id }) {
+                guard replies[i].delivery == .queued, reply.delivery != .queued else { return false }
+                replies[i] = reply
+            } else {
+                replies.append(reply)
+            }
+            notes[index].replies = replies
             try save(notes)
-            return updated
+            return true
         }
+    }
 
-        let title = dailyTitle(for: now)
-        let note = Note(
-            text: "# \(title)\n\n" + text,
-            generatedTitle: title,
-            kind: .daily,
-            sourceApp: sourceApp,
-            sourceURL: nil,
-            createdAt: now,
-            updatedAt: now,
-            decisionContext: decisionContext
-        )
-        notes.insert(note, at: 0)
-        try save(notes)
-        ExternalNoteEvent.postCreated(noteID: note.id, source: sourceApp)
-        return note
+    func applyMobileChange(_ action: MobileAction) throws {
+        try LibraryWriteLock.withLock(in: libraryDirectory) {
+            switch action.kind {
+            case .read(let id):
+                var notes = try load()
+                guard let index = notes.firstIndex(where: { $0.id == id }), !notes[index].isRead else { return }
+                notes[index].isRead = true
+                try save(notes)
+            case let .createFolder(id, name, agent):
+                var folders = try loadFolders()
+                guard !folders.contains(where: { $0.id == id }) else { return }
+                let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !name.isEmpty, name.count <= 100, InboxAgent(rawValue: agent) != nil else {
+                    throw MCPError.invalidArguments("Nom de dossier ou agent invalide.")
+                }
+                guard !folders.contains(where: { $0.mailbox == agent && $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame }) else {
+                    throw MCPError.invalidArguments("Un dossier porte déjà ce nom sur le Mac.")
+                }
+                folders.append(Folder(id: id, name: name, mailbox: agent))
+                try saveFolders(folders)
+            case let .move(note, folder):
+                if let folder, !(try loadFolders()).contains(where: { $0.id == folder && !$0.isSmart }) {
+                    throw MCPError.notFound("Ce dossier est indisponible sur le Mac.")
+                }
+                _ = try moveNote(id: note, toFolder: folder)
+            case .reply:
+                throw MCPError.invalidArguments("Une réponse nécessite une conversation liée.")
+            }
+        }
     }
 
     func listNotes(limit: Int) throws -> [Note] {
@@ -167,92 +173,6 @@ final class NotesFileStore {
         return notes.first { $0.id == id }
     }
 
-    func updateNote(id: UUID, text: String, title: String? = nil) throws -> Note {
-        var notes = try load()
-        guard let index = notes.firstIndex(where: { $0.id == id }) else {
-            throw MCPError.notFound("Note \(id) not found.")
-        }
-        notes[index].text = text
-        // If an explicit title is provided use it; otherwise clear the generated
-        // title so it is re-derived from the new first heading / first line.
-        notes[index].generatedTitle = title?.isEmpty == false ? title : nil
-        notes[index].updatedAt = Date()
-        let updated = notes[index]
-        notes.sort { $0.updatedAt > $1.updatedAt }
-        try save(notes)
-        return updated
-    }
-
-    func updateDecisionContext(id: UUID, context: NoteDecisionContext?) throws -> Note {
-        var notes = try load()
-        guard let index = notes.firstIndex(where: { $0.id == id }) else {
-            throw MCPError.notFound("Note \(id) not found.")
-        }
-        notes[index].decisionContext = context?.isEmpty == true ? nil : context
-        notes[index].updatedAt = Date()
-        let updated = notes[index]
-        notes.sort { $0.updatedAt > $1.updatedAt }
-        try save(notes)
-        return updated
-    }
-
-    func markDecisionContextResolved(id: UUID, resolvedAt: Date = Date()) throws -> Note {
-        var notes = try load()
-        guard let index = notes.firstIndex(where: { $0.id == id }) else {
-            throw MCPError.notFound("Note \(id) not found.")
-        }
-        guard var context = notes[index].decisionContext else {
-            throw MCPError.invalidArguments("Note \(id) has no decision context.")
-        }
-        context.resolvedAt = resolvedAt
-        context.updatedAt = Date()
-        notes[index].decisionContext = context
-        notes[index].updatedAt = Date()
-        let updated = notes[index]
-        notes.sort { $0.updatedAt > $1.updatedAt }
-        try save(notes)
-        return updated
-    }
-
-    func notesWithExpiringDecisionContext(days: Int, includeExpired: Bool, limit: Int) throws -> [Note] {
-        let notes = try load()
-        let now = Date()
-        let endDate = Calendar.current.date(byAdding: .day, value: max(0, days), to: now) ?? now
-
-        return Array(notes.lazy
-            .filter { note in
-                guard let context = note.decisionContext,
-                      context.resolvedAt == nil,
-                      let expiresAt = context.expiresAt else {
-                    return false
-                }
-                if expiresAt < now {
-                    return includeExpired
-                }
-                return expiresAt <= endDate
-            }
-            .prefix(max(1, limit)))
-    }
-
-    func decisionTrail(for id: UUID) throws -> [Note] {
-        let notes = try load()
-        guard let source = notes.first(where: { $0.id == id }) else {
-            throw MCPError.notFound("Note \(id) not found.")
-        }
-        guard let decisionTitle = source.decisionContext?.decisionTitle.trimmingCharacters(in: .whitespacesAndNewlines),
-              !decisionTitle.isEmpty else {
-            return [source]
-        }
-
-        return notes.filter { note in
-            guard let noteDecision = note.decisionContext?.decisionTitle.trimmingCharacters(in: .whitespacesAndNewlines),
-                  !noteDecision.isEmpty else {
-                return false
-            }
-            return note.id == source.id || noteDecision.localizedCaseInsensitiveCompare(decisionTitle) == .orderedSame
-        }
-    }
-
     func deleteNote(id: UUID) throws {
         var notes = try load()
         guard let index = notes.firstIndex(where: { $0.id == id }) else {
@@ -265,53 +185,6 @@ final class NotesFileStore {
     /// Append `text` to the end of an existing note, separated by a blank line.
     /// Clears the cached `generatedTitle` so the title is re-derived from the
     /// first heading / first line of the resulting text.
-    func appendToNote(id: UUID, text: String) throws -> Note {
-        let appendix = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !appendix.isEmpty else {
-            throw MCPError.invalidArguments("`text` cannot be empty.")
-        }
-        var notes = try load()
-        guard let index = notes.firstIndex(where: { $0.id == id }) else {
-            throw MCPError.notFound("Note \(id) not found.")
-        }
-        let existing = notes[index].text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let separator = existing.isEmpty ? "" : "\n\n"
-        notes[index].text = existing + separator + appendix
-        notes[index].generatedTitle = nil
-        notes[index].updatedAt = Date()
-        let updated = notes[index]
-        notes.remove(at: index)
-        notes.insert(updated, at: 0)
-        try save(notes)
-        return updated
-    }
-
-    /// Prepend `text` to the start of an existing note. Title is re-derived
-    /// from the new first line — so callers that need a stable title should
-    /// keep that line at the top of `text` (e.g. start with a `# Heading`).
-    func prependToNote(id: UUID, text: String) throws -> Note {
-        let prefix = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !prefix.isEmpty else {
-            throw MCPError.invalidArguments("`text` cannot be empty.")
-        }
-        var notes = try load()
-        guard let index = notes.firstIndex(where: { $0.id == id }) else {
-            throw MCPError.notFound("Note \(id) not found.")
-        }
-        let existing = notes[index].text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let separator = existing.isEmpty ? "" : "\n\n"
-        notes[index].text = prefix + separator + existing
-        notes[index].generatedTitle = nil
-        notes[index].updatedAt = Date()
-        let updated = notes[index]
-        notes.remove(at: index)
-        notes.insert(updated, at: 0)
-        try save(notes)
-        return updated
-    }
-
-    /// Return notes updated within the last `days` days, in updatedAt-desc
-    /// order, capped at `limit`. Day 0 is interpreted as "today only".
     func recentNotes(days: Int, limit: Int) throws -> [Note] {
         let calendar = Calendar.current
         let safeDays = max(0, days)
@@ -349,19 +222,19 @@ final class NotesFileStore {
         try loadFolders().sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
-    func findFolder(byName name: String) throws -> Folder? {
-        let target = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        return try loadFolders().first { $0.name.lowercased() == target }
-    }
-
-    func createFolder(name: String) throws -> Folder {
+    func createFolder(name: String, agent: InboxAgent? = nil, sender: String? = nil) throws -> Folder {
         let cleaned = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleaned.isEmpty else { throw MCPError.invalidArguments("Folder name cannot be empty.") }
         var folders = try loadFolders()
-        if let existing = folders.first(where: { $0.name.lowercased() == cleaned.lowercased() }) {
-            return existing
+        let key = agent?.rawValue ?? sender ?? clientAgent?.rawValue ?? clientName
+        let matches = folders.filter { $0.name.localizedCaseInsensitiveCompare(cleaned) == .orderedSame }
+        let scoped = matches.filter { $0.mailbox == key }
+        let candidates = scoped.isEmpty ? matches.filter { $0.mailbox == nil } : scoped
+        if candidates.count > 1 || (key == nil && candidates.isEmpty && !matches.isEmpty) {
+            throw MCPError.invalidArguments("Use folder_id from list_folders to select the destination mailbox.")
         }
-        let folder = Folder(name: cleaned)
+        if let existing = candidates.first { return existing }
+        let folder = Folder(name: cleaned, mailbox: key)
         folders.append(folder)
         try saveFolders(folders)
         return folder
@@ -385,23 +258,37 @@ final class NotesFileStore {
         guard !folders[index].isSmart else {
             throw MCPError.invalidArguments("Folder \"\(folders[index].name)\" is a smart folder and cannot be deleted.")
         }
-        folders.remove(at: index)
-        try saveFolders(folders)
-
         var notes = try load()
+        let originalFolders = folders
+        folders.remove(at: index)
         var changed = false
         for i in notes.indices where notes[i].folderID == id {
             notes[i].folderID = nil
             changed = true
         }
-        if changed { try save(notes) }
+        try saveFolders(folders)
+        if changed {
+            do {
+                try save(notes)
+            } catch {
+                try? saveFolders(originalFolders)
+                throw error
+            }
+        }
     }
 
     func moveNote(id: UUID, toFolder folderID: UUID?) throws -> Note {
-        let resolved = try resolveFolderID(folderID)
+        let folders = try loadFolders()
+        let resolved = try resolveFolderID(folderID, folders: folders)
         var notes = try load()
         guard let index = notes.firstIndex(where: { $0.id == id }) else {
             throw MCPError.notFound("Note \(id) not found.")
+        }
+        let previous = notes[index]
+        if previous.sourceApp == nil || previous.sourceApp == "MCP",
+           let oldID = previous.folderID, let old = folders.first(where: { $0.id == oldID }) {
+            if old.kind == .smartCodex { notes[index].sourceApp = InboxAgent.codex.rawValue }
+            if old.kind == .smartClaude { notes[index].sourceApp = InboxAgent.claude.rawValue }
         }
         notes[index].folderID = resolved
         notes[index].updatedAt = Date()
@@ -424,7 +311,7 @@ final class NotesFileStore {
             do {
                 let data = try Data(contentsOf: url)
                 if data.isEmpty { result = []; return }
-                result = try decoder.decode([Folder].self, from: data)
+                result = try VellemLibraryValidation.uniqueIDs(decoder.decode([Folder].self, from: data), kind: "folders")
             } catch {
                 ioError = error
             }
@@ -474,7 +361,7 @@ final class NotesFileStore {
         coordinator.coordinate(readingItemAt: fileURL, options: [], error: &outError) { url in
             do {
                 let data = try Data(contentsOf: url)
-                let notes = try decoder.decode([Note].self, from: data)
+                let notes = try VellemLibraryValidation.uniqueIDs(decoder.decode([Note].self, from: data), kind: "notes")
                 result = notes.sorted { $0.updatedAt > $1.updatedAt }
             } catch {
                 ioError = error
@@ -509,18 +396,5 @@ final class NotesFileStore {
     private func ensureDirectory() throws {
         let dir = fileURL.deletingLastPathComponent()
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-    }
-
-    // Same format as NotesStore.dailyTitleFormatter — daily notes have a consistent title
-    // whether created via the app or via MCP.
-    private static let dailyTitleFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = .current
-        f.setLocalizedDateFormatFromTemplate("EEE d MMM")
-        return f
-    }()
-
-    private func dailyTitle(for date: Date) -> String {
-        "Today, \(Self.dailyTitleFormatter.string(from: date))"
     }
 }
