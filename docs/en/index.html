@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vellem · A project notebook for your AI agents</title>
+  <meta name="description" content="A Mac inbox for reports from your AI agents. Explore three projects and copy a prompt to send to your agent.">
+  <meta name="theme-color" content="#f6f2ed">
+  <link rel="canonical" href="https://pulssart.github.io/vellem/en/">
+  <link rel="alternate" hreflang="fr" href="https://pulssart.github.io/vellem/">
+  <link rel="alternate" hreflang="en" href="https://pulssart.github.io/vellem/en/">
+  <meta property="og:title" content="Vellem · A project notebook for your AI agents">
+  <meta property="og:description" content="A Mac inbox for reports from your AI agents. Explore three projects and copy a prompt to send to your agent.">
+  <meta property="og:url" content="https://pulssart.github.io/vellem/en/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://pulssart.github.io/vellem/assets/carnet/apercu.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="../assets/carnet/icon.png">
+  <link rel="preload" href="../assets/carnet/baskervville.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../assets/carnet/landing.css">
+  <script defer src="../assets/carnet/landing.js"></script>
+</head>
+<body>
+  <a class="skip" href="#projects">Skip to projects</a>
+  <header class="masthead">
+    <a class="wordmark" href="#projects" aria-label="Vellem home">
+      <span class="fold" aria-hidden="true"></span>Vellem
+    </a>
+    <a class="download" data-download href="https://github.com/pulssart/vellem/releases/download/v1.1.0/Vellem-1.1.0.dmg">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M3.5 18v2.5h17V18"/></svg>
+      Download for Mac
+    </a>
+  </header>
+  <main>
+    <section id="projects" class="projects" aria-labelledby="project-heading">
+      <div class="intro">
+        <h1 id="project-heading">What would you <br>like to plan?</h1>
+        <p>Choose a request. <br>Your agent sends the result to Vellem.</p>
+        <div class="filters" role="group" aria-label="Filter projects" hidden>
+          <button type="button" data-filter="all" aria-pressed="true">All</button>
+          <button type="button" data-filter="work" aria-pressed="false">Work</button>
+          <button type="button" data-filter="personal" aria-pressed="false">Personal</button>
+        </div>
+      </div>
+      <nav class="gallery" aria-label="Choose a project">
+        <a class="card" data-category="personal" href="#sortie" aria-controls="sortie">
+          <img src="../assets/carnet/sortie.webp" width="360" height="516" alt="">
+          <span class="card-title">Family outing</span>
+        </a>
+        <a class="card" data-category="personal" href="#devis" aria-controls="devis">
+          <img src="../assets/carnet/devis.webp" width="360" height="516" alt="">
+          <span class="card-title">Renovation quotes</span>
+        </a>
+        <a class="card" data-category="work" href="#design" aria-controls="design">
+          <img src="../assets/carnet/design.webp" width="360" height="516" alt="">
+          <span class="card-title">Design review</span>
+        </a>
+      </nav>
+    </section>
+    <div class="examples" data-copied="Prompt copied" data-manual="Select the text to copy it.">
+      <section class="example" id="sortie" tabindex="-1" aria-labelledby="result-sortie">
+        <div class="request">
+          <h2>The request</h2>
+          <p class="quotation">Plan a family outing for Saturday.</p>
+          <button type="button" class="copy" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="14" height="15" rx="2"/><rect x="3" y="7" width="14" height="15" rx="2"/></svg>
+            <span>Copy prompt</span>
+          </button>
+          <details class="prompt-text"><summary>Copy prompt</summary><pre>Plan a family outing for Saturday.
+
+Ask where we are starting, the ages, budget and maximum travel time. Find a free slot in the family Google Calendar I specify. Check venue websites for opening times on that date, admission for the whole family and booking requirements.
+
+Suggest three different outings, including one indoors. Give a departure time, time on site and estimated total cost for each. Pick the best fit for our constraints and explain why in one sentence.
+
+Cite the sources you consulted and include links when available. If a source is inaccessible or information is missing, say so. If nothing matches, tell me before sending anything.
+
+Send the result to Vellem in Markdown using the send_output MCP tool. Give it a title that names the subject and set folder_name to “Personal”. Confirm once Vellem accepts it.</pre></details>
+          <span class="sr-only" role="status"></span>
+        </div>
+        <div class="result">
+          <h2>The result in Vellem</h2>
+          <h3 id="result-sortie">Saturday in the forest</h3>
+          <ul><li>A 6 km loop (about two hours) with the kids.</li><li>Picnic spot, weather and what to pack.</li></ul>
+          <a class="back" href="#projects">Back to projects ↑</a>
+        </div>
+      </section>
+      <section class="example" id="devis" tabindex="-1" aria-labelledby="result-devis">
+        <div class="request">
+          <h2>The request</h2>
+          <p class="quotation">Compare these two bathroom renovation quotes.</p>
+          <button type="button" class="copy" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="14" height="15" rx="2"/><rect x="3" y="7" width="14" height="15" rx="2"/></svg>
+            <span>Copy prompt</span>
+          </button>
+          <details class="prompt-text"><summary>Copy prompt</summary><pre>Compare these two bathroom renovation quotes.
+
+Ask for both quotes or the Gmail threads where they can be found. Match the scope, quantity, materials, tax-inclusive price and timeline for each line. Check travel, removal, disposal and finishing costs where relevant to the job.
+
+Explain the price difference. Mark missing information as “unspecified” and distinguish optional extras from included work. End with three concrete questions I could send to the contractors before deciding.
+
+Cite the sources you consulted and include links when available. If a source is inaccessible or information is missing, say so. If nothing matches, tell me before sending anything.
+
+Send the result to Vellem in Markdown using the send_output MCP tool. Give it a title that names the subject and set folder_name to “Personal”. Confirm once Vellem accepts it.</pre></details>
+          <span class="sr-only" role="status"></span>
+        </div>
+        <div class="result">
+          <h2>The result in Vellem</h2>
+          <h3 id="result-devis">Two quotes for the same room</h3>
+          <ul><li>The first includes removing the tiles. The second lists it as an extra.</li><li>Before choosing, ask whether either quote covers waste removal.</li></ul>
+          <a class="back" href="#projects">Back to projects ↑</a>
+        </div>
+      </section>
+      <section class="example" id="design" tabindex="-1" aria-labelledby="result-design">
+        <div class="request">
+          <h2>The request</h2>
+          <p class="quotation">Prepare the sign-up flow for a design review.</p>
+          <button type="button" class="copy" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="14" height="15" rx="2"/><rect x="3" y="7" width="14" height="15" rx="2"/></svg>
+            <span>Copy prompt</span>
+          </button>
+          <details class="prompt-text"><summary>Copy prompt</summary><pre>Prepare the sign-up flow for a design review.
+
+Use the Notion spec and related Linear issues for the feature I name. If the feature is unclear, ask which one to review.
+
+Prepare an agenda for the design review. For each user flow, identify the states the spec covers and any gaps in empty, loading or error states. Separate decisions already made from questions that need an answer, and link each question to its source.
+
+Cite the sources you consulted and include links when available. If a source is inaccessible or information is missing, say so. If nothing matches, tell me before sending anything.
+
+Send the result to Vellem in Markdown using the send_output MCP tool. Give it a title that names the subject and set folder_name to “Product”. Confirm once Vellem accepts it.</pre></details>
+          <span class="sr-only" role="status"></span>
+        </div>
+        <div class="result">
+          <h2>The result in Vellem</h2>
+          <h3 id="result-design">Before Thursday’s review</h3>
+          <ul><li>On mobile, the keyboard covers the confirmation button.</li><li>For the review: do we need a street address at sign-up?</li></ul>
+          <a class="back" href="#projects">Back to projects ↑</a>
+        </div>
+      </section>
+    </div>
+    <section class="setup" aria-labelledby="setup-heading">
+      <div class="setup-photo"><img src="../assets/carnet/foret.webp" width="1440" height="960" alt="" loading="lazy"></div>
+      <div class="setup-copy">
+        <h2 id="setup-heading">Receive your first report</h2>
+        <p>Vellem collects the results you ask your agents to send to your Mac.</p>
+        <ol><li>Install Vellem, then open Settings → Agents.</li><li>Pick your agent and follow the connection instructions. Then start a new conversation.</li><li>Paste the prompt into your agent. Its report arrives in Vellem, complete with sources and formatting.</li></ol>
+        <a class="guide" href="https://github.com/pulssart/vellem#connect-an-agent">Read the connection guide <span aria-hidden="true">↗</span></a>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <div class="signature"><span class="fold" aria-hidden="true"></span><span>Vellem</span></div>
+    <p>macOS 26+ <span aria-hidden="true">·</span> Intel &amp; Apple Silicon</p>
+    <nav aria-label="Links and language">
+      <a href="https://github.com/pulssart/vellem/releases">Release notes</a>
+      <a href="https://github.com/pulssart/vellem">GitHub</a>
+      <a href="../" lang="fr" hreflang="fr">Français</a>
+    </nav>
+  </footer>
+</body>
+</html>

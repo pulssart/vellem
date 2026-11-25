@@ -67,8 +67,9 @@ VellemWidget/               WidgetKit extension
   VellemWidget.swift        un seul Widget (toutes les tailles), lecture via NSFileCoordinator
 
 docs/                       landing (https://pulssart.github.io/vellem/)
-  index.html                bundle Anthropic auto-contenu. PIEGE, les *.jsx ne sont PAS servis.
-  *.jsx                     sources canvas. Pour modifier le site live, patcher le bundle.
+  index.html, en/index.html  pages statiques du carnet, en français et en anglais.
+  assets/carnet/             photos, polices, styles et interactions du site.
+website/                    gabarit HTML et textes du carnet de projets.
 
 script/
   build_and_run.sh          cycle debug
@@ -78,7 +79,7 @@ script/
 ## Conventions
 
 - Commits, ligne imperative courte plus corps explicatif plus `Co-Authored-By`. Commits thematiques separes (un par sujet), pas de mega-commits fourre-tout.
-- Version bump, `Vellem/Info.plist` et `VellemWidget/Info.plist`, `CFBundleShortVersionString` et `CFBundleVersion`. Met aussi a jour la version visible dans `docs/direction-a.jsx` (footer) ET re-bundle `docs/index.html`.
+- Version bump, `Vellem/Info.plist` et `VellemWidget/Info.plist`, `CFBundleShortVersionString` et `CFBundleVersion`. Après la mise à jour de l’appcast, exécute `python3 script/build-landing.py` pour actualiser le téléchargement de secours des deux pages.
 - Swift, `@MainActor` sur les stores. `notes.remove(at:)` plus `notes.insert(_, at: 0)` au lieu d'un `sort` complet quand une seule note change. `Task.detached(priority: .utility)` pour le JSON I/O, puis `await MainActor.run` pour appliquer.
 - MCP tools, tout passe par `MCPServer.execute(toolName:args:)`. Les nouveaux tools s'ajoutent dans `tools/list` ET dans le `switch` de `execute`.
 - Pas d'emojis dans le code. L'utilisateur en met dans les notes, pas dans les sources.
@@ -87,7 +88,7 @@ script/
 
 - Deux copies de l'app installees. `~/Applications/Vellem.app` (lu par Claude Desktop et Codex pour le MCP) et `/Applications/Vellem.app` (lu par macOS pour Spotlight et Launchpad). `build_and_run.sh` synchronise les deux. Si tu modifies seulement une, l'autre devient stale et tu auras des bugs MCP intermittents.
 - Plugin database widgets. Quand on supprime un kind de widget (e.g. `VellemLargeWidget` en 1.0.9), les instances placees sur le bureau restent orphelines. `pluginkit -r/a` sur les deux emplacements plus suppression manuelle des snapshots dans `~/Library/Containers/com.adriendonot.Vellem.Widget/Data/SystemData/com.apple.chrono/`. L'utilisateur doit retirer les widgets fantomes manuellement.
-- Landing page. `docs/index.html` est un bundle auto-contenu (`<script type="__bundler/manifest">` contient les JSX gzippes plus base64). Editer `docs/direction-a.jsx` ou `docs/shared.jsx` n'a AUCUN effet sur le site servi. Pour patcher, decompresser le manifest, appliquer les changements sur le contenu decompresse, recompresser. Voir le script Python du commit `ed0f1db`.
+- Landing page. GitHub Pages sert `main:/docs`. Modifie `website/landing.html` ou `website/carnet.json`, puis exécute `python3 script/build-landing.py` et livre les deux HTML générés. Les anciens fichiers JSX ne pilotent plus le site.
 - Embeddings cache. `embeddings.json` dans le container App Group. Auto-genere a la premiere requete semantique. Si on change la canonicalisation dans `SemanticIndex.canonicalize`, supprimer le cache pour forcer un re-embed (sinon les anciens vecteurs avec l'ancienne canonicalisation cohabitent avec les nouveaux).
 
 ## Etat actuel (v1.0.10)

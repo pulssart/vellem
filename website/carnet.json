@@ -1,0 +1,118 @@
+{
+  "fr": {
+    "page_title": "Vellem · Le carnet de projets pour vos agents IA",
+    "description": "Une boîte de réception sur Mac pour les rapports de vos agents IA. Explorez trois projets et copiez la demande à envoyer à votre agent.",
+    "skip": "Aller aux projets",
+    "home": "Vellem, accueil",
+    "headline": "Que voulez-vous\npréparer ?",
+    "intro": "Choisissez une demande.\nVotre agent envoie le résultat dans Vellem.",
+    "download": "Télécharger pour Mac",
+    "filter_label": "Filtrer les projets",
+    "all": "Tous",
+    "work": "Travail",
+    "personal": "Personnel",
+    "gallery_label": "Choisir un projet",
+    "request": "La demande",
+    "result": "Le résultat dans Vellem",
+    "copy": "Copier le prompt",
+    "copied": "Prompt copié",
+    "manual": "Sélectionnez le texte pour le copier.",
+    "all_projects": "Revoir les projets",
+    "setup_title": "Recevoir votre premier rapport",
+    "setup_intro": "Vellem rassemble sur votre Mac les résultats que vous demandez à vos agents.",
+    "step_one": "Installez Vellem, puis ouvrez Réglages → Agents.",
+    "step_two": "Choisissez votre agent et suivez les instructions de connexion. Ouvrez ensuite une nouvelle conversation.",
+    "step_three": "Collez le prompt dans votre agent. Son rapport arrive dans Vellem, avec ses sources et sa mise en page.",
+    "guide": "Voir le guide de connexion",
+    "versions": "Notes de version",
+    "footer_label": "Liens et langue",
+    "other_name": "English",
+    "items": {
+      "sortie": {
+        "title": "Sortie en famille",
+        "request": "Prépare une sortie en famille samedi.",
+        "result": "Samedi en forêt",
+        "lines": [
+          "Une boucle de 6 km (environ 2 h) avec les enfants.",
+          "Pique-nique, météo et liste à emporter."
+        ]
+      },
+      "devis": {
+        "title": "Devis travaux",
+        "request": "Compare ces deux devis pour la salle de bains.",
+        "result": "Deux devis pour la même pièce",
+        "lines": [
+          "Le premier inclut la dépose du carrelage. Le second la chiffre en option.",
+          "Avant de choisir, demander si l’évacuation des gravats est comprise."
+        ]
+      },
+      "design": {
+        "title": "Revue de design",
+        "request": "Prépare la revue du parcours d’inscription.",
+        "result": "Avant la revue de jeudi",
+        "lines": [
+          "Sur mobile, le clavier masque le bouton de validation.",
+          "À trancher en revue : faut-il demander l’adresse dès la création du compte ?"
+        ]
+      }
+    }
+  },
+  "en": {
+    "page_title": "Vellem · A project notebook for your AI agents",
+    "description": "A Mac inbox for reports from your AI agents. Explore three projects and copy a prompt to send to your agent.",
+    "skip": "Skip to projects",
+    "home": "Vellem home",
+    "headline": "What would you\nlike to plan?",
+    "intro": "Choose a request.\nYour agent sends the result to Vellem.",
+    "download": "Download for Mac",
+    "filter_label": "Filter projects",
+    "all": "All",
+    "work": "Work",
+    "personal": "Personal",
+    "gallery_label": "Choose a project",
+    "request": "The request",
+    "result": "The result in Vellem",
+    "copy": "Copy prompt",
+    "copied": "Prompt copied",
+    "manual": "Select the text to copy it.",
+    "all_projects": "Back to projects",
+    "setup_title": "Receive your first report",
+    "setup_intro": "Vellem collects the results you ask your agents to send to your Mac.",
+    "step_one": "Install Vellem, then open Settings → Agents.",
+    "step_two": "Pick your agent and follow the connection instructions. Then start a new conversation.",
+    "step_three": "Paste the prompt into your agent. Its report arrives in Vellem, complete with sources and formatting.",
+    "guide": "Read the connection guide",
+    "versions": "Release notes",
+    "footer_label": "Links and language",
+    "other_name": "Français",
+    "items": {
+      "sortie": {
+        "title": "Family outing",
+        "request": "Plan a family outing for Saturday.",
+        "result": "Saturday in the forest",
+        "lines": [
+          "A 6 km loop (about two hours) with the kids.",
+          "Picnic spot, weather and what to pack."
+        ]
+      },
+      "devis": {
+        "title": "Renovation quotes",
+        "request": "Compare these two bathroom renovation quotes.",
+        "result": "Two quotes for the same room",
+        "lines": [
+          "The first includes removing the tiles. The second lists it as an extra.",
+          "Before choosing, ask whether either quote covers waste removal."
+        ]
+      },
+      "design": {
+        "title": "Design review",
+        "request": "Prepare the sign-up flow for a design review.",
+        "result": "Before Thursday’s review",
+        "lines": [
+          "On mobile, the keyboard covers the confirmation button.",
+          "For the review: do we need a street address at sign-up?"
+        ]
+      }
+    }
+  }
+}

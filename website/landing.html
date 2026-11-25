@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="$lang">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>$page_title</title>
+  <meta name="description" content="$description">
+  <meta name="theme-color" content="#f6f2ed">
+  <link rel="canonical" href="$canonical">
+  <link rel="alternate" hreflang="fr" href="https://pulssart.github.io/vellem/">
+  <link rel="alternate" hreflang="en" href="https://pulssart.github.io/vellem/en/">
+  <meta property="og:title" content="$page_title">
+  <meta property="og:description" content="$description">
+  <meta property="og:url" content="$canonical">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://pulssart.github.io/vellem/assets/carnet/apercu.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="${assets}icon.png">
+  <link rel="preload" href="${assets}baskervville.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="${assets}landing.css">
+  <script defer src="${assets}landing.js"></script>
+</head>
+<body>
+  <a class="skip" href="#projects">$skip</a>
+  <header class="masthead">
+    <a class="wordmark" href="#projects" aria-label="$home">
+      <span class="fold" aria-hidden="true"></span>Vellem
+    </a>
+    <a class="download" data-download href="$dmg">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M3.5 18v2.5h17V18"/></svg>
+      $download
+    </a>
+  </header>
+  <main>
+    <section id="projects" class="projects" aria-labelledby="project-heading">
+      <div class="intro">
+        <h1 id="project-heading">$headline</h1>
+        <p>$intro</p>
+        <div class="filters" role="group" aria-label="$filter_label" hidden>
+          <button type="button" data-filter="all" aria-pressed="true">$all</button>
+          <button type="button" data-filter="work" aria-pressed="false">$work</button>
+          <button type="button" data-filter="personal" aria-pressed="false">$personal</button>
+        </div>
+      </div>
+      <nav class="gallery" aria-label="$gallery_label">
+$gallery
+      </nav>
+    </section>
+    <div class="examples" data-copied="$copied" data-manual="$manual">
+$examples
+    </div>
+    <section class="setup" aria-labelledby="setup-heading">
+      <div class="setup-photo"><img src="${assets}foret.webp" width="1440" height="960" alt="" loading="lazy"></div>
+      <div class="setup-copy">
+        <h2 id="setup-heading">$setup_title</h2>
+        <p>$setup_intro</p>
+        <ol><li>$step_one</li><li>$step_two</li><li>$step_three</li></ol>
+        <a class="guide" href="https://github.com/pulssart/vellem#connect-an-agent">$guide <span aria-hidden="true">↗</span></a>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <div class="signature"><span class="fold" aria-hidden="true"></span><span>Vellem</span></div>
+    <p>macOS 26+ <span aria-hidden="true">·</span> Intel &amp; Apple Silicon</p>
+    <nav aria-label="$footer_label">
+      <a href="https://github.com/pulssart/vellem/releases">$versions</a>
+      <a href="https://github.com/pulssart/vellem">GitHub</a>
+      <a href="$other_url" lang="$other_lang" hreflang="$other_lang">$other_name</a>
+    </nav>
+  </footer>
+</body>
+</html>
